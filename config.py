@@ -16,3 +16,8 @@ else:
     MASTER_KEY = os.getenv('MASTER_KEY')
     DATABASE_ID = os.getenv('DATABASE_ID')
     CONTAINER_ID = os.getenv('CONTAINER_ID')
+
+# Check if any of the required environment variables are missing
+if not all([HOST, MASTER_KEY, DATABASE_ID, CONTAINER_ID]):
+    print("Error: Please make sure HOST, MASTER_KEY, DATABASE_ID, and CONTAINER_ID environment variables are set.")
+    exit(1)
