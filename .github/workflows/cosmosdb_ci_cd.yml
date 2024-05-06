@@ -11,28 +11,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
-
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install azure-cosmos
-        pip install python-dotenv
 
     - name: Set up environment variables
       run: |
-        echo "HOST=$HOST" >> $GITHUB_ENV
-        echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
-        source .env
+        echo "HOST=${{ secrets.ACCOUNT_HOST }}" >> $GITHUB_ENV
+        echo "MASTER_KEY=${{ secrets.ACCOUNT_KEY }}" >> $GITHUB_ENV
 
     - name: Run script
       run: python run.py
-      env:
-        HOST: ${{ secrets.COSMOS_DB_HOST }}
-        MASTER_KEY: ${{ secrets.COSMOS_DB_MASTER_KEY }}
