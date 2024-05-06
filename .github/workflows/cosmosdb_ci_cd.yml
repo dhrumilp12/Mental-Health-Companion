@@ -29,6 +29,7 @@ jobs:
       run: |
         echo "HOST=$HOST" >> $GITHUB_ENV
         echo "MASTER_KEY=$MASTER_KEY" >> $GITHUB_ENV
+        source .env
 
     - name: Run script
       run: python run.py
