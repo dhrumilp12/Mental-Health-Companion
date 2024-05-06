@@ -21,7 +21,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install azure-cosmos python-dotenv  # Add python-dotenv here
+        pip install azure-cosmos
+
+    - name: Set up environment variables
+      run: |
+        echo "HOST=${{ secrets.ACCOUNT_HOST }}" >> $GITHUB_ENV
+        echo "MASTER_KEY=${{ secrets.ACCOUNT_KEY }}" >> $GITHUB_ENV
 
     - name: Run script
       run: python run.py
