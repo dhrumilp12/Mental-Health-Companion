@@ -1,12 +1,18 @@
+
 import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-settings = {
-    'host': os.environ.get('ACCOUNT_HOST'),
-    'master_key': os.environ.get('ACCOUNT_KEY'),
-    'database_id': os.environ.get('COSMOS_DATABASE'),
-    'container_id': os.environ.get('COSMOS_CONTAINER'),
-}
+# Check if running in GitHub Actions environment
+if os.getenv('GITHUB_ACTIONS'):
+    # Load environment variables directly from GitHub Actions secrets
+    HOST = os.getenv('HOST')
+    MASTER_KEY = os.getenv('MASTER_KEY')
+    DATABASE_ID = os.getenv('DATABASE_ID')
+    CONTAINER_ID = os.getenv('CONTAINER_ID')
+else:
+    # Load environment variables from .env file using dotenv
+    from dotenv import load_dotenv
+    load_dotenv()
+    HOST = os.getenv('HOST')
+    MASTER_KEY = os.getenv('MASTER_KEY')
+    DATABASE_ID = os.getenv('DATABASE_ID')
+    CONTAINER_ID = os.getenv('CONTAINER_ID')
