@@ -4,74 +4,81 @@ from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.vectorstores import AzureCosmosDBVectorSearch
 from langchain.prompts import PromptTemplate
-from langchain.schema import StrOutputParser, Document
+from langchain.schema import StrOutputParser
 from langchain.tools import Tool
 import json
+import logging
 
-# Load settings from the .env file
-load_dotenv()
-CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING")
-AOAI_KEY = os.getenv("AOAI_KEY")
-AOAI_ENDPOINT = os.getenv("AOAI_ENDPOINT")
-EMBEDDINGS_DEPLOYMENT_NAME = "MENTAL"
-COMPLETIONS_DEPLOYMENT_NAME = "mentalHEalth"
-AOAI_API_VERSION = "2024-02-15-preview"
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Establish Azure OpenAI connectivity without using the unsupported 'deployment' parameter
-llm = AzureChatOpenAI(
-    model="gpt-35-turbo",
-    deployment_name="mentalHEalth",
-    azure_endpoint=AOAI_ENDPOINT,
-    api_key=AOAI_KEY,
-    api_version=AOAI_API_VERSION
-    # Make sure to use any required parameters correctly here
-)
+def setup_langchain():
+    """
+    Sets up and returns the components necessary for LangChain interaction with Azure OpenAI.
+    """
+    load_dotenv()
+    CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING")
+    AOAI_KEY = os.getenv("AOAI_KEY")
+    AOAI_ENDPOINT = os.getenv("AOAI_ENDPOINT")
+    EMBEDDINGS_DEPLOYMENT_NAME = "MENTAL"
+    COMPLETIONS_DEPLOYMENT_NAME = "mentalHEalth"
+    AOAI_API_VERSION = "2024-02-15-preview"
 
-embedding_model = AzureOpenAIEmbeddings(
-    azure_endpoint=AOAI_ENDPOINT,
-    api_key=AOAI_KEY,
-    api_version=AOAI_API_VERSION,
-    model="text-embedding-ada-002",
-    deployment_name="MENTAL",
-    chunk_size=10
-)
+    # Establish Azure OpenAI connectivity without using the unsupported 'deployment' parameter
+    llm = AzureChatOpenAI(
+        model="gpt-35-turbo",
+        deployment_name="mentalHEalth",
+        azure_endpoint=AOAI_ENDPOINT,
+        api_key=AOAI_KEY,
+        api_version=AOAI_API_VERSION
+    )
 
-# Establish connection to the database
-db_client = pymongo.MongoClient(CONNECTION_STRING)
-db = db_client['cosmic_works']
-products_collection = db['products']
+    embedding_model = AzureOpenAIEmbeddings(
+        azure_endpoint=AOAI_ENDPOINT,
+        api_key=AOAI_KEY,
+        api_version=AOAI_API_VERSION,
+        model="text-embedding-ada-002",
+        deployment_name="MENTAL",
+        chunk_size=10
+    )
 
-# Initialize vector store
-vector_store = AzureCosmosDBVectorSearch(
-    collection=products_collection,
-    embedding=embedding_model,
-    index_name="VectorSearchIndex",
-    text_key="textContent",
-    embedding_key="vectorContent"
-)
+    # Establish connection to the database
+    db_client = pymongo.MongoClient(CONNECTION_STRING)
+    db = db_client['cosmic_works']
+    products_collection = db['products']
 
-# Define the system prompt template
-system_prompt = """
-You are a helpful, fun and friendly sales assistant for Cosmic Works, a bicycle and bicycle accessories store. 
-Your name is Cosmo.
-You are designed to answer questions about the products that Cosmic Works sells.
+    # Initialize vector store
+    vector_store = AzureCosmosDBVectorSearch(
+        collection=products_collection,
+        embedding=embedding_model,
+        index_name="VectorSearchIndex",
+        text_key="textContent",
+        embedding_key="vectorContent"
+    )
 
-Only answer questions related to the information provided in the list of products below that are represented in JSON format.
+    # Define the system prompt template
+    system_prompt = """
+    You are Cosmo, a knowledgeable assistant trained to provide information on a wide range of topics, including but not limited to bicycles and accessories. You can answer general questions to the best of your ability based on your training data.
 
-If you are asked a question that is not in the list, respond with "I don't know."
+    List of products:
+    {products}
 
-List of products:
-{products}
+    Question:
+    {question}
+    """
 
-Question:
-{question}
-"""
+    # Instantiate PromptTemplate with the system prompt
+    prompt_template = PromptTemplate.from_template(system_prompt)
 
+    return {
+        "llm": llm,
+        "embedding_model": embedding_model,
+        "vector_store": vector_store,
+        "prompt_template": prompt_template,
+        "db": db
+    }
 
-# Instantiate PromptTemplate with the system prompt
-prompt_template = PromptTemplate.from_template(system_prompt)
-
-# Define the function to extract text from MongoDB documents
 def extract_text(docs, key='description'):
     """
     Extracts text from MongoDB documents using a specified key.
@@ -85,32 +92,31 @@ def extract_text(docs, key='description'):
     """
     return [doc.get(key, 'No description available') for doc in docs]
 
-# Fetch documents with descriptions that include the word "yellow"
-query = {"description": {"$regex": "yellow", "$options": "i"}}
-documents = db.products.find(query)
+def process_langchain_query(question):
+    components = setup_langchain()
+    llm = components["llm"]
+    prompt_template = components["prompt_template"]
+    db = components["db"]
 
-# Extract text content from documents
-text_contents = extract_text(documents)
+    # Fetch documents with descriptions that include the word "yellow"
+    query = {"description": {"$regex": "yellow", "$options": "i"}}
+    documents = db.products.find(query)
 
-# Prepare the product list for the prompt
-products_list = json.dumps(text_contents, indent=2) if text_contents else "No products found."
+    # Extract text content from documents
+    text_contents = extract_text(documents)
 
-try:
-    # Process the prompt with the extracted text
-    processed_prompt = prompt_template.invoke({"products": products_list, "question": "What products do you have that are yellow?"})
-    # Ensure that the result from invoke is correctly handled
-    result = llm.invoke(processed_prompt)  # Adjusted based on the method's correct use
-    final_output = StrOutputParser().parse(result)
-    # Convert the final_output to a dictionary if it is not already one
-    if not isinstance(final_output, dict):
-        final_output = vars(final_output) if hasattr(final_output, '__dict__') else final_output.__dict__
-    print("Structured Result from the LangChain Model:", json.dumps(final_output, indent=2))
-except Exception as e:
-    print(f"An error occurred: {e}")
+    # Prepare the product list for the prompt
+    products_list = json.dumps(text_contents, indent=2) if text_contents else "No products found."
+
+    processed_prompt = prompt_template.invoke({"products": products_list, "question": question})
+    result = llm.invoke(processed_prompt)
+
+    # Access the assistant's message content
+    response_content = result
+    return response_content
 
 if __name__ == "__main__":
-    # Ensures this block only runs if the script completes without exceptions
-    if 'final_output' in locals():
-        print("Final Structured Output:", json.dumps(final_output, indent=2))
-    else:
-        print("Final output is not available due to an error.")
+    question = "How are you doing?"
+    response = process_langchain_query(question)
+    print(f"Response: {response}")
+
