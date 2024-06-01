@@ -3,6 +3,7 @@ import json
 import re
 
 from dotenv import load_dotenv
+from openai import AzureOpenAI
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.vectorstores import AzureCosmosDBVectorSearch
 from langchain.schema.document import Document
@@ -17,8 +18,8 @@ DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
 AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
 AOAI_KEY = os.environ.get("AOAI_KEY")
 AOAI_API_VERSION = "2023-09-01-preview"
-COMPLETIONS_DEPLOYMENT = "completions"
-EMBEDDINGS_DEPLOYMENT = "embeddings"
+COMPLETIONS_DEPLOYMENT = os.getenv("COMPLETIONS_DEPLOYMENT_NAME")
+EMBEDDINGS_DEPLOYMENT = os.getenv("EMBEDDINGS_DEPLOYMENT_NAME")
 
 class AIAgent:
 
@@ -56,6 +57,7 @@ class AIAgent:
         result = self.agent_executor({"input": prompt})
         return result["output"]
     
+
     def __create_vector_store_retriever(self, namespace, top_k = 3) -> list[Tool]:
         """
         Returns a vector store retriever for the given collection.
@@ -104,6 +106,56 @@ class AIAgent:
 
         return tools
     
+
+    @staticmethod
+    def query_ai(system_message, prompt, **chat_parameters):
+        """
+        Sends a chat message to OpenAI's Chat Completion model and returns the assistant's response.
+        
+        Args:
+            prompt (str): The user input to which the assistant should respond.
+
+        Returns:
+            str: The assistant's response as a string.
+        """
+        try:
+            client = AzureOpenAI(
+                azure_endpoint=AOAI_ENDPOINT,
+                api_key=AOAI_KEY,  
+                api_version="2024-02-15-preview"
+            )
+
+            message_text = [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt},
+            ]
+
+            completion = client.chat.completions.create(
+                model=COMPLETIONS_DEPLOYMENT,
+                messages=message_text,
+                temperature=chat_parameters.get("temperature", 0),
+                max_tokens=chat_parameters.get("max_tokens", 800),
+                top_p=chat_parameters.get("top_p", 0.95),
+                frequency_penalty=chat_parameters.get("frequency_penalty", 0),
+                presence_penalty=chat_parameters.get("presence_penalty", 0),
+                stop=None
+            )
+
+            # Extract the assistant's response
+            assistant_response = next(
+                (choice.message.content for choice in completion.choices if choice.message.role == 'assistant'),
+                None
+            )
+            
+            if assistant_response:
+                return assistant_response
+            else:
+                raise ValueError("No assistant response found in completion.")
+            
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
     
     @staticmethod
     def format_docs(docs:list[Document]) -> str:
