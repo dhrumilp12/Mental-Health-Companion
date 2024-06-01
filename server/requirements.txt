@@ -1,0 +1,75 @@
+aiohttp==3.9.5
+aiosignal==1.3.1
+annotated-types==0.7.0
+anyio==4.4.0
+attrs==23.2.0
+blinker==1.8.2
+# bzip2==1.0.8
+# ca-certificates==2024.3.11
+certifi==2024.2.2
+charset-normalizer==3.3.2
+click==8.1.7
+dataclasses-json==0.6.6
+distro==1.9.0
+dnspython==2.6.1
+# expat==2.6.2
+flask==3.0.3
+flask-cors==4.0.1
+frozenlist==1.4.1
+greenlet==3.0.3
+h11==0.14.0
+httpcore==1.0.5
+httpx==0.27.0
+idna==3.7
+itsdangerous==2.2.0
+jinja2==3.1.4
+jsonpatch==1.33
+jsonpointer==2.4
+langchain==0.2.1
+langchain-community==0.2.1
+langchain-core==0.2.3
+langchain-openai==0.1.8
+langchain-text-splitters==0.2.0
+langsmith==0.1.67
+# ld_impl_linux-64==2.38
+# libffi==3.4.4
+# libgcc-ng==11.2.0
+# libgomp==11.2.0
+# libstdcxx-ng==11.2.0
+# libuuid==1.41.5
+markupsafe==2.1.5
+marshmallow==3.21.2
+multidict==6.0.5
+mypy-extensions==1.0.0
+# ncurses==6.4
+openai==1.30.5
+# openssl==3.0.13
+orjson==3.10.3
+packaging==23.2
+pip==24.0
+pydantic==2.7.2
+pydantic-core==2.18.3
+pymongo==4.7.2
+# python==3.11.9
+python-dotenv==1.0.1
+pyyaml==6.0.1
+# readline==8.2
+regex==2024.5.15
+requests==2.32.3
+setuptools==69.5.1
+sniffio==1.3.1
+sqlalchemy==2.0.30
+# sqlite==3.45.3
+tenacity==8.3.0
+tiktoken==0.7.0
+# tk==8.6.14
+tqdm==4.66.4
+typing-extensions==4.12.0
+typing-inspect==0.9.0
+# tzdata==2024a
+urllib3==2.2.1
+werkzeug==3.0.3
+wheel==0.43.0
+# xz==5.4.6
+yarl==1.9.4
+# zlib==1.2.13
