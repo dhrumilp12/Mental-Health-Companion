@@ -8,11 +8,8 @@ import os
 import json
 import pymongo
 
-<<<<<<< Updated upstream
-from classes.ai_agent import AIAgent
-=======
 from .ai_agent import AIAgent
->>>>>>> Stashed changes
+
 
 DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
 

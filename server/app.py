@@ -35,7 +35,7 @@ def signup():
         user = UserModel(**user_data)
         hashed_password = generate_password_hash(user.password)
         user_data['password'] = hashed_password
-        db_client = MongoDBClient.get_client(os.getenv('connection_string'))
+        db_client = MongoDBClient.get_client(os.getenv('DB_CONNECTION_STRING'))
         db = db_client['cosmic_works']
         result = MongoDBClient.save_user(db, user_data)
         if result:
