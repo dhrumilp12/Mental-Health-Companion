@@ -91,3 +91,18 @@ class MongoDBClient:
                 print(f"Error during operation: {e}")
                 raise
         raise Exception("Maximum retries exceeded")
+    
+    @staticmethod
+    def save_user(db, user_data):
+        try:
+            result = db['users'].find_one_and_update(
+                {"username": user_data['username']},
+                {"$set": user_data},
+                upsert=True,
+                return_document=ReturnDocument.AFTER
+            )
+            logger.info("User saved or updated.")
+            return result
+        except Exception as e:
+            logger.error(f"Error saving user: {str(e)}")
+            raise

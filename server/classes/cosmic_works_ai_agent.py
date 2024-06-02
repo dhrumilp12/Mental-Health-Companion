@@ -8,7 +8,8 @@ import os
 import json
 import pymongo
 
-from classes.ai_agent import AIAgent
+from .ai_agent import AIAgent
+
 
 DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
 
