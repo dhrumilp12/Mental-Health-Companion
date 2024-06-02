@@ -21,8 +21,8 @@ COPY . .
 EXPOSE 8000
 
 # Define environment variables for Flask
-FLASK_RUN_PORT=8000
-FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=8000
+ENV FLASK_RUN_HOST=0.0.0.0
 
 # Execute Flask
-flask run
+CMD ["flask", "run"]
