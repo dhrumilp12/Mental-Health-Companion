@@ -46,6 +46,15 @@ jobs:
         level: high
         confidence: high
         exit_zero: true
+
+    - name: Start application
+      run: |
+        flask run &
+        sleep 5  # give Flask time to start
+
+    - name: Check application is running
+      run: |
+        curl localhost:5000
         
 
   docker-build:
