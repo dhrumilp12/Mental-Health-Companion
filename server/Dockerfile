@@ -25,4 +25,4 @@ ENV FLASK_RUN_PORT=8000
 ENV FLASK_RUN_HOST=0.0.0.0
 
 # Execute Flask
-CMD ["flask", "run"]
+CMD gunicorn -b ${FLASK_RUN_HOST}:${FLASK_RUN_PORT} app:app
