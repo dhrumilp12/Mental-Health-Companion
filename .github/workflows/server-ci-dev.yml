@@ -2,15 +2,22 @@ name: Python CI
 
 on:
     push:
-        branches:
-            - dev
+      paths:
+      - "server/**"
+      branches:
+          - dev
     
     pull_request:
+      paths:
+      - "server/**"
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
 
     steps:
     - name: Checkout
