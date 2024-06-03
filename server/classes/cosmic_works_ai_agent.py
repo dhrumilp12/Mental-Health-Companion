@@ -10,6 +10,10 @@ import pymongo
 
 from .ai_agent import AIAgent
 
+# Suppressing CosmosDB Mongo driver warning.
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message='.*You appear to be connected to a CosmosDB cluster.*')
+
 
 DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
 
@@ -19,6 +23,7 @@ class CosmicWorksAIAgent(AIAgent):
     that can be used to answer questions about Cosmic Works
     products, customers, and sales.
     """
+    
     db = pymongo.MongoClient(DB_CONNECTION_STRING).cosmic_works
 
     def __init__(self, session_id: str):

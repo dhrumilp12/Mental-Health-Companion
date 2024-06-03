@@ -8,6 +8,7 @@ from flask_cors import CORS
 from routes.user import user_routes
 from routes.ai import ai_routes
 
+
 # Set up the app
 app = Flask(__name__)
 CORS(app)
