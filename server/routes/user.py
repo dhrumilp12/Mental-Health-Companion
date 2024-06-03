@@ -1,6 +1,7 @@
 import logging
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 
 from werkzeug.security import generate_password_hash
 from models.user import User as UserModel
@@ -39,3 +40,19 @@ def signup():
     except Exception as e:
         logging.error(f"Exception during time_registration: {str(e)}")
         return jsonify({"error": str(e)}), 400
+
+@user_routes.post('/anonymous_signin')
+def anonymous_signin():
+    try:
+        # Set a reasonable expiration time for tokens, e.g., 24 hours
+        #expires = timedelta(hours=24)
+
+        identity = {'anonymous': True}
+        access_token = create_access_token(identity=identity, expires_delta=False)  # Token never expires; adjust as needed
+        logging.info("create access token successful")
+        return jsonify(access_token=access_token), 200
+
+    except Exception as e:
+        # Log the error and return an appropriate error message
+        logging.error(f"Failed to create access token: {str(e)}")
+        return jsonify({"msg": "Failed to create access token"}), 500
