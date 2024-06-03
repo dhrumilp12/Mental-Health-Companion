@@ -38,19 +38,15 @@ jobs:
       run: |
         pytest tests/
 
-
-  security_check:
-    name: Run security checks with Bandit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: mdegis/bandit-action@v1.0
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          path: "."
-          level: high
-          confidence: high
-          exit_zero: true
-
+    - name: Run security checks with bandit
+      uses: mdegis/bandit-action@v1.0
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: "."
+        level: high
+        confidence: high
+        exit_zero: true
+        
 
   docker-build:
     runs-on: ubuntu-latest
