@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User as UserModel
 from tools.azure_mongodb import MongoDBClient
 
@@ -56,3 +56,22 @@ def anonymous_signin():
         # Log the error and return an appropriate error message
         logging.error(f"Failed to create access token: {str(e)}")
         return jsonify({"msg": "Failed to create access token"}), 500
+    
+@user_routes.post('/login')
+def login():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    
+    if not username or not password:
+        return jsonify({"msg": "Missing username or password"}), 400
+
+    user = UserModel.find_by_username(username)  # You need to implement this method in your User model
+    if user and check_password_hash(user.password, password):
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token), 200
+    else:
+        return jsonify({"msg": "Bad username or password"}), 401
+    
+@user_routes.post('/logout')
+def logout():
+    return jsonify({"msg": "Logout successful"}), 200
