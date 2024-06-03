@@ -1,8 +1,14 @@
+import logging
+
 from flask import Blueprint, request
 from werkzeug.exceptions import InternalServerError
 
 from models.ai_request import AIRequest
 from classes.cosmic_works_ai_agent import CosmicWorksAIAgent
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ai_routes = Blueprint("ai", __name__)
 
