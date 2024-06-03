@@ -47,12 +47,15 @@ def signup():
 
 @app.post("/ai/cosmic_works")
 def run_cosmic_works_ai_agent():
-    request_data = request.get_json()
+    """
+    Run the Cosmic Works AI agent.
+    """
+    request_data:AIRequest = request.get_json()
     session_id = request_data.get("session_id")
     prompt = request_data.get("prompt")
 
     if session_id not in agent_pool:
-        agent_pool[session_statement] = CosmicWorksAIAgent(session_id)
+        agent_pool[session_id] = CosmicWorksAIAgent(session_id)
     return {"message": agent_pool[session_id].run(prompt)}
 
 @app.get("/query_openai/")
