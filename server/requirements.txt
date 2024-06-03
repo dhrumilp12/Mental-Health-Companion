@@ -12,6 +12,7 @@ click==8.1.7
 dataclasses-json==0.6.6
 distro==1.9.0
 dnspython==2.6.1
+email-validator==2.1.1
 # expat==2.6.2
 flask==3.0.3
 flask-cors==4.0.1

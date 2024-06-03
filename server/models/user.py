@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 class User(BaseModel):
     username: str = Field(..., min_length=3, max_length=20)
@@ -10,7 +10,7 @@ class User(BaseModel):
     place_of_residence: str = None
     field_of_work: str = None
 
-    @validator('username')
+    @field_validator('username')
     def username_alphanumeric(cls, v):
         assert v.isalnum(), 'must be alphanumeric'
         return v
