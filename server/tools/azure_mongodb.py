@@ -4,7 +4,7 @@ import random
 import logging
 import requests
 import pymongo
-from pymongo import UpdateOne
+from pymongo import UpdateOne, ReturnDocument
 
 from dotenv import load_dotenv
 
