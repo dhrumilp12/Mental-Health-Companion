@@ -12,7 +12,7 @@ def signup():
     try:
         user_data = request.get_json()
         user = UserModel(**user_data)
-        db_client = MongoDBClient.get_client(os.getenv('connection_string'))
+        db_client = MongoDBClient.get_client(os.getenv('DB_CONNECTION_STRING'))
         db = db_client['cosmic_works']
         
         # Check if user already exists with the same username or email
