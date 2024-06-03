@@ -1,7 +1,7 @@
 """
 API entrypoint for backend API.
 """
-# on dev!
+
 import logging
 import os
 from flask import Flask, request, jsonify
@@ -44,6 +44,7 @@ def signup():
             return jsonify({"error": "Failed to register user"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 @app.post("/ai/cosmic_works")
 def run_cosmic_works_ai_agent():
