@@ -1,4 +1,5 @@
 __pycache__/
+.pytest_cache
 venv/
 mental_health_bot_env/
 
