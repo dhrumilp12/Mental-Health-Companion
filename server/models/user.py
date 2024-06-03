@@ -16,21 +16,6 @@ class User(BaseModel):
         assert v.isalnum(), 'must be alphanumeric'
         return v
     
-    @validator('password', pre=True, always=True)
-    def password_complexity(cls, v):
-        pattern = (
-            r'^(?=.*[a-z])'        # at least one lowercase letter
-            r'(?=.*[A-Z])'         # at least one uppercase letter
-            r'(?=.*\d)'            # at least one digit
-            r'(?=.*[@$!%*?&])'     # at least one special character
-            r'[A-Za-z\d@$!%*?&]{8,}$'  # minimum 8 characters long
-        )
-        if not re.match(pattern, v):
-            raise ValueError(
-                "Password must be at least 8 characters long and include at least one lowercase letter, "
-                "one uppercase letter, one digit, and one special character."
-            )
-        return v
 
     @classmethod
     def find_by_username(cls, username):

@@ -1,7 +1,7 @@
 import logging
 
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User as UserModel
@@ -59,19 +59,29 @@ def anonymous_signin():
     
 @user_routes.post('/login')
 def login():
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
-    
-    if not username or not password:
-        return jsonify({"msg": "Missing username or password"}), 400
+    try:
+        username = request.json.get('username', None)
+        password = request.json.get('password', None)
+        
+        if not username or not password:
+            return jsonify({"msg": "Missing username or password"}), 400
 
-    user = UserModel.find_by_username(username)  # You need to implement this method in your User model
-    if user and check_password_hash(user.password, password):
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token), 200
-    else:
-        return jsonify({"msg": "Bad username or password"}), 401
+        user = UserModel.find_by_username(username)  # You need to implement this method in your User model
+        if user and check_password_hash(user.password, password):
+            access_token = create_access_token(identity=username)
+            return jsonify(access_token=access_token), 200
+        else:
+            return jsonify({"msg": "Bad username or password"}), 401
+    
+    except Exception as e:
+            logging.error(f"Login error: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+
     
 @user_routes.post('/logout')
+@jwt_required()
 def logout():
+    # JWT Revocation or Blacklisting could be implemented here if needed
+    jwt_id = get_jwt_identity()
+    logging.info(f"User {jwt_id} logged out successfully")
     return jsonify({"msg": "Logout successful"}), 200
