@@ -23,6 +23,7 @@ EXPOSE 8000
 # Define environment variables for Flask
 ENV FLASK_RUN_PORT=8000
 ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_ENV=production
 
 # Execute Flask
 CMD gunicorn -b ${FLASK_RUN_HOST}:${FLASK_RUN_PORT} app:app

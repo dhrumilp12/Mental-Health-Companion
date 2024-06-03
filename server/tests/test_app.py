@@ -1,6 +1,10 @@
 import sys
 sys.path.append(".")
 
+import warnings
+# Ignore pkg_resources warning caused by the mongomock 3rd party library
+warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*pkg_resources.*")
+
 from app import app
 
 def test_health_probe_endpoint():

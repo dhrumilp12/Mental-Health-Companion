@@ -9,6 +9,7 @@ import json
 import pymongo
 
 from .ai_agent import AIAgent
+from tools.azure_mongodb import MongoDBClient
 
 # Suppressing CosmosDB Mongo driver warning.
 import warnings
@@ -24,7 +25,7 @@ class CosmicWorksAIAgent(AIAgent):
     products, customers, and sales.
     """
     
-    db = pymongo.MongoClient(DB_CONNECTION_STRING).cosmic_works
+    db = MongoDBClient.get_client()
 
     def __init__(self, session_id: str):
         system_message = """

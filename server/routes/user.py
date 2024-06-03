@@ -1,4 +1,3 @@
-import os
 import logging
 
 from flask import Blueprint, request, jsonify
@@ -17,8 +16,9 @@ def signup():
         logging.info(f"Received user data: {user_data}")
 
         user = UserModel(**user_data)
-        db_client = MongoDBClient.get_client(os.getenv('DB_CONNECTION_STRING'))
-        db = db_client['cosmic_works']
+
+        db_client = MongoDBClient.get_client()
+        db = db_client[MongoDBClient.get_db()]
         
         # Check if user already exists with the same username or email
         logging.info("Checking for existing users")

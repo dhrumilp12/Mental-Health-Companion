@@ -40,7 +40,7 @@ def setup_langchain(db_name, collection_name, system_prompt):
     )
 
     # Establish connection to the database
-    db_client = MongoDBClient.get_client(CONNECTION_STRING)
+    db_client = MongoDBClient.get_client()
     db = db_client[db_name]
     collection = db[collection_name]
 

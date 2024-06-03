@@ -5,6 +5,8 @@ import logging
 import requests
 import pymongo
 from pymongo import UpdateOne, ReturnDocument
+import mongomock
+from flask import g
 
 from dotenv import load_dotenv
 
@@ -17,12 +19,35 @@ load_dotenv()
 
 class MongoDBClient:
     _client = None
+    _db_name = None
 
     @classmethod
-    def get_client(cls, connection_string):
+    def get_client(cls):
+        CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
+        ENV = os.environ.get("FLASK_ENV")
+        
         if cls._client is None:
-            cls._client = pymongo.MongoClient(connection_string)
+            if ENV == "test":
+                cls._client = mongomock.MongoClient()
+                # g.db = cls.get_client
+            else:
+                cls._client = pymongo.MongoClient(CONNECTION_STRING)
+                # g.db = cls.get_client
+
         return cls._client
+    
+    @classmethod
+    def get_db(cls):
+        ENV = os.environ.get("FLASK_ENV")
+        APP_NAME = "mental-health"
+
+        if cls._db_name is None:
+            if ENV == "test":
+                cls._db_name = f"{APP_NAME}-test"
+            else:
+                cls._db_name = f"{APP_NAME}-prod"
+        
+        return cls._db_name
 
 
     @staticmethod    
