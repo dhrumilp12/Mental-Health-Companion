@@ -2,14 +2,17 @@ import logging
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from bson import ObjectId
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User as UserModel
 from tools.azure_mongodb import MongoDBClient
 
+
+
 user_routes = Blueprint("user", __name__)
 
-@user_routes.post('/signup')
+@user_routes.post('/user/signup')
 def signup():
     try:
         logging.info("Starting user registration process")
@@ -41,7 +44,8 @@ def signup():
         logging.error(f"Exception during time_registration: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-@user_routes.post('/anonymous_signin')
+
+@user_routes.post('/user/anonymous_signin')
 def anonymous_signin():
     try:
         # Set a reasonable expiration time for tokens, e.g., 24 hours
@@ -57,7 +61,8 @@ def anonymous_signin():
         logging.error(f"Failed to create access token: {str(e)}")
         return jsonify({"msg": "Failed to create access token"}), 500
     
-@user_routes.post('/login')
+
+@user_routes.post('/user/login')
 def login():
     try:
         username = request.json.get('username', None)
@@ -78,10 +83,38 @@ def login():
             return jsonify({"error": str(e)}), 500
 
     
-@user_routes.post('/logout')
+@user_routes.post('/user/logout')
 @jwt_required()
 def logout():
     # JWT Revocation or Blacklisting could be implemented here if needed
     jwt_id = get_jwt_identity()
     logging.info(f"User {jwt_id} logged out successfully")
     return jsonify({"msg": "Logout successful"}), 200
+
+
+@user_routes.get('/user/profile/<user_id>')
+def get_public_profile(user_id):
+    db_client = MongoDBClient.get_client()
+    db = db_client[MongoDBClient.get_db()]
+
+    user_data = db['users'].find_one({"_id": ObjectId(user_id)})
+    if user_data is None:
+        return jsonify({"error": "User could not be found."}), 404
+    
+    user = UserModel(**user_data)
+    return jsonify(user.model_dump(exclude={"password"})), 200
+
+
+@user_routes.patch('/user/profile/<user_id>')
+def update_profile_fields(user_id):
+    update_fields = request.get_json()
+    
+    db_client = MongoDBClient.get_client()
+    db = db_client[MongoDBClient.get_db()]
+
+    result = db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
+
+    if result.matched_count == 0:
+        return jsonify({"error": "User cannot be found."}), 404
+    
+    return jsonify({"message": "User has been updated successfully."}), 200

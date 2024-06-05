@@ -41,11 +41,9 @@ class MongoDBClient:
         ENV = os.environ.get("FLASK_ENV")
         APP_NAME = "mental-health"
 
+        # sets the db based on the environment
         if cls._db_name is None:
-            if ENV == "test":
-                cls._db_name = f"{APP_NAME}-test"
-            else:
-                cls._db_name = f"{APP_NAME}-prod"
+            cls._db_name = f"{APP_NAME}-{ENV}"
         
         return cls._db_name
 

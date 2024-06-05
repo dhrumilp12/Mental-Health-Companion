@@ -17,7 +17,7 @@ def test_signup_response():
     """
     Test to ensure sign up returns a successful status upon completion.
     """
-    response = app.test_client().post("/signup", json=user_data)
+    response = app.test_client().post("user/signup", json=user_data)
 
     assert response.status_code == 201
 
@@ -26,7 +26,7 @@ def test_signup_writes_to_db():
     """
     Test to ensure sign up writes a new user to db.
     """
-    app.test_client().post("/signup", json=user_data)
+    app.test_client().post("user/signup", json=user_data)
 
     users = db["users"].find()
     user_count = db["users"].count_documents({})
@@ -38,7 +38,7 @@ def test_signup_fails_on_duplicate_username():
     """
     Test to ensure sign up writes a new user to db.
     """
-    app.test_client().post("/signup", json=user_data)
+    app.test_client().post("user/signup", json=user_data)
 
     user_data_2 = {
         "username": "user1",
@@ -55,7 +55,7 @@ def test_signup_fails_on_duplicate_email():
     """
     Test to ensure sign up writes a new user to db.
     """
-    app.test_client().post("/signup", json=user_data)
+    app.test_client().post("user/signup", json=user_data)
 
     user_data_2 = {
         "username": "notuser1",
@@ -72,7 +72,7 @@ def test_signup_password_is_hashed():
     """
     Test to ensure password was not saved as plaintext in db.
     """
-    app.test_client().post("/signup", json=user_data)
+    app.test_client().post("user/signup", json=user_data)
 
     stored_user = db["users"].find_one({"username": user_data["username"]})
     
