@@ -118,3 +118,36 @@ def update_profile_fields(user_id):
         return jsonify({"error": "User cannot be found."}), 404
     
     return jsonify({"message": "User has been updated successfully."}), 200
+
+@user_routes.post('/user/log_mood')
+@jwt_required()
+def log_mood():
+    try:
+        current_user = get_jwt_identity()
+        request_data = request.get_json()
+        mood = request_data.get('mood')
+        activities = request_data.get('activities')
+        
+        # Validate data
+        if not mood or not activities:
+            return jsonify({"message": "Missing data for mood or activities"}), 400
+        
+        MongoDBClient.log_user_mood(current_user, mood, activities)
+        return jsonify({"message": "Mood logged successfully"}), 200
+    
+    except Exception as e:
+        logging.error(f"Error logging mood: {str(e)}")
+        return jsonify({"error": "Failed to log mood"}), 500
+
+
+@user_routes.get('/user/get_mood_logs')
+@jwt_required()
+def get_mood_logs():
+    try:
+        current_user = get_jwt_identity()
+        mood_logs = MongoDBClient.get_user_mood_logs(current_user)
+        return jsonify({"mood_logs": [str(log) for log in mood_logs]}), 200
+    
+    except Exception as e:
+        logging.error(f"Error retrieving mood logs: {str(e)}")
+        return jsonify({"error": "Failed to retrieve mood logs"}), 500

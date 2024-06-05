@@ -7,6 +7,7 @@ import pymongo
 from pymongo import UpdateOne, ReturnDocument
 import mongomock
 from flask import g
+from datetime import datetime
 
 from dotenv import load_dotenv
 
@@ -128,4 +129,29 @@ class MongoDBClient:
             return result
         except Exception as e:
             logger.error(f"Error saving user: {str(e)}")
+            raise
+
+    @staticmethod
+    def log_user_mood(user_id, mood, activities):
+        try:
+            client = MongoDBClient.get_client()
+            db = client[MongoDBClient.get_db()]  # Get the database instance
+            db.mood_logs.insert_one({
+                "user_id": user_id,
+                "mood": mood,
+                "activities": activities,
+                "timestamp": datetime.now()
+            })
+        except pymongo.errors.PyMongoError as e:
+            logging.error(f"Error logging mood: {str(e)}")
+            raise
+        
+    @staticmethod
+    def get_user_mood_logs(user_id):
+        try:
+            client = MongoDBClient.get_client()
+            db = client[MongoDBClient.get_db()]  # Get the database instance
+            return list(db.mood_logs.find({"user_id": user_id}))
+        except pymongo.errors.PyMongoError as e:
+            logging.error(f"Error retrieving mood logs: {str(e)}")
             raise
