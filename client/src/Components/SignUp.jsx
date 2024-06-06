@@ -12,7 +12,8 @@ import {
     Paper,
     CssBaseline,
     Avatar,
-    useMediaQuery
+    Snackbar, // Importing Snackbar for feedback messages
+    Alert 
 } from '@mui/material';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -83,6 +84,9 @@ function SignUp() {
     const [gender, setGender] = useState('');
     const [placeOfResidence, setPlaceOfResidence] = useState('');
     const [fieldOfWork, setFieldOfWork] = useState('');
+    const [open, setOpen] = useState(false); // State to control Snackbar visibility
+    const [message, setMessage] = useState(''); // State to hold the message
+    const [severity, setSeverity] = useState('info'); // State to control the type of alert
 
     const handleSignUp = async (e) => {
         e.preventDefault();
@@ -98,12 +102,24 @@ function SignUp() {
                 fieldOfWork
             });
             console.log('Signup Success:', response.data);
-            // Redirect to login or other actions on successful signup
+            setMessage("User registered successfully!");
+            setSeverity("success");
+            setOpen(true);
         } catch (error) {
             console.error('Signup Failed:', error.response.data);
-            // Handle errors here
+            setMessage(error.response.data.error || "Failed to register user.");
+            setSeverity("error");
+            setOpen(true);
         }
     };
+
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setOpen(false);
+    };
+    
 
     return (
     <ThemeProvider theme={theme}>
@@ -142,6 +158,11 @@ function SignUp() {
                             Sign Up
                         </Button>
                     </form>
+                    <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+                        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+                            {message}
+                        </Alert>
+                    </Snackbar>
                 </StyledForm>
             </Container>
         </ThemeProvider>
