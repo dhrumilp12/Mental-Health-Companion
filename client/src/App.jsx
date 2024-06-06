@@ -4,6 +4,7 @@ import Home from './Components/Home';  // Ensure this path is correct
 import SignUp from './Components/SignUp';
 
 function App() {
+    console.log("App rendering");
     return (
         <Router>
             <Routes>
