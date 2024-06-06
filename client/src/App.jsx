@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './Components/Home';  // Ensure this path is correct
+import SignUp from './Components/SignUp';
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <h1>Mental Health App</h1>
-      <p>
-        Welcome to your mental health aide!
-      </p>
-    </>
-  )
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/signUp" element={<SignUp />} />
+            </Routes>
+        </Router>
+    );
 }
 
-export default App
+export default App;

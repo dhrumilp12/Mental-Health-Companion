@@ -1,0 +1,27 @@
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.signup-form form {
+    display: flex;
+    flex-direction: column;
+}
+
+.signup-form input {
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+    width: 200px;
+}
+
+.signup-form button {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: blue;
+    color: white;
+    font-size: 16px;
+}
