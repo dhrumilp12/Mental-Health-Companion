@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Components/Home';  // Ensure this path is correct
 import AuthComponent from './Components/authComponent';
@@ -26,12 +26,16 @@ function Layout({ children }) {
     const noNavRoutes = ['/auth'];  // List of routes that shouldn't show the navbar or sidebar
     const showNav = !noNavRoutes.includes(location.pathname);
     const mainPadding = noNavRoutes.includes(location.pathname) ? 0 : 6;
+    const [sidebarOpen, setSidebarOpen] = useState(true);  // State to control the sidebar
 
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);  // Toggle the state
+    };
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            {showNav && <Navbar />}
-            {showNav && <Sidebar />}
+            {showNav && <Navbar toggleSidebar={toggleSidebar}/>}
+            {showNav && sidebarOpen && <Sidebar />}
             <Box component="main" sx={{ flexGrow: 1, p: mainPadding }}>
                 {children}
             </Box>

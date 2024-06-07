@@ -5,11 +5,11 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search';
 
-function Navbar() {
+function Navbar({ toggleSidebar }) {
   return (
     <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar>
-        <IconButton
+        <IconButton onClick={toggleSidebar}
           color="inherit"
           edge="start"
           sx={{ marginRight: 2 }}
