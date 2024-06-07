@@ -74,7 +74,9 @@ function AuthComponent() {
     const [message, setMessage] = useState(''); // State to hold the message
     const [severity, setSeverity] = useState('info'); // State to control the type of alert
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     try {
         const response = await axios.post('/api/user/login', { username, password });
         setMessage('Login successful!');
@@ -85,6 +87,7 @@ function AuthComponent() {
         setSeverity('error');
     }
     setOpen(true);
+    setLoading(false);
 };
 
   const handleSignUp = async (e) => {
@@ -104,17 +107,18 @@ function AuthComponent() {
             console.log('Signup Success:', response.data);
             setMessage("User registered successfully!");
             setSeverity("success");
-            setOpen(true);
+            
         } catch (error) {
             console.error('Signup Failed:', error.response.data);
             setMessage(error.response.data.error || "Failed to register user.");
             setSeverity("error");
-            setOpen(true);
         }
         setLoading(false);
+        setOpen(true);
     };
 
-    const handleAnonymousSignIn = async () => {
+    const handleAnonymousSignIn = async (e) => {
+        e.preventDefault();
         setLoading(true);
         try {
             const response = await axios.post('/api/user/anonymous_signin');
@@ -125,8 +129,9 @@ function AuthComponent() {
             setMessage('Anonymous sign-in failed: ' + (error.response.data.msg || 'Unknown error'));
             setSeverity('error');
         }
-        setOpen(true);
+        
         setLoading(false);
+        setOpen(true);
     };
 
   const handleChange = (event, newValue) => {
@@ -156,7 +161,7 @@ function AuthComponent() {
           </Tabs>
           <Box sx={{ mt: 3, width: '100%', px: 3 }}>
           {activeTab === 0 && (
-            <>
+            <form onSubmit={handleLogin}>
               <TextField label="Username" variant="outlined" margin="normal" required fullWidth
                 value={username} onChange={e => setUsername(e.target.value)} />
               <TextField label="Password" type={showPassword ? 'text' : 'password'} variant="outlined" margin="normal" required fullWidth value={password} onChange={e => setPassword(e.target.value)}
@@ -167,12 +172,12 @@ function AuthComponent() {
                       </IconButton>
                     ),
                   }} />
-              <Button onClick={handleLogin} variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
+              <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
               {loading ? <CircularProgress size={24} /> : 'Login'} </Button>
-            </>
+              </form>
           )}
           {activeTab === 1 && (
-            <>
+            <form onSubmit={handleSignUp}>
               <TextField label="Username" variant="outlined" margin="normal" required fullWidth value={username} onChange={e => setUsername(e.target.value)} />
                             <TextField label="Email" type="email" variant="outlined" margin="normal" required fullWidth value={email} onChange={e => setEmail(e.target.value)} />
                             <TextField label="Password" type={showPassword ? 'text' : 'password'} variant="outlined" margin="normal" required fullWidth value={password} onChange={e => setPassword(e.target.value)}
@@ -184,9 +189,9 @@ function AuthComponent() {
                                 ),
                             }} />
                             <TextField label="Name" variant="outlined" margin="normal" fullWidth value={name} onChange={e => setName(e.target.value)} />
-                            <TextField label="Age" type="number" variant="outlined" margin="normal" fullWidth value={age} onChange={e => setAge(e.target.value)} />
+                            <TextField label="Age" type="number" variant="outlined" margin="normal" required fullWidth value={age} onChange={e => setAge(e.target.value)} />
                             
-                            <FormControl fullWidth margin="normal">
+                            <FormControl required fullWidth margin="normal">
                                 <InputLabel>Gender</InputLabel>
                                 <Select value={gender} label="Gender" onChange={e => setGender(e.target.value)}>
                                     <MenuItem value="">Select Gender</MenuItem>
@@ -198,13 +203,15 @@ function AuthComponent() {
                             
                             <TextField label="Place of Residence" variant="outlined" margin="normal" fullWidth value={placeOfResidence} onChange={e => setPlaceOfResidence(e.target.value)} />
                             <TextField label="Field of Work" variant="outlined" margin="normal" fullWidth value={fieldOfWork} onChange={e => setFieldOfWork(e.target.value)} />
-                            <Button onClick={handleSignUp} variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>{loading ? <CircularProgress size={24} /> : 'Sign Up'}
+                            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>{loading ? <CircularProgress size={24} /> : 'Sign Up'}
                             </Button>
-            </>
+             </form>
           )}
           {activeTab === 2 && (
-            <Button onClick={handleAnonymousSignIn} variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} disabled={loading}>{loading ? <CircularProgress size={24} /> : 'Anonymous Sign-In'}
+             <form onSubmit={handleAnonymousSignIn}>
+            <Button type="submit" variant="outlined" color="secondary" fullWidth sx={{ mt: 2 }} disabled={loading}>{loading ? <CircularProgress size={24} /> : 'Anonymous Sign-In'}
                   </Button>
+                  </form>
           )}
            </Box>
           <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>

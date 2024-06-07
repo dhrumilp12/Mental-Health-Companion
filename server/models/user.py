@@ -8,8 +8,8 @@ class User(BaseModel):
     name: str = None
     age: int = Field(None, ge=0)  # Age should be a non-negative integer
     gender: str = Field(None, pattern='^(male|female|other)$')  # Example to validate gender
-    place_of_residence: str = None
-    field_of_work: str = None
+    placeOfResidence: str = None
+    fieldOfWork: str = None
 
     @field_validator('username')
     def username_alphanumeric(cls, v):
