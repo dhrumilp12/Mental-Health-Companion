@@ -21,6 +21,7 @@ AOAI_API_VERSION = "2023-09-01-preview"
 COMPLETIONS_DEPLOYMENT = os.getenv("COMPLETIONS_DEPLOYMENT_NAME")
 EMBEDDINGS_DEPLOYMENT = os.getenv("EMBEDDINGS_DEPLOYMENT_NAME")
 
+#FIXME: These classes may be redundant with tools.langchain; choose one or the other
 class AIAgent:
 
     def __init__(self, session_id:str, system_message:str, schema:list[str]=[]):

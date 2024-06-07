@@ -119,6 +119,7 @@ def update_profile_fields(user_id):
     
     return jsonify({"message": "User has been updated successfully."}), 200
 
+
 @user_routes.post('/user/log_mood')
 @jwt_required()
 def log_mood():

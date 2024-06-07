@@ -22,9 +22,14 @@ class MongoDBClient:
     _client = None
     _db_name = None
 
+    @staticmethod
+    def get_mongodb_variables():
+        CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
+        return CONNECTION_STRING
+
     @classmethod
     def get_client(cls):
-        CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
+        CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
         ENV = os.environ.get("FLASK_ENV")
         
         if cls._client is None:

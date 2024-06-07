@@ -6,8 +6,23 @@ from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.vectorstores import AzureCosmosDBVectorSearch
 from langchain.prompts import PromptTemplate
+from langchain_core.messages import SystemMessage
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores.azure_cosmos_db import (
+    AzureCosmosDBVectorSearch,
+    CosmosDBSimilarityType,
+    CosmosDBVectorSearchType
+)
+from langchain.agents import Tool
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
+from langchain.memory import ChatMessageHistory
+from langchain_mongodb import MongoDBChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.runnables.utils import ConfigurableFieldSpec
 
-from azure_mongodb import MongoDBClient
+from tools.azure_mongodb import MongoDBClient
 
 def setup_langchain(db_name, collection_name, system_prompt):
     """
@@ -101,3 +116,148 @@ def process_langchain_query(query_string, question, collection_name, system_prom
     # Access the assistant's message content
     response_content = result
     return response_content
+
+def get_azure_openai_variables():
+    load_dotenv()
+    AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
+    AOAI_KEY = os.environ.get("AOAI_KEY")
+    AOAI_API_VERSION = "2023-09-01-preview"
+    AOAI_EMBEDDINGS = "embeddings"
+    AOAI_COMPLETIONS = "completions"
+
+    return AOAI_ENDPOINT, AOAI_KEY, AOAI_API_VERSION, AOAI_EMBEDDINGS, AOAI_COMPLETIONS
+
+
+def get_azure_openai_llm():
+    AOAI_ENDPOINT, AOAI_KEY, AOAI_API_VERSION, _, AOAI_COMPLETIONS = get_azure_openai_variables()
+
+    llm = AzureChatOpenAI(
+        temperature = 0.0,
+        openai_api_version = AOAI_API_VERSION,
+        azure_endpoint = AOAI_ENDPOINT,
+        openai_api_key = AOAI_KEY,
+        azure_deployment = AOAI_COMPLETIONS
+    )
+
+    return llm
+
+
+def get_cosmosdb_vector_store_retriever(db_name, collection_name, top_k=3):
+    CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
+    _, _, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
+
+    vector_store = AzureCosmosDBVectorSearch.from_connection_string(
+        connection_string = CONNECTION_STRING, 
+        namespace = f"{db_name}.{collection_name}", 
+        embedding = AOAI_EMBEDDINGS, 
+        index_name =f"{db_name}-{collection_name}_index"
+    )
+    return vector_store.as_retriever(search_kwargs={"k": top_k})
+
+
+def get_cosmosdb_tool(db_name, collection_name):
+    AOAI_ENDPOINT, AOAI_KEY, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
+
+    loader = PyPDFLoader("./cognitive-behavioral.pdf")
+    documents = loader.load()
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+
+    docs = text_splitter.split_documents(documents)
+
+    mongo_client = pymongo.MongoClient(os.environ.get("DB_CONNECTION_STRING"))
+    collection = mongo_client[db_name][collection_name]
+
+    openai_embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
+        azure_deployment=AOAI_EMBEDDINGS,
+        api_key=AOAI_KEY,
+        azure_endpoint=AOAI_ENDPOINT
+    )
+
+    vectorstore = AzureCosmosDBVectorSearch.from_documents(
+        docs,
+        openai_embeddings,
+        collection=collection,
+        index_name=f"{db_name}-{collection_name}_index"
+    )
+
+    num_lists = 100
+    dimensions = 1536
+    similarity_algorithm = CosmosDBSimilarityType.COS
+    kind = CosmosDBVectorSearchType.VECTOR_IVF
+    m = 16
+    ef_construction = 64
+
+    vectorstore.create_index(
+        num_lists,
+        dimensions,
+        similarity_algorithm,
+        kind,
+        m, 
+        ef_construction
+    )
+
+    retriever = get_cosmosdb_vector_store_retriever("mentalhealthtestcollection")
+    cosmosdb_tool = Tool(
+        name = "vector_search_test",
+        func = retriever.invoke,
+        description = "Searches the Mental Health database for psychology theory."
+    )
+
+    return cosmosdb_tool
+
+
+def get_mongodb_agent_with_history(llm, tools, db_name, collection_name, system_message, user_id, timestamp):
+    CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
+
+    agent_executor = create_conversational_retrieval_agent(
+        llm=llm,
+        tools=tools,
+        system_message=system_message,
+        verbose=True
+    )
+
+    message_history = MongoDBChatMessageHistory(
+        connection_string=CONNECTION_STRING,
+        session_id=f"{user_id};{timestamp}",
+        database_name=db_name,
+        collection_name=collection_name
+    )
+
+    agent_with_history = RunnableWithMessageHistory(
+        agent_executor,
+        lambda session_id: message_history,
+        input_messages_key="input",
+        history_messages_key="chat_history",
+        # history_factory_config=[
+        #     ConfigurableFieldSpec(
+        #         id="user_id",
+        #         annotation=str,
+        #         name="User ID",
+        #         description="Unique identifier for the user.",
+        #         is_shared=True
+        #     )
+        # ]
+    )
+
+    return agent_with_history
+
+
+def get_langchain_agent_response(db_name, collection_name, system_message, prompt, user_id, timestamp):
+    llm = get_azure_openai_llm()
+
+    system_message_obj = SystemMessage(
+        content=system_message
+    )
+
+    search = TavilySearchResults() # Going to use this to connect user to resources
+    # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
+    tools = [search] #, cosmosdb_tool]
+
+    agent_with_history = get_mongodb_agent_with_history(llm, tools, db_name, collection_name, system_message_obj, user_id, timestamp)
+
+    invocation = agent_with_history.invoke(
+        { "input": prompt },
+        config={"configurable": {"session_id": ""}}
+    )
+
+    return invocation["output"]
