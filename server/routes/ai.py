@@ -8,7 +8,7 @@ from werkzeug.exceptions import InternalServerError
 from models.ai_request import AIRequest
 from classes.cosmic_works_ai_agent import CosmicWorksAIAgent
 
-from tools.langchain import get_langchain_agent_response
+from tools.langchain import get_langchain_initial_state, get_langchain_agent_response
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -31,24 +31,54 @@ def run_cosmic_works_ai_agent():
     return {"message": agent_pool[session_id].run(prompt)}
     
 
-@ai_routes.post("/ai/mental_health/<user_id>")
-def run_mental_health_agent(user_id):
+@ai_routes.post("/ai/mental_health/welcome/<user_id>")
+def get_mental_health_agent_welcome(user_id):
+    # Here, it gets the initial state of the app
+    ENV = os.environ.get("FLASK_ENV")
+    timestamp = datetime.now().isoformat()
+
+    system_message = """
+    You are a therapy companion.
+
+    You are a patient, empathetic virtual therapist. Your purpose is not to replace human therapists, but to lend aid when human therapists are not available.
+    
+    Your job is to gently guide the user, your patient, through their mental healing journey.
+
+    You will speak in a natural, concise, and casual tone. Do not be verbose. Your role is not to ramble about psychology theory, but to support and listen to your patient. 
+    If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer, instead, honestly state that you don't know the answer.
+    """
+
+    response_message = get_langchain_initial_state(db_name=f"mental-health-{ENV}", 
+                                collection_name="chatbot_logs", 
+                                user_id=user_id, 
+                                system_message=system_message, 
+                                timestamp=timestamp)
+    
+    
+    return {"message": response_message}
+
+
+@ai_routes.post("/ai/mental_health/<user_id>/<chat_id>")
+def run_mental_health_agent(user_id, chat_id):
     ENV = os.environ.get("FLASK_ENV")
     body = request.get_json()
 
     prompt = body.get("prompt")
 
     system_message = """
-    Your name is Aria, a therapy companion.
+    You are a therapy companion.
 
-    You are a patient, empathetic virtual therapist. Your purpose is not to replace human therapists, but to help bridge the gap when human therapists are not available.
+    You are a patient, empathetic virtual therapist. Your purpose is not to replace human therapists, but to lend aid when human therapists are not available.
     
     Your job is to gently guide the user, your patient, through their mental healing journey.
 
-    You will speak in a natural, concise, and casual tone. Do not be verbose. Your role is not to ramble about theory, but to support and listen to your patient. 
-    If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer. Just say "I don't know".
+    You will speak in a natural, concise, and casual tone. Do not be verbose. Your role is not to ramble about psychology theory, but to support and listen to your patient. 
+    If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer, instead, honestly state that you don't know the answer.
 
-    To begin, politely introduce yourself to your patient and explain your purpose.
+    Last Conversation Log:
+    {history}
+    Last Conversation Summary:
+    {summary}
     """
 
     timestamp = datetime.now().isoformat()
@@ -56,3 +86,9 @@ def run_mental_health_agent(user_id):
     response_message = get_langchain_agent_response(f"mental-health-{ENV}", "chatbot_logs", system_message, prompt, user_id, timestamp)
 
     return {"message": response_message}
+
+
+@ai_routes.post("/ai/mental_health/finalize/<user_id>/<chat_id>")
+def set_mental_health_end_state(user_id):
+    # Here, it gets the initial state of the app
+    pass

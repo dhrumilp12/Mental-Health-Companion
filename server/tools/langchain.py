@@ -1,4 +1,5 @@
 import os
+import copy
 import pymongo
 import json
 
@@ -17,7 +18,7 @@ from langchain_community.vectorstores.azure_cosmos_db import (
 from langchain.agents import Tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
-from langchain.memory import ChatMessageHistory
+# from langchain.memory import MemoryConversationSummaryMemory, CombinedMemory
 from langchain_mongodb import MongoDBChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables.utils import ConfigurableFieldSpec
@@ -180,6 +181,7 @@ def get_cosmosdb_tool(db_name, collection_name):
         index_name=f"{db_name}-{collection_name}_index"
     )
 
+
     num_lists = 100
     dimensions = 1536
     similarity_algorithm = CosmosDBSimilarityType.COS
@@ -228,22 +230,71 @@ def get_mongodb_agent_with_history(llm, tools, db_name, collection_name, system_
         lambda session_id: message_history,
         input_messages_key="input",
         history_messages_key="chat_history",
-        # history_factory_config=[
-        #     ConfigurableFieldSpec(
-        #         id="user_id",
-        #         annotation=str,
-        #         name="User ID",
-        #         description="Unique identifier for the user.",
-        #         is_shared=True
-        #     )
-        # ]
     )
 
     return agent_with_history
 
 
+def get_langchain_initial_state(db_name, collection_name, user_id, system_message, timestamp):
+    
+    db_client = MongoDBClient.get_client()
+    db = db_client[MongoDBClient.get_db()]
+    user_journey_collection = db["user_journeys"]
+    user_journey = user_journey_collection.find_one({"user_id": user_id})
+    if user_journey is None:
+        # user has not engaged with the chatbot before
+        user_journey_collection.insert_one({
+            "user_id": user_id,
+            "patient_goals": [],
+            "therapy_type": [],
+            "last_updated": timestamp,
+            "therapy_plan": [],
+            "mental_health_concerns": []
+        })
+            
+        addendum = """This is your first session with the patient. Be polite and introduce yourself in a friendly and inviting manner.
+            In this session, do your best to understand what the user hopes to achieve through your service, and derive a therapy style fitting to
+            their needs.        
+        """
+        mod_system_message = ''.join([system_message, addendum])
+        response = get_langchain_agent_response(db_name, collection_name, mod_system_message, "", user_id, timestamp)
+        return response
+    else:
+        pass
+        # do something else
+        recent_turns = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(5).next()
+        # Get summary
+        chat_summary = db.chat_summaries.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
+        new_chat_id = chat_summary.get("chat_id") + 1
+
+
+        # prompt_template = PromptTemplate.from_template(mod_system_message)
+        # prompt = prompt_template.format(user_id=user_id, )
+
+
+
 def get_langchain_agent_response(db_name, collection_name, system_message, prompt, user_id, timestamp):
     llm = get_azure_openai_llm()
+
+    # At the start of a chat turn, we want to load the conversation with the necessary context.
+    # Necessary context means:
+    # - Summary of the last conversation
+    # - Last 5 turns
+    # - User journey doc
+    # db_client = MongoDBClient.get_client()
+    # db = db_client[MongoDBClient.get_db()]
+    # chat_summary = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
+    # new_chat_id = chat_summary.get("chat_id") + 1
+
+
+    #TODO: Need to get db_history from MongoDB table
+    # db_history = []
+
+    # summarized_memory = ConversationSummaryMemory.from_messages(
+    #     llm=llm,
+    #     chat_memory=db_history,
+    #     return_messages=True
+    # )
 
     system_message_obj = SystemMessage(
         content=system_message
@@ -253,11 +304,91 @@ def get_langchain_agent_response(db_name, collection_name, system_message, promp
     # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
     tools = [search] #, cosmosdb_tool]
 
+    # memory = ConversationEntityMemory()
+
     agent_with_history = get_mongodb_agent_with_history(llm, tools, db_name, collection_name, system_message_obj, user_id, timestamp)
 
     invocation = agent_with_history.invoke(
         { "input": prompt },
         config={"configurable": {"session_id": ""}}
     )
+
+    return invocation["output"]
+
+    # Chat Turn Schema
+    {
+        "user_id": "",
+        "chat_id": "",
+        "turn_id": "",
+        "human_message": "",
+        "ai_message": "",
+        "timestamp": "",
+    }
+
+    # Chat Summary Schema
+    {
+        "user_id": "",
+        "chat_id": "",
+        "timestamp": "",
+        "last_updated": "",
+        "perceived_mood": "",
+        "summary_text": "",
+        "concerns_progress": {
+            {
+                "label": "",
+                "delta": ""
+            }
+        },
+    }
+
+    # User Journey schema
+    {
+        "user_id": "",
+        "patient_goals": [],
+        "therapy_type": [],
+        "last_updated": "",
+        "therapy_plan": [
+            {
+                "chat_id": "",
+                "exercises": "",
+                "submit_assignments": [],
+                "assign_assignments": [],
+                "assign_exercise": [],
+                "share_resource": []
+            }
+        ],
+        "mental_health_concerns": [
+            {
+                "label": "",
+                "severity": "",
+            }
+        ]
+    }
+
+    # User Entities Schema
+    {
+        "user_id": "",
+        "entity_id": "",
+        "entity_data": []
+
+    }
+
+    # Resources Schema
+    {
+        "resource_id": "",
+        "resource_type": "Article/Video/Contact Information/Exercise",
+        "": ""
+
+    }
+
+    # User Resource Schema
+    {
+        "user_id": "",
+        "resource_id": "",
+        "user_liked": "",
+        "user_viewed": "",
+    }
+
+    # At the time of creating a response, we want to save the response to mongodb
 
     return invocation["output"]
