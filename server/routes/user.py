@@ -33,15 +33,17 @@ def signup():
         
         hashed_password = generate_password_hash(user.password)
         user_data['password'] = hashed_password
-        result = MongoDBClient.save_user(db, user_data)
+        result = db['users'].insert_one(user_data)
         if result:
             logging.info("User registration successful")
-            return jsonify({"message": "User registered successfully"}), 201
+            user_id = result.inserted_id
+            access_token = create_access_token(identity=str(user_id))
+            return jsonify({"message": "User registered successfully", "access_token": access_token, "userId": str(user_id)}), 201
         else:
-            logging.error("Failed to in context_save")
+            logging.error("Failed to save user")
             return jsonify({"error": "Failed to register user"}), 500
     except Exception as e:
-        logging.error(f"Exception during time_registration: {str(e)}")
+        logging.error(f"Exception during registration: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
 
@@ -73,8 +75,8 @@ def login():
 
         user = UserModel.find_by_username(username)  # You need to implement this method in your User model
         if user and check_password_hash(user.password, password):
-            access_token = create_access_token(identity=username)
-            return jsonify(access_token=access_token), 200
+            access_token = create_access_token(identity=str(user.id))
+            return jsonify(access_token=access_token, userId=str(user.id)), 200
         else:
             return jsonify({"msg": "Bad username or password"}), 401
     

@@ -1,11 +1,23 @@
-import React from 'react';
+import React, {useContext} from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Typography, Badge } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search';
+import { UserContext } from './userContext';
 
 function Navbar({ toggleSidebar }) {
+  const navigate = useNavigate();
+  const { user } = useContext(UserContext);
+
+  const handleProfileClick = () => {
+    if (user && user.userId) {
+      navigate(`/user/profile/${user.userId}`);
+    } else {
+      console.error("User ID not found");
+    }
+  };
   return (
     <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar>
@@ -27,7 +39,7 @@ function Navbar({ toggleSidebar }) {
         <IconButton color="inherit">
           <SearchIcon />
         </IconButton>
-        <IconButton color="inherit">
+        <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
         </IconButton>
       </Toolbar>

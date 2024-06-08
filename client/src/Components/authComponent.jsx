@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { UserContext } from './userContext';
+
 import {TextField, Button, Paper, CssBaseline, Snackbar, Alert,
     Tab, Tabs, Box, CircularProgress,Select, InputLabel,FormControl,MenuItem, IconButton} from '@mui/material';
 import { createTheme,  ThemeProvider, styled } from '@mui/material/styles';
@@ -59,6 +62,9 @@ const StyledForm = styled(Paper)(({ theme }) => ({
 }));
 
 function AuthComponent() {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { setUser } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState(0);
   const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -79,12 +85,21 @@ function AuthComponent() {
     setLoading(true);
     try {
         const response = await axios.post('/api/user/login', { username, password });
-        setMessage('Login successful!');
-        setSeverity('success');
-        console.log('Access Token:', response.data.access_token);
+        if (response && response.data) {
+          const userId = response.data.userId;
+          setMessage('Login successful!');
+          setSeverity('success');
+          setIsAuthenticated(true);
+          setUser({ userId });
+          navigate('/');
+          console.log('User logged in:', userId);
+        } else {
+          throw new Error('Invalid response from server');
+        }
     } catch (error) {
-        setMessage('Login failed: ' + (error.response.data.msg || 'Unknown error'));
-        setSeverity('error');
+      console.error('Login failed:', error);
+      setMessage('Login failed: ' + (error.response?.data?.msg || 'Unknown error'));
+      setSeverity('error');
     }
     setOpen(true);
     setLoading(false);
@@ -104,17 +119,25 @@ function AuthComponent() {
                 placeOfResidence,
                 fieldOfWork
             });
-            console.log('Signup Success:', response.data);
-            setMessage("User registered successfully!");
-            setSeverity("success");
+            if (response && response.data) {
+              const userId = response.data.userId;
+              setMessage('User registered successfully!');
+              setSeverity('success');
+              setIsAuthenticated(true);
+              setUser({ userId });
+              navigate('/');
+              console.log('User registered:', userId);
+            } else {
+              throw new Error('Invalid response from server');
+            }
             
-        } catch (error) {
-            console.error('Signup Failed:', error.response.data);
-            setMessage(error.response.data.error || "Failed to register user.");
-            setSeverity("error");
-        }
-        setLoading(false);
-        setOpen(true);
+            } catch (error) {
+              console.error('Signup failed:', error);
+              setMessage(error.response?.data?.error || 'Failed to register user.');
+              setSeverity('error');
+            }
+            setLoading(false);
+            setOpen(true);
     };
 
     const handleAnonymousSignIn = async (e) => {
@@ -122,14 +145,21 @@ function AuthComponent() {
         setLoading(true);
         try {
             const response = await axios.post('/api/user/anonymous_signin');
-            setMessage('Anonymous sign-in successful!');
-            setSeverity('success');
-            console.log('Access Token:', response.data.access_token);
+            if (response && response.data) {
+              const userId = null;
+              setMessage('Anonymous sign-in successful!');
+              setSeverity('success');
+              setIsAuthenticated(true);
+              setUser({ userId });
+              navigate('/');
+            } else {
+              throw new Error('Invalid response from server');
+            }
         } catch (error) {
-            setMessage('Anonymous sign-in failed: ' + (error.response.data.msg || 'Unknown error'));
-            setSeverity('error');
+          console.error('Anonymous sign-in failed:', error);
+          setMessage('Anonymous sign-in failed: ' + (error.response?.data?.msg || 'Unknown error'));
+          setSeverity('error');
         }
-        
         setLoading(false);
         setOpen(true);
     };

@@ -69,6 +69,7 @@ const StyledForm = styled(Paper)(({ theme }) => ({
 function UserProfile() {
  const { userId } = useParams();
  const [user, setUser] = useState({
+    username: '',
     name: '',
     email: '',
     age: '',
@@ -90,6 +91,7 @@ function UserProfile() {
         const response = await axios.get(`/api/user/profile/${userId}`);
         console.log("Fetched data:", response.data);
         const formattedData = {
+            username: response.data.username || '',
             name: response.data.name || '',
             email: response.data.email || '',
             age: response.data.age || '',
@@ -135,7 +137,7 @@ function UserProfile() {
       <CssBaseline />
       <Container component="main" maxWidth="md">
         <StyledForm component="form" onSubmit={handleSubmit}>
-        <Typography variant="h5" style={{ fontWeight: 700 }}><AccountCircleIcon style={{ marginRight: '10px' }} /> User Profile</Typography>
+        <Typography variant="h5" style={{ fontWeight: 700 }}><AccountCircleIcon style={{ marginRight: '10px' }} /> {user.username}</Typography>
           <TextField
             fullWidth
             label="Name"
