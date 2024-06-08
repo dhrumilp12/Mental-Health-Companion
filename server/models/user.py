@@ -6,7 +6,7 @@ class User(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     name: str = None
-    age: int = Field(None, ge=0)  # Age should be a non-negative integer
+    age: int = Field(None, ge=18)  # Age should be a non-negative integer
     gender: str = Field(None, pattern='^(male|female|other)$')  # Example to validate gender
     placeOfResidence: str = None
     fieldOfWork: str = None
