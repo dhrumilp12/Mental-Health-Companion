@@ -19,10 +19,12 @@ from langchain.agents import Tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
+from langchain.memory import ConversationSummaryMemory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables.utils import ConfigurableFieldSpec
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.ai import AIMessage
+from langchain.chains.summarize import load_summarize_chain
 
 from tools.azure_mongodb import MongoDBClient
 
@@ -43,7 +45,7 @@ def setup_langchain(db_name, collection_name, system_prompt):
     # Establish Azure OpenAI connectivity without using the unsupported 'deployment' parameter
     llm = AzureChatOpenAI(
         model="gpt-35-turbo",
-        deployment_name="mentalHEalth",
+        deployment_name=COMPLETIONS_DEPLOYMENT_NAME,
         azure_endpoint=AOAI_ENDPOINT,
         api_key=AOAI_KEY,
         api_version=AOAI_API_VERSION
@@ -126,8 +128,8 @@ def get_azure_openai_variables():
     AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
     AOAI_KEY = os.environ.get("AOAI_KEY")
     AOAI_API_VERSION = "2023-09-01-preview"
-    AOAI_EMBEDDINGS = "embeddings"
-    AOAI_COMPLETIONS = "completions"
+    AOAI_EMBEDDINGS = os.getenv("EMBEDDINGS_DEPLOYMENT_NAME")
+    AOAI_COMPLETIONS = os.getenv("COMPLETIONS_DEPLOYMENT_NAME")
 
     return AOAI_ENDPOINT, AOAI_KEY, AOAI_API_VERSION, AOAI_EMBEDDINGS, AOAI_COMPLETIONS
 
@@ -330,7 +332,7 @@ def get_langchain_initial_state(db_name, collection_name, user_id, system_messag
                 history.append(HumanMessage(turn.get("human_message")))
             if turn.get("ai_message"):
                 history.append(AIMessage(turn.get("ai_message")))
-        
+
         old_chat_id = recent_turns[0].get("chat_id", -1) + 1
         
         chat_summary = ""
@@ -368,7 +370,6 @@ def get_langchain_initial_state(db_name, collection_name, user_id, system_messag
         # prompt = prompt_template.format(user_id=user_id, )
 
 
-
 def get_langchain_agent_response(db_name, collection_name, system_message, message, user_id, chat_id, turn_id, timestamp, history=[]):
     llm = get_azure_openai_llm()
 
@@ -398,10 +399,7 @@ def get_langchain_agent_response(db_name, collection_name, system_message, messa
 
     # memory = ConversationEntityMemory()
 
-    if type(system_message) == str:
-        system_message_obj = SystemMessage(system_message)
-    else:
-        system_message_obj = system_message
+
 
 
     if not history:
@@ -417,7 +415,24 @@ def get_langchain_agent_response(db_name, collection_name, system_message, messa
             if turn.get("ai_message"):
                 history.append(AIMessage(turn.get("ai_message")))
 
-    prompt = f"history:\n{history}\n{message}"
+    chat_history = ChatMessageHistory()
+    chat_history.add_messages(history)
+    
+    memory = ConversationSummaryMemory.from_messages(
+        llm=llm,
+        chat_memory=chat_history,
+        return_messages=True
+    )
+    
+    # summary_chain = load_summarize_chain(llm, chain_type="stuff")
+    # summary = summary_chain.invoke(f"history:\n{history}")
+
+    prompt = f"{message}" #```Conversation Log:{memory.buffer}```\n\n
+
+    if type(system_message) == str:
+        system_message_obj = SystemMessage(f"{system_message}\nContext:\n{memory.buffer}")
+    else:
+        system_message_obj = system_message
 
     agent_with_history = get_mongodb_agent_with_history(llm, tools, db_name, collection_name, message, system_message_obj, user_id, chat_id, timestamp, history=history)
 
@@ -442,6 +457,8 @@ def get_langchain_agent_response(db_name, collection_name, system_message, messa
 
     return invocation["output"]
 
+
+def reference_schemas():
     # Chat Turn Schema
     {
         "user_id": "",
