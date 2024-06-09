@@ -1,5 +1,6 @@
 import logging
-
+from bson import json_util
+import json
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
@@ -149,7 +150,8 @@ def get_mood_logs():
     try:
         current_user = get_jwt_identity()
         mood_logs = MongoDBClient.get_user_mood_logs(current_user)
-        return jsonify({"mood_logs": [str(log) for log in mood_logs]}), 200
+        mood_logs_json = json.loads(json_util.dumps(mood_logs))
+        return jsonify({"mood_logs": mood_logs_json}), 200
     
     except Exception as e:
         logging.error(f"Error retrieving mood logs: {str(e)}")

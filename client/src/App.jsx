@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { UserProvider } from './Components/userContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Components/Home';  // Ensure this path is correct
@@ -6,9 +6,16 @@ import AuthComponent from './Components/authComponent';
 import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
 import Navbar from './Components/navBar';
+import MoodLogging from './Components/moodLogging';
+import MoodLogs from './Components/moodLogs';
 import { CssBaseline, Box } from '@mui/material';
 
 function App() {
+    useEffect(() => {
+        document.body.style.backgroundColor = '#f5f5f5';
+        
+      }, []);
+    
     return (
         <UserProvider>
             <Layout>
@@ -16,6 +23,8 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/auth" element={<AuthComponent />} />
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
+                    <Route path="/user/mood_logging" element={<MoodLogging />} />
+                    <Route path="/user/mood_logs" element={<MoodLogs />} />
                 </Routes>
             </Layout>
         </ UserProvider>
@@ -37,7 +46,7 @@ function Layout({ children }) {
             <CssBaseline />
             {showNav && <Navbar toggleSidebar={toggleSidebar}/>}
             {showNav && sidebarOpen && <Sidebar />}
-            <Box component="main" sx={{ flexGrow: 1, p: mainPadding }}>
+            <Box component="main" sx={{ flexGrow: 1, p: mainPadding, }}>
                 {children}
             </Box>
         </Box>
