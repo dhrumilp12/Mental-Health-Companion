@@ -38,7 +38,7 @@ def get_mental_health_agent_welcome(user_id):
     timestamp = datetime.now().isoformat()
 
     system_message = """
-    You are a therapy companion.
+    Your name is Aria, you are a therapy companion.
 
     You are a patient, empathetic virtual therapist. Your purpose is not to replace human therapists, but to lend aid when human therapists are not available.
     
@@ -64,6 +64,7 @@ def run_mental_health_agent(user_id, chat_id):
     body = request.get_json()
 
     prompt = body.get("prompt")
+    turn_id = body.get("turn_id")
 
     system_message = """
     You are a therapy companion.
@@ -73,17 +74,19 @@ def run_mental_health_agent(user_id, chat_id):
     Your job is to gently guide the user, your patient, through their mental healing journey.
 
     You will speak in a natural, concise, and casual tone. Do not be verbose. Your role is not to ramble about psychology theory, but to support and listen to your patient. 
-    If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer, instead, honestly state that you don't know the answer.
-
-    Last Conversation Log:
-    {history}
-    Last Conversation Summary:
-    {summary}
+    If you do not know the answer of a question, honestly state that you don't know the answer. Do not make up an answer.
     """
 
     timestamp = datetime.now().isoformat()
 
-    response_message = get_langchain_agent_response(f"mental-health-{ENV}", "chatbot_logs", system_message, prompt, user_id, timestamp)
+    response_message = get_langchain_agent_response(f"mental-health-{ENV}", 
+                                                    "chatbot_logs", 
+                                                    system_message, 
+                                                    prompt, 
+                                                    user_id,
+                                                    int(chat_id),
+                                                    turn_id + 1, 
+                                                    timestamp)
 
     return {"message": response_message}
 
