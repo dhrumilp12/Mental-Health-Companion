@@ -215,13 +215,6 @@ def get_cosmosdb_tool(db_name, collection_name):
     return cosmosdb_tool
 
 
-def find_session(user_id, chat_id):
-    if sessions.get((user_id, chat_id)) is None:
-        chat_history = ChatMessageHistory()
-        sessions[(user_id, chat_id)] = chat_history
-    return sessions[(user_id, chat_id)]
-
-
 class ChatHistoryScope(Enum):
     ALL = "all",
     PREVIOUS = "previous"
