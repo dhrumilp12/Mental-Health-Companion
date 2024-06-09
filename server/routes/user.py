@@ -4,7 +4,7 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
-
+from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User as UserModel
 from tools.azure_mongodb import MongoDBClient
@@ -38,7 +38,7 @@ def signup():
         if result:
             logging.info("User registration successful")
             user_id = result.inserted_id
-            access_token = create_access_token(identity=str(user_id))
+            access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=24))
             return jsonify({"message": "User registered successfully", "access_token": access_token, "userId": str(user_id)}), 201
         else:
             logging.error("Failed to save user")
@@ -76,7 +76,7 @@ def login():
 
         user = UserModel.find_by_username(username)  # You need to implement this method in your User model
         if user and check_password_hash(user.password, password):
-            access_token = create_access_token(identity=str(user.id))
+            access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=24))
             return jsonify(access_token=access_token, userId=str(user.id)), 200
         else:
             return jsonify({"msg": "Bad username or password"}), 401
