@@ -160,3 +160,5 @@ class MongoDBClient:
         except pymongo.errors.PyMongoError as e:
             logging.error(f"Error retrieving mood logs: {str(e)}")
             raise
+    
+    

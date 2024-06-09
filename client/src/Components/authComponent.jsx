@@ -87,6 +87,8 @@ function AuthComponent() {
         const response = await axios.post('/api/user/login', { username, password });
         if (response && response.data) {
           const userId = response.data.userId;
+          localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
+          console.log('Token stored:', localStorage.getItem('token')); // Confirm the token is stored
           setMessage('Login successful!');
           setSeverity('success');
           setIsAuthenticated(true);
@@ -121,6 +123,8 @@ function AuthComponent() {
             });
             if (response && response.data) {
               const userId = response.data.userId;
+              localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
+              console.log('Token stored:', localStorage.getItem('token')); // Confirm the token is stored
               setMessage('User registered successfully!');
               setSeverity('success');
               setIsAuthenticated(true);
@@ -147,6 +151,8 @@ function AuthComponent() {
             const response = await axios.post('/api/user/anonymous_signin');
             if (response && response.data) {
               const userId = null;
+              localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
+              console.log('Token stored:', localStorage.getItem('token')); // Confirm the token is stored
               setMessage('Anonymous sign-in successful!');
               setSeverity('success');
               setIsAuthenticated(true);

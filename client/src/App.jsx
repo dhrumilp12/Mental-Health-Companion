@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { UserProvider } from './Components/userContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Components/Home';  // Ensure this path is correct
 import AuthComponent from './Components/authComponent';
@@ -9,7 +10,7 @@ import { CssBaseline, Box } from '@mui/material';
 
 function App() {
     return (
-        <Router>
+        <UserProvider>
             <Layout>
                 <Routes>
                     <Route path="/" element={<Home />} />
@@ -17,7 +18,7 @@ function App() {
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
                 </Routes>
             </Layout>
-        </Router>
+        </ UserProvider>
     );
 }
 

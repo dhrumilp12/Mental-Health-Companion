@@ -1,28 +1,29 @@
-import React from 'react';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import React, {useContext} from 'react';
+import { Drawer, List, ListItem, ListItemIcon, ListItemText} from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
-import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { UserContext } from './userContext';
 
-const drawerWidth = 240;
+const drawerWidth = 230;
 
 function Sidebar() {
+  const { logout } = useContext(UserContext);
   return (
     <Drawer
       sx={{
         width: drawerWidth,
         flexShrink: 0,
+        mt: 8,
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          position: 'relative'
         },
       }}
       variant="permanent"
       anchor="left"
     >
-      <Typography variant="h6" sx={{ my: 2, mx: 2 }}>
-        Dashboard
-      </Typography>
       <List>
         <ListItem button>
           <ListItemIcon><HomeIcon /></ListItemIcon>
@@ -32,10 +33,11 @@ function Sidebar() {
           <ListItemIcon><PersonIcon /></ListItemIcon>
           <ListItemText primary="Profile" />
         </ListItem>
-        <ListItem button>
-          <ListItemIcon><SettingsIcon /></ListItemIcon>
-          <ListItemText primary="Settings" />
-        </ListItem>
+        <ListItem button onClick={logout}>
+          <ListItemIcon><ExitToAppIcon /></ListItemIcon>
+          <ListItemText primary="Logout" /> 
+        </ListItem>      
+        
       </List>
     </Drawer>
   );
