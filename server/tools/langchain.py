@@ -1,12 +1,12 @@
 import os
-import copy
 import pymongo
 import json
+from enum import Enum
 
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_community.vectorstores import AzureCosmosDBVectorSearch
-from langchain.prompts import PromptTemplate, SystemMessagePromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import CharacterTextSplitter
@@ -24,9 +24,9 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables.utils import ConfigurableFieldSpec
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.ai import AIMessage
-from langchain.chains.summarize import load_summarize_chain
 
 from tools.azure_mongodb import MongoDBClient
+from pymongo import ASCENDING
 
 sessions = {}
 
@@ -222,32 +222,48 @@ def find_session(user_id, chat_id):
     return sessions[(user_id, chat_id)]
 
 
-def get_user_history(user_id, chat_id):
+class ChatHistoryScope(Enum):
+    ALL = "all",
+    PREVIOUS = "previous"
+    CURRENT = "current"
+
+def get_chat_history(user_id, chat_id, history_scope:ChatHistoryScope):
     """
     Used to find personal details from previous conversations with the user.
     """
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db()]
-    turns = list(db.chat_turns.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}))
+    collection = db["chat_turns"]
+
+    # Check if the 'timestamp' index already exists
+    indexes = collection.list_indexes()
+    if not any(index['key'].get('timestamp') for index in indexes):
+        collection.create_index([('timestamp', ASCENDING)])
+
+    turns = []
+    if history_scope == ChatHistoryScope.ALL:
+        turns = list(collection.find({"user_id": user_id}).sort({"timestamp": -1}))
+    elif history_scope == ChatHistoryScope.PREVIOUS:
+        turns = list(collection.find({"user_id": user_id, "chat_id": (chat_id - 1)}).sort({"timestamp": -1}))
+    elif history_scope == ChatHistoryScope.CURRENT:
+        turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}))
+
     turns.reverse()
-    history = []
+    history_list = []
     
     for turn in turns:
         if turn.get("human_message"):
-            history.append(HumanMessage(turn.get("human_message")))
+            history_list.append(HumanMessage(turn.get("human_message")))
         if turn.get("ai_message"):
-            history.append(AIMessage(turn.get("ai_message")))
-    
-    return history
+            history_list.append(AIMessage(turn.get("ai_message")))
 
-        
     chat_history = ChatMessageHistory()
-    chat_history.add_messages(history)
-    sessions[(user_id, chat_id)] = chat_history
+    chat_history.add_messages(history_list)
+    
+    return chat_history
 
-def get_mongodb_agent_with_history(llm, tools, db_name, collection_name, message, system_message, user_id, chat_id, timestamp, history=[]):
-    CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
 
+def get_mongodb_agent_with_history(llm, tools, system_message, memory, user_id, chat_id):
     agent_executor = create_conversational_retrieval_agent(
         llm=llm,
         tools=tools,
@@ -255,19 +271,9 @@ def get_mongodb_agent_with_history(llm, tools, db_name, collection_name, message
         verbose=True
     )
 
-    # message_history = MongoDBChatMessageHistory(
-    #     connection_string=CONNECTION_STRING,
-    #     session_id=f"{user_id};{timestamp}",
-    #     database_name=db_name,
-    #     collection_name=collection_name
-    # )
-
-    # chat_history = ChatMessageHistory(session_id=)
-    # chat_history.add_messages(history)
-
     agent_with_history = RunnableWithMessageHistory(
         agent_executor,
-        find_session,
+        lambda chat_id, user_id: memory.chat_memory,
         input_messages_key="input",
         history_messages_key="chat_history",
         history_factory_config=[
@@ -293,12 +299,13 @@ def get_mongodb_agent_with_history(llm, tools, db_name, collection_name, message
     return agent_with_history
 
 
-def get_langchain_initial_state(db_name, collection_name, user_id, system_message, timestamp, chat_id=None, history=[]):
-    
+def get_initial_greeting(db_name, collection_name, user_id, system_message, timestamp, history=[]):
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db()]
+
     user_journey_collection = db["user_journeys"]
     user_journey = user_journey_collection.find_one({"user_id": user_id})
+
     # Has user engaged with chatbot before?
     if user_journey is None:
         user_journey_collection.insert_one({
@@ -315,7 +322,7 @@ def get_langchain_initial_state(db_name, collection_name, user_id, system_messag
             their needs.        
         """
         
-        full_system_message = SystemMessagePromptTemplate.from_template(''.join([system_message, addendum])).format()
+        full_system_message = ''.join([system_message, addendum])
         response = get_langchain_agent_response(db_name=db_name, 
                                                 collection_name=collection_name, 
                                                 system_message=full_system_message, 
@@ -326,99 +333,41 @@ def get_langchain_initial_state(db_name, collection_name, user_id, system_messag
                                                 timestamp=timestamp)
         return response
     else:
-        recent_turns = list(db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(5))
-        recent_turns.reverse()
-        history = []
-        for turn in recent_turns:
-            if turn.get("human_message"):
-                history.append(HumanMessage(turn.get("human_message")))
-            if turn.get("ai_message"):
-                history.append(AIMessage(turn.get("ai_message")))
+        try:
+            last_turn = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
+        except StopIteration:
+            last_turn = {}
 
-        old_chat_id = recent_turns[0].get("chat_id", -1) + 1
-        
-        chat_summary = ""
-        # chat_summary = db.chat_summaries.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
-        new_chat_id = old_chat_id
-        
+        old_chat_id = last_turn.get("chat_id", -1)
+        new_chat_id = old_chat_id + 1
 
         addendum = """
             Last Conversation Summary:
             {summary}
         """
-        
-        system_message_template = SystemMessagePromptTemplate.from_template(''.join([system_message, addendum]))
-
-        full_system_message = system_message_template.format(history=history, summary=chat_summary)
         response = get_langchain_agent_response(db_name=db_name, 
                                                 collection_name=collection_name, 
-                                                system_message=full_system_message, 
+                                                system_message=system_message, 
                                                 message="",
                                                 user_id=user_id, 
                                                 chat_id=new_chat_id,
                                                 turn_id=0,
                                                 timestamp=timestamp,
-                                                history=history)
+                                                history_scope=ChatHistoryScope.PREVIOUS)
         return response
-        
-        # last_turn = db.chat_turns.find({"user_id": user_id}).sort({"chat_id": -1}).limit(1).next()
-        # Is this a new conversation?
-        # if last_turn.get("chat_id") != chat_id or chat_id is None:
-            # pass
-            # Get summary
-            # new_chat_id = chat_summary.get("chat_id") + 1            
-
-        # prompt_template = PromptTemplate.from_template(mod_system_message)
-        # prompt = prompt_template.format(user_id=user_id, )
 
 
-def get_langchain_agent_response(db_name, collection_name, system_message, message, user_id, chat_id, turn_id, timestamp, history=[]):
-    llm = get_azure_openai_llm()
-
-    # At the start of a chat turn, we want to load the conversation with the necessary context.
-    # Necessary context means:
-    # - Summary of the last conversation
-    # - Last 5 turns
-    # - User journey doc
-    # db_client = MongoDBClient.get_client()
-    # db = db_client[MongoDBClient.get_db()]
-    # chat_summary = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
-    # new_chat_id = chat_summary.get("chat_id") + 1
-
-
-    #TODO: Need to get db_history from MongoDB table
-    # db_history = []
-
-    # summarized_memory = ConversationSummaryMemory.from_messages(
-    #     llm=llm,
-    #     chat_memory=db_history,
-    #     return_messages=True
-    # )
-
-    search = TavilySearchResults() # Going to use this to connect user to resources
+def prepare_tools():
+    search = TavilySearchResults()
     # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
-    tools = [search] #, cosmosdb_tool]
-
-    # memory = ConversationEntityMemory()
+    return [search]#, cosmosdb_tool
 
 
-
-
-    if not history:
-        db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
-        turns = list(db.chat_turns.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}).limit(5))
-        turns.reverse()
-        history = []
-        
-        for turn in turns:
-            if turn.get("human_message"):
-                history.append(HumanMessage(turn.get("human_message")))
-            if turn.get("ai_message"):
-                history.append(AIMessage(turn.get("ai_message")))
-
-    chat_history = ChatMessageHistory()
-    chat_history.add_messages(history)
+def get_langchain_agent_response(db_name, collection_name, system_message, message, user_id, chat_id, turn_id, timestamp, history_scope=[]):
+    # Step 1: Prep llm, tools, and memory
+    llm = get_azure_openai_llm()
+    tools = prepare_tools()
+    chat_history = get_chat_history(user_id, chat_id, history_scope)
     
     memory = ConversationSummaryMemory.from_messages(
         llm=llm,
@@ -426,23 +375,28 @@ def get_langchain_agent_response(db_name, collection_name, system_message, messa
         return_messages=True
     )
     
-    # summary_chain = load_summarize_chain(llm, chain_type="stuff")
-    # summary = summary_chain.invoke(f"history:\n{history}")
-
-    prompt = f"{message}" #```Conversation Log:{memory.buffer}```\n\n
+    # Step 2: Set up agent
+    # prompt = f"{message}" #```Conversation Log:{memory.buffer}```\n\n
 
     if type(system_message) == str:
-        system_message_obj = SystemMessage(f"{system_message}\nContext:\n{memory.buffer}")
+        addendum = f"""
+        Previous Conversation Summary:
+        {memory.buffer}
+        """        
+        full_system_message = f"{system_message}\n{addendum}"
+        system_message_obj = SystemMessage(full_system_message)
     else:
         system_message_obj = system_message
 
-    agent_with_history = get_mongodb_agent_with_history(llm, tools, db_name, collection_name, message, system_message_obj, user_id, chat_id, timestamp, history=history)
+    agent_with_history = get_mongodb_agent_with_history(llm, tools, system_message_obj, memory=memory, user_id=user_id, chat_id=chat_id)
 
+    # Step 3: Get AI response
     invocation = agent_with_history.invoke(
-        { "input": prompt },
+        { "input": message },
         config={"configurable": {"user_id": user_id, "chat_id": chat_id}} 
     )
 
+    # Step 4: Write to chat turn to db
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db()]
     chat_turns_collection = db["chat_turns"]
@@ -455,7 +409,6 @@ def get_langchain_agent_response(db_name, collection_name, system_message, messa
         "ai_message": invocation.get("output"),
         "timestamp": timestamp
     })
-    
 
     return invocation["output"]
 
@@ -534,85 +487,3 @@ def reference_schemas():
         "user_liked": "",
         "user_viewed": "",
     }
-
-    # At the time of creating a response, we want to save the response to mongodb
-
-    return invocation["output"]
-
-    # Chat Turn Schema
-    {
-        "user_id": "",
-        "chat_id": "",
-        "turn_id": "",
-        "human_message": "",
-        "ai_message": "",
-        "timestamp": "",
-    }
-
-    # Chat Summary Schema
-    {
-        "user_id": "",
-        "chat_id": "",
-        "timestamp": "",
-        "last_updated": "",
-        "perceived_mood": "",
-        "summary_text": "",
-        "concerns_progress": {
-            {
-                "label": "",
-                "delta": ""
-            }
-        },
-    }
-
-    # User Journey schema
-    {
-        "user_id": "",
-        "patient_goals": [],
-        "therapy_type": [],
-        "last_updated": "",
-        "therapy_plan": [
-            {
-                "chat_id": "",
-                "exercises": "",
-                "submit_assignments": [],
-                "assign_assignments": [],
-                "assign_exercise": [],
-                "share_resource": []
-            }
-        ],
-        "mental_health_concerns": [
-            {
-                "label": "",
-                "severity": "",
-            }
-        ]
-    }
-
-    # User Entities Schema
-    {
-        "user_id": "",
-        "entity_id": "",
-        "entity_data": []
-
-    }
-
-    # Resources Schema
-    {
-        "resource_id": "",
-        "resource_type": "Article/Video/Contact Information/Exercise",
-        "": ""
-
-    }
-
-    # User Resource Schema
-    {
-        "user_id": "",
-        "resource_id": "",
-        "user_liked": "",
-        "user_viewed": "",
-    }
-
-    # At the time of creating a response, we want to save the response to mongodb
-
-    return invocation["output"]

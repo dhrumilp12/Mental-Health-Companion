@@ -8,7 +8,7 @@ from werkzeug.exceptions import InternalServerError
 from models.ai_request import AIRequest
 from classes.cosmic_works_ai_agent import CosmicWorksAIAgent
 
-from tools.langchain import get_langchain_initial_state, get_langchain_agent_response
+from tools.langchain import get_initial_greeting, get_langchain_agent_response, ChatHistoryScope
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,7 @@ def get_mental_health_agent_welcome(user_id):
     If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer, instead, honestly state that you don't know the answer.
     """
 
-    response_message = get_langchain_initial_state(db_name=f"mental-health-{ENV}", 
+    response_message = get_initial_greeting(db_name=f"mental-health-{ENV}", 
                                 collection_name="chatbot_logs", 
                                 user_id=user_id, 
                                 system_message=system_message, 
@@ -86,7 +86,8 @@ def run_mental_health_agent(user_id, chat_id):
                                                     user_id,
                                                     int(chat_id),
                                                     turn_id + 1, 
-                                                    timestamp)
+                                                    timestamp,
+                                                    ChatHistoryScope.ALL)
 
     return {"message": response_message}
 
