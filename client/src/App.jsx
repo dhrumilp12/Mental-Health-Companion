@@ -1,7 +1,7 @@
 import React, { useState,useEffect } from 'react';
 import { UserProvider } from './Components/userContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Home from './Components/Home';  // Ensure this path is correct
+import ChatComponent from './Components/chatComponent';  // Ensure this path is correct
 import AuthComponent from './Components/authComponent';
 import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
@@ -20,7 +20,7 @@ function App() {
         <UserProvider>
             <Layout>
                 <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<ChatComponent />} />
                     <Route path="/auth" element={<AuthComponent />} />
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
                     <Route path="/user/mood_logging" element={<MoodLogging />} />
