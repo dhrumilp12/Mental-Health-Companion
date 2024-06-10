@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 import logging
-
+from flask import jsonify
 from flask import Blueprint, request
 from werkzeug.exceptions import InternalServerError
 
@@ -89,10 +89,20 @@ def run_mental_health_agent(user_id, chat_id):
                                                     timestamp,
                                                     ChatHistoryScope.ALL)
 
-    return response
+    return jsonify(response), 200
 
 
 @ai_routes.post("/ai/mental_health/finalize/<user_id>/<chat_id>")
-def set_mental_health_end_state(user_id):
-    # Here, it gets the initial state of the app
-    pass
+def set_mental_health_end_state(user_id, chat_id):
+    # Simulate some logic to handle the end state
+    try:
+        # Your logic here, for example:
+        logger.info(f"Finalizing chat {chat_id} for user {user_id}")
+
+        # Potentially update the database or perform other cleanup operations
+        # For now, let's assume it's a simple response:
+        return jsonify({"message": "Chat session finalized successfully"}), 200
+
+    except Exception as e:
+        logger.error(f"Error during finalizing chat: {e}")
+        return jsonify({"error": "Failed to finalize chat"}), 500

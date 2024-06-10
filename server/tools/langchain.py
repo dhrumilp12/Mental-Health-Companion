@@ -235,11 +235,11 @@ def get_chat_history(user_id, chat_id, history_scope:ChatHistoryScope):
 
     turns = []
     if history_scope == ChatHistoryScope.ALL:
-        turns = list(collection.find({"user_id": user_id}).sort({"timestamp": -1}))
+        turns = list(collection.find({"user_id": user_id}).sort({"timestamp": -1}).limit(5))
     elif history_scope == ChatHistoryScope.PREVIOUS:
         turns = list(collection.find({"user_id": user_id, "chat_id": (chat_id - 1)}).sort({"timestamp": -1}))
     elif history_scope == ChatHistoryScope.CURRENT:
-        turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}))
+        turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}).limit(5))
 
     turns.reverse()
     history_list = []

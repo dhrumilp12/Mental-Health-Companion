@@ -6,6 +6,7 @@ import AuthComponent from './Components/authComponent';
 import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
 import Navbar from './Components/navBar';
+import ChatInterface from './Components/chatInterface';
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
 import { CssBaseline, Box } from '@mui/material';
@@ -21,6 +22,7 @@ function App() {
             <Layout>
                 <Routes>
                     <Route path="/" element={<ChatComponent />} />
+                    <Route path="/chat" element={<ChatInterface />} />
                     <Route path="/auth" element={<AuthComponent />} />
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
                     <Route path="/user/mood_logging" element={<MoodLogging />} />
