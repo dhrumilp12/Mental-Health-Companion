@@ -1,0 +1,103 @@
+/* ChatComponent.module.css */
+
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.chat-container {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    overflow-y: auto;
+    height: 350px;
+    border: 1px solid #ccc;
+}
+
+.message {
+    padding: 10px 15px;
+    margin: 8px 0;
+    border-radius: 20px;
+    max-width: 75%;
+    word-wrap: break-hard;
+    font-size: 16px;
+    line-height: 1.6;
+    transition: background-color 0.3s ease-out;
+}
+
+.message.user {
+    align-self: flex-end;
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 75, 160, 0.15);
+}
+
+.message.agent {
+    background-color: #e3e3e3;
+    color: #333;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(100, 100, 100, 0.1);
+}
+
+.inputSection {
+    display: flex;
+    padding-top: 20px;
+    align-items: center;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+input {
+    flex-grow: 1;
+    padding: 12px 20px;
+    margin-right: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f8f8f8;
+    font-size: 16px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+button {
+    padding: 12px 24px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #003570;
+    box-shadow: 0 4px 8px rgba(0, 56, 107, 0.2);
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

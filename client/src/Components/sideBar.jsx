@@ -21,7 +21,7 @@ function Sidebar() {
           width: drawerWidth,
           boxSizing: 'border-box',
           position: 'relative', //position: 'fixed', Fixing the sidebar so it doesn't move on scroll
-          height: '100vh', // Ensuring it covers the full height of the viewport
+          height: '91vh', // Ensuring it covers the full height of the viewport
           top: 0, // Aligning it to the top of the viewport
           overflowX: 'hidden', // Hiding horizontal overflow
         },
@@ -33,7 +33,7 @@ function Sidebar() {
       <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
         <ListItem button>
           <ListItemIcon><DeckIcon /></ListItemIcon>
-          <ListItemText primary="Home" />
+          <ListItemText primary="Mind Chat" />
         </ListItem>
         </Link>
         <Link to="/user/mood_logging" style={{ textDecoration: 'none', color: 'inherit' }}>
