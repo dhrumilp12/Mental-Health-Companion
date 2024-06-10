@@ -48,14 +48,14 @@ def get_mental_health_agent_welcome(user_id):
     If you do not know the answer of a question, do not give a `I am a virtual assistant` disclaimer, instead, honestly state that you don't know the answer.
     """
 
-    response_message = get_initial_greeting(db_name=f"mental-health-{ENV}", 
+    response = get_initial_greeting(db_name=f"mental-health-{ENV}", 
                                 collection_name="chatbot_logs", 
                                 user_id=user_id, 
                                 system_message=system_message, 
                                 timestamp=timestamp)
     
     
-    return {"message": response_message}
+    return response
 
 
 @ai_routes.post("/ai/mental_health/<user_id>/<chat_id>")
@@ -79,7 +79,7 @@ def run_mental_health_agent(user_id, chat_id):
 
     timestamp = datetime.now().isoformat()
 
-    response_message = get_langchain_agent_response(f"mental-health-{ENV}", 
+    response = get_langchain_agent_response(f"mental-health-{ENV}", 
                                                     "chatbot_logs", 
                                                     system_message, 
                                                     prompt, 
@@ -89,7 +89,7 @@ def run_mental_health_agent(user_id, chat_id):
                                                     timestamp,
                                                     ChatHistoryScope.ALL)
 
-    return {"message": response_message}
+    return response
 
 
 @ai_routes.post("/ai/mental_health/finalize/<user_id>/<chat_id>")

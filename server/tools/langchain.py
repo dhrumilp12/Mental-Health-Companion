@@ -237,9 +237,9 @@ def get_chat_history(user_id, chat_id, history_scope:ChatHistoryScope):
     if history_scope == ChatHistoryScope.ALL:
         turns = list(collection.find({"user_id": user_id}).sort({"timestamp": -1}))
     elif history_scope == ChatHistoryScope.PREVIOUS:
-        turns = list(collection.find({"user_id": user_id, "chat_id": (chat_id - 1)}).sort({"timestamp": -1}).limit(5))
+        turns = list(collection.find({"user_id": user_id, "chat_id": (chat_id - 1)}).sort({"timestamp": -1}))
     elif history_scope == ChatHistoryScope.CURRENT:
-        turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}).limit(5))
+        turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}))
 
     turns.reverse()
     history_list = []
@@ -324,7 +324,8 @@ def get_initial_greeting(db_name, collection_name, user_id, system_message, time
                                                 chat_id=0,
                                                 turn_id=0,
                                                 timestamp=timestamp)
-        return response
+        return { "message": response, 
+                "chat_id": 0 }
     else:
         try:
             last_turn = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
@@ -347,7 +348,10 @@ def get_initial_greeting(db_name, collection_name, user_id, system_message, time
                                                 turn_id=0,
                                                 timestamp=timestamp,
                                                 history_scope=ChatHistoryScope.PREVIOUS)
-        return response
+        return {
+            "message": response,
+            "chat_id": new_chat_id
+        }
 
 
 def prepare_tools():
