@@ -1,15 +1,15 @@
 import logging
 from bson import json_util
 import json
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
 from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from models.user import User as UserModel
-from tools.azure_mongodb import MongoDBClient
-
-
+from services.azure_mongodb import MongoDBClient
 
 user_routes = Blueprint("user", __name__)
 

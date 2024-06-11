@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, validator
-from tools.azure_mongodb import MongoDBClient
+from services.azure_mongodb import MongoDBClient
+
 import re
 class User(BaseModel):
     id: str = None

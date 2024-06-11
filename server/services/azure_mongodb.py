@@ -2,12 +2,12 @@ import os
 import time
 import random
 import logging
+from datetime import datetime
+
 import requests
 import pymongo
 from pymongo import UpdateOne, ReturnDocument
 import mongomock
-from flask import g
-from datetime import datetime
 
 from dotenv import load_dotenv
 
@@ -162,3 +162,77 @@ class MongoDBClient:
             raise
     
     
+def reference_schemas():
+    # Chat Turn Schema
+    {
+        "user_id": "",
+        "chat_id": "",
+        "turn_id": "",
+        "human_message": "",
+        "ai_message": "",
+        "timestamp": "",
+    }
+
+    # Chat Summary Schema
+    {
+        "user_id": "",
+        "chat_id": "",
+        "timestamp": "",
+        "last_updated": "",
+        "perceived_mood": "",
+        "summary_text": "",
+        "concerns_progress": {
+            {
+                "label": "",
+                "delta": ""
+            }
+        },
+    }
+
+    # User Journey schema
+    {
+        "user_id": "",
+        "patient_goals": [],
+        "therapy_type": [],
+        "last_updated": "",
+        "therapy_plan": [
+            {
+                "chat_id": "",
+                "exercises": "",
+                "submit_assignments": [],
+                "assign_assignments": [],
+                "assign_exercise": [],
+                "share_resource": []
+            }
+        ],
+        "mental_health_concerns": [
+            {
+                "label": "",
+                "severity": "",
+            }
+        ]
+    }
+
+    # User Entities Schema
+    {
+        "user_id": "",
+        "entity_id": "",
+        "entity_data": []
+
+    }
+
+    # Resources Schema
+    {
+        "resource_id": "",
+        "resource_type": "Article/Video/Contact Information/Exercise",
+        "": ""
+
+    }
+
+    # User Resource Schema
+    {
+        "user_id": "",
+        "resource_id": "",
+        "user_liked": "",
+        "user_viewed": "",
+    }

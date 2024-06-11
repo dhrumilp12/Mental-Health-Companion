@@ -9,10 +9,9 @@ from flask_jwt_extended import JWTManager
 from routes.user import user_routes 
 from routes.ai import ai_routes
 
-
 # Set up the app
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 't54WKRE5t5UaZnEWDvUd75Qe5ilYAKKe9n8tbUGv3_Q'  
+app.config['JWT_SECRET_KEY'] = 't54WKRE5t5UaZnEWDvUd75Qe5ilYAKKe9n8tbUGv3_Q' #FIXME: This should be an environment variable.
 jwt = JWTManager(app)
 CORS(app)
 
