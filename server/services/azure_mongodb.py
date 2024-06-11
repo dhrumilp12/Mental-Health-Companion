@@ -9,6 +9,8 @@ import pymongo
 from pymongo import UpdateOne, ReturnDocument
 import mongomock
 
+from utils.consts import APP_NAME
+
 from dotenv import load_dotenv
 
 # Configure logging
@@ -43,9 +45,8 @@ class MongoDBClient:
         return cls._client
     
     @classmethod
-    def get_db(cls):
+    def get_db_name(cls):
         ENV = os.environ.get("FLASK_ENV")
-        APP_NAME = "mental-health"
 
         # sets the db based on the environment
         if cls._db_name is None:
@@ -140,7 +141,7 @@ class MongoDBClient:
     def log_user_mood(user_id, mood, activities):
         try:
             client = MongoDBClient.get_client()
-            db = client[MongoDBClient.get_db()]  # Get the database instance
+            db = client[MongoDBClient.get_db_name()]  # Get the database instance
             db.mood_logs.insert_one({
                 "user_id": user_id,
                 "mood": mood,
@@ -155,7 +156,7 @@ class MongoDBClient:
     def get_user_mood_logs(user_id):
         try:
             client = MongoDBClient.get_client()
-            db = client[MongoDBClient.get_db()]  # Get the database instance
+            db = client[MongoDBClient.get_db_name()]  # Get the database instance
             return list(db.mood_logs.find({"user_id": user_id}))
         except pymongo.errors.PyMongoError as e:
             logging.error(f"Error retrieving mood logs: {str(e)}")

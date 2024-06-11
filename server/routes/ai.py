@@ -1,11 +1,9 @@
-import os
-from datetime import datetime
 import logging
+
 from flask import jsonify
 from flask import Blueprint, request
 import json
 
-from models.ai_request import AIRequest
 from agents.mental_health_agent import MentalHealthAIAgent, ChatHistoryScope
 from utils.consts import SYSTEM_MESSAGE
 
@@ -18,27 +16,17 @@ ai_routes = Blueprint("ai", __name__)
 
 @ai_routes.post("/ai/mental_health/welcome/<user_id>")
 def get_mental_health_agent_welcome(user_id):
-    # Here, it gets the initial state of the app
-    ENV = os.environ.get("FLASK_ENV")
-    timestamp = datetime.now().isoformat()
+    agent = MentalHealthAIAgent()
 
-    agent = MentalHealthAIAgent(session_id=0, 
-                        system_message=SYSTEM_MESSAGE, 
-                        db_name=f"mental-health-{ENV}", 
-                        schema=[])
-
-    response = agent.get_initial_greeting(db_name=f"mental-health-{ENV}", 
-                                collection_name="chatbot_logs", 
-                                user_id=user_id, 
-                                system_message=SYSTEM_MESSAGE, 
-                                timestamp=timestamp)
+    response = agent.get_initial_greeting(
+                                    user_id=user_id
+                                )
     
     return response
 
 
 @ai_routes.post("/ai/mental_health/<user_id>/<chat_id>")
 def run_mental_health_agent(user_id, chat_id):
-    ENV = os.environ.get("FLASK_ENV")
     body = request.get_json()
     if not body:
         return jsonify({"error": "No data provided"}), 400
@@ -46,23 +34,18 @@ def run_mental_health_agent(user_id, chat_id):
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
-    agent = MentalHealthAIAgent(session_id=0, 
-                            system_message=SYSTEM_MESSAGE, 
-                            db_name=f"mental-health-{ENV}", 
-                            schema=[])
+    agent = MentalHealthAIAgent()
 
-    timestamp = datetime.now().isoformat()
     try:
             
-        response = agent.get_agent_response(f"mental-health-{ENV}", 
-                                                        "chatbot_logs", 
-                                                        SYSTEM_MESSAGE, 
-                                                        prompt, 
-                                                        user_id,
-                                                        int(chat_id),
-                                                        turn_id + 1, 
-                                                        timestamp,
-                                                        ChatHistoryScope.ALL)
+        response = agent.run(
+                                message=prompt,
+                                with_history=True,
+                                user_id=user_id,
+                                chat_id=int(chat_id),
+                                turn_id=turn_id + 1, 
+                                history_scope=ChatHistoryScope.ALL
+                            )
 
         return jsonify(response), 200
     except json.JSONDecodeError as e:

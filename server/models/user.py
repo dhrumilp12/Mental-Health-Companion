@@ -22,7 +22,7 @@ class User(BaseModel):
     @classmethod
     def find_by_username(cls, username):
         db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
+        db = db_client[MongoDBClient.get_db_name()]
         user_data = db.users.find_one({"username": username})  # 'users' is the collection name
         if user_data:
             user_data['id'] = str(user_data['_id'])

@@ -1,76 +1,64 @@
-import os
-import json
 import re
 
-from dotenv import load_dotenv
 from langchain_community.vectorstores import AzureCosmosDBVectorSearch
-from langchain.schema.document import Document
 from langchain.agents import Tool
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 from langchain.tools import StructuredTool
 from langchain_core.messages import SystemMessage
 from langchain_core.vectorstores import VectorStoreRetriever
 
-from services.azure import get_azure_openai_llm, get_azure_openai_embeddings
+from services.azure_mongodb import MongoDBClient
+from services.azure import get_azure_openai_variables, get_azure_openai_llm, get_azure_openai_embeddings
 
-load_dotenv(".env")
-DB_CONNECTION_STRING = os.environ.get("DB_CONNECTION_STRING")
-AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
-AOAI_KEY = os.environ.get("AOAI_KEY")
-AOAI_API_VERSION = "2023-09-01-preview"
-COMPLETIONS_DEPLOYMENT = os.getenv("COMPLETIONS_DEPLOYMENT_NAME")
-EMBEDDINGS_DEPLOYMENT = os.getenv("EMBEDDINGS_DEPLOYMENT_NAME")
-
-#FIXME: These classes may be redundant with tools.langchain; choose one or the other
 class AIAgent:
-
-    def __init__(self, session_id:str, system_message:str, db_name:str, schema:list[str]=[]):
+    def __init__(self, system_message:str, schema:list[str]=[]):
+        self.db_client = MongoDBClient.get_client()
         self.llm = get_azure_openai_llm()
         self.embedding_model = get_azure_openai_embeddings()
 
-        self.system_message_obj = SystemMessage(content=system_message)
+        self.system_message = SystemMessage(content=system_message)
 
         self.agent_executor = create_conversational_retrieval_agent(
             llm=self.llm,
-            tools=self.__create_agent_tools(db_name, schema),
-            system_message = self.system_message_obj,
-            memory_key=session_id,
+            tools=self.__create_agent_tools(schema),
+            system_message = self.system_message,
             verbose=True
         )
     
 
-    def run(self, prompt:str) -> str:
+    def run(self, message:str) -> str:
         """
-        Run the AI agent.
+        Executes the AI agent and gets a response as a result.
         """        
-        result = self.agent_executor({"input": prompt})
+        result = self.agent_executor({"input": message})
         return result["output"]
     
 
-    def __create_vector_store_retriever(self, namespace, top_k = 3) -> VectorStoreRetriever:
-        """
-        Returns a vector store retriever for the given collection.
-        """        
-        vector_store = AzureCosmosDBVectorSearch.from_connection_string(
-            connection_string= DB_CONNECTION_STRING,
-            namespace = namespace,
-            embedding = self.embedding_model,
-            index_name = "VectorSearchIndex",
-            embedding_key = "contentVector",
-            text_key = "_id"
-        )
+    def __get_cosmosdb_vector_store_retriever(db_name, collection_name, top_k=3) -> VectorStoreRetriever:
+        CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
+        _, _, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
 
+        vector_store = AzureCosmosDBVectorSearch.from_connection_string(
+            connection_string = CONNECTION_STRING, 
+            namespace = f"{db_name}.{collection_name}", 
+            embedding = AOAI_EMBEDDINGS, 
+            index_name =f"{db_name}_{collection_name}_index",
+            embedding_key = "contentVector", #TODO: Find out what these are for
+            text_key = "_id" #TODO: Find out what these are for
+        )
         return vector_store.as_retriever(search_kwargs={"k": top_k})
     
 
-    def __create_agent_tools(self, db_name, schema=[]) -> list[Tool]:
+    def __create_agent_tools(self, schema=[]) -> list[Tool]:
         """
         Returns a list of agent tools.
         """
+        db_name = MongoDBClient.get_db_name()
+
         tools = []
         for header_name in schema:
 
-            retriever = self.__create_vector_store_retriever(f"{db_name}.{header_name}")
+            retriever = self.__get_cosmosdb_vector_store_retriever(f"{db_name}.{header_name}")
 
             retriever_chain = retriever | AIAgent.format_docs
 
@@ -94,20 +82,3 @@ class AIAgent:
         tools.extend(structured_tools)
 
         return tools
-        
-    
-    @staticmethod
-    def format_docs(docs:list[Document]) -> str:
-        """
-        Prepares the product list for the system prompt.
-        """       
-        str_docs = []
-
-        for doc in docs:
-            doc_dict = {"_id": doc.page_content}
-            doc_dict.update(doc.metadata)
-            if "contentVector" in doc_dict:
-                del doc_dict["contentVector"]
-            str_docs.append(json.dumps(doc_dict, default=str))
-        
-        return "\n\n".join(str_docs)

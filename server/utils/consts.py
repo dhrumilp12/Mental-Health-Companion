@@ -1,3 +1,5 @@
+APP_NAME = "mental-health"
+
 SYSTEM_MESSAGE = """
     Your name is Aria, you are a therapy companion. 
 

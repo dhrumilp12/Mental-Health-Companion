@@ -1,19 +1,21 @@
+from datetime import datetime
+
 from enum import Enum
 from pymongo import ASCENDING
 
 from langchain_core.messages.human import HumanMessage
 from langchain_core.messages.ai import AIMessage
 from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
-from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables.utils import ConfigurableFieldSpec
 from langchain.memory import ConversationSummaryMemory
 from langchain_core.messages import SystemMessage
 from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 
 from .ai_agent import AIAgent
 from services.azure_mongodb import MongoDBClient
-from services.azure import get_azure_openai_llm
+from utils.consts import SYSTEM_MESSAGE
 
 class ChatHistoryScope(Enum):
     ALL = "all",
@@ -31,24 +33,27 @@ class MentalHealthAIAgent(AIAgent):
     """
     db = MongoDBClient.get_client()
 
-    def __init__(self, session_id: str, system_message, db_name, schema):
-        system_message = """
-        Lorem ipsum il dolor.
-        """
-        super().__init__(session_id, system_message, schema)
+    def __init__(self, system_message=SYSTEM_MESSAGE, schema=[]):
+        self.system_message = system_message
 
-        self.agent_executor = self.get_agent_with_history(
+        super().__init__(system_message, schema)
+
+        self.agent_executor = create_conversational_retrieval_agent(
             llm=self.llm,
+            tools= MentalHealthAIAgent.prepare_tools(),
+            system_message = self.system_message,
+            verbose=True
         )
+
     
 
-    @staticmethod
-    def get_user_by_id(user_id:str) -> str:
-        """
-        Retrieves a user by their ID.
-        """
+    # @staticmethod
+    # def get_user_by_id(user_id:str) -> str:
+    #     """
+    #     Retrieves a user by their ID.
+    #     """
         
-        doc = MentalHealthAIAgent.db.users.find_one({"_id": user_id})
+    #     doc = MentalHealthAIAgent.db.users.find_one({"_id": user_id})
 
 
     def get_chat_history(self, user_id, chat_id, history_scope:ChatHistoryScope):
@@ -56,7 +61,7 @@ class MentalHealthAIAgent(AIAgent):
         Used to find personal details from previous conversations with the user.
         """
         db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
+        db = db_client[MongoDBClient.get_db_name()]
         collection = db["chat_turns"]
 
         # Check if the 'timestamp' index already exists
@@ -87,15 +92,21 @@ class MentalHealthAIAgent(AIAgent):
         return chat_history
 
 
-    def get_agent_with_history(self, tools, system_message, memory):
-        agent_executor = create_conversational_retrieval_agent(
-            tools=tools,
-            system_message=system_message,
-            verbose=True
+    def get_agent_memory(self, user_id, chat_id, history_scope=ChatHistoryScope.ALL):
+        chat_history = self.get_chat_history(user_id, chat_id, history_scope)
+        
+        memory = ConversationSummaryMemory.from_messages(
+            llm=self.llm,
+            chat_memory=chat_history,
+            return_messages=True
         )
 
+        return memory
+
+
+    def get_agent_with_history(self, memory):
         agent_with_history = RunnableWithMessageHistory(
-            agent_executor,
+            self.agent_executor,
             lambda chat_id, user_id: memory.chat_memory,
             input_messages_key="input",
             history_messages_key="chat_history",
@@ -120,50 +131,11 @@ class MentalHealthAIAgent(AIAgent):
         )
 
         return agent_with_history
-
-
-    def prepare_tools():
-        search = TavilySearchResults()
-        # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
-        return [search]#, cosmosdb_tool
-
     
-    def get_agent_response(self, db_name, collection_name, system_message, message, user_id, chat_id, turn_id, timestamp, history_scope=[]):
-        # Step 1: Prep llm, tools, and memory
-        llm = get_azure_openai_llm()
-        tools = self.prepare_tools()
-        chat_history = self.get_chat_history(user_id, chat_id, history_scope)
-        
-        memory = ConversationSummaryMemory.from_messages(
-            llm=llm,
-            chat_memory=chat_history,
-            return_messages=True
-        )
-        
-        # Step 2: Set up agent
-        # prompt = f"{message}" #```Conversation Log:{memory.buffer}```\n\n
 
-        if type(system_message) == str:
-            addendum = f"""
-            Previous Conversation Summary:
-            {memory.buffer}
-            """        
-            full_system_message = f"{system_message}\n{addendum}"
-            system_message_obj = SystemMessage(full_system_message)
-        else:
-            system_message_obj = system_message
-
-        agent_with_history = self.get_agent_with_history(llm, tools, system_message_obj, memory=memory, user_id=user_id, chat_id=chat_id)
-
-        # Step 3: Get AI response
-        invocation = agent_with_history.invoke(
-            { "input": message },
-            config={"configurable": {"user_id": user_id, "chat_id": chat_id}} 
-        )
-
-        # Step 4: Write to chat turn to db
+    def write_agent_response_to_db(self, invocation, user_id, chat_id, turn_id):
         db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
+        db = db_client[MongoDBClient.get_db_name()]
         chat_turns_collection = db["chat_turns"]
 
         chat_turns_collection.insert_one({
@@ -172,18 +144,51 @@ class MentalHealthAIAgent(AIAgent):
             "turn_id": turn_id,
             "human_message": invocation.get("input"),
             "ai_message": invocation.get("output"),
-            "timestamp": timestamp
+            "timestamp": datetime.now().isoformat()
         })
 
         return invocation["output"]
 
+    def run(self, message:str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
+        if not with_history:
+            return super().run(message)
+        else:
+            #:TODO throw error if user_id, chat_id, or history_scope is set to None.
+            memory = self.get_agent_memory(user_id, chat_id, history_scope)
+            agent_with_history = self.get_agent_with_history(memory)
+            
+            if memory.buffer:
+                addendum = f"""
+                Previous Conversation Summary:
+                {memory.buffer}
+                """        
+                self.system_message.content = f"{self.system_message.content}\n{addendum}"
 
-    def get_initial_greeting(self, db_name, collection_name, user_id, system_message, timestamp, history=[]):
+            invocation = agent_with_history.invoke(
+                { "input": message },
+                config={"configurable": {"user_id": user_id, "chat_id": chat_id}} 
+            )
+
+            self.write_agent_response_to_db(invocation, user_id, chat_id, turn_id)
+
+            return invocation["output"]
+
+
+    def prepare_tools():
+        search = TavilySearchResults()
+        # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
+        return [search]#, cosmosdb_tool
+
+
+    def get_initial_greeting(self, user_id):
         db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
 
         user_journey_collection = db["user_journeys"]
         user_journey = user_journey_collection.find_one({"user_id": user_id})
+
+        system_message = self.system_message
 
         # Has user engaged with chatbot before?
         if user_journey is None:
@@ -191,7 +196,7 @@ class MentalHealthAIAgent(AIAgent):
                 "user_id": user_id,
                 "patient_goals": [],
                 "therapy_type": [],
-                "last_updated": timestamp,
+                "last_updated": datetime.now().isoformat(),
                 "therapy_plan": [],
                 "mental_health_concerns": []
             })
@@ -201,17 +206,22 @@ class MentalHealthAIAgent(AIAgent):
                 their needs.        
             """
             
-            full_system_message = ''.join([system_message, addendum])
-            response = self.get_agent_response(db_name=db_name, 
-                                                    collection_name=collection_name, 
-                                                    system_message=full_system_message, 
-                                                    message="", 
-                                                    user_id=user_id, 
-                                                    chat_id=0,
-                                                    turn_id=0,
-                                                    timestamp=timestamp)
-            return { "message": response, 
-                    "chat_id": 0 }
+            full_system_message = ''.join([system_message.content, addendum])
+            system_message.content = full_system_message
+            response = self.run(
+                            message="",
+                            with_history=False,
+                            user_id=user_id, 
+                            chat_id=0,
+                            turn_id=0,
+                            history_scope = ChatHistoryScope.ALL,
+                        )
+            
+            return { 
+                "message": response, 
+                "chat_id": 0 
+            }
+        
         else:
             try:
                 last_turn = db.chat_turns.find({"user_id": user_id}).sort({"timestamp": -1}).limit(1).next()
@@ -221,123 +231,95 @@ class MentalHealthAIAgent(AIAgent):
             old_chat_id = last_turn.get("chat_id", -1)
             new_chat_id = old_chat_id + 1
 
-            addendum = """
-                Last Conversation Summary:
-                {summary}
-            """
-            response = self.get_agent_response(db_name=db_name, 
-                                                    collection_name=collection_name, 
-                                                    system_message=system_message, 
-                                                    message="",
-                                                    user_id=user_id, 
-                                                    chat_id=new_chat_id,
-                                                    turn_id=0,
-                                                    timestamp=timestamp,
-                                                    history_scope=ChatHistoryScope.PREVIOUS)
+
+            response = self.run(
+                            message="",
+                            with_history=True,
+                            user_id=user_id, 
+                            chat_id=new_chat_id,
+                            turn_id=0,
+                            history_scope=ChatHistoryScope.PREVIOUS
+                        )
+            
             return {
                 "message": response,
                 "chat_id": new_chat_id
             }
 
 
-def extract_text(docs, key='description'):
-    """
-    Extracts text from MongoDB documents using a specified key.
+# def process_langchain_query(query_string, question, collection_name, system_prompt):
+#     components = setup_langchain(collection_name, system_prompt)
+#     llm = components["llm"]
+#     prompt_template = components["prompt_template"]
+#     db = components["db"]
 
-    Args:
-        docs (list of pymongo documents): Documents from which to extract text.
-        key (str): The key used to extract text from documents.
+#     # Fetch documents with descriptions that include the word "yellow"
+#     query = {"description": {"$regex": query_string, "$options": "i"}}
+#     documents = db[collection_name].find(query)
 
-    Returns:
-        list: A list containing the extracted text from each document.
-    """
-    return [doc.get(key, 'No description available') for doc in docs]
+#     # Extract text content from documents
+#     text_contents = extract_text(documents)
 
+#     # Prepare the product list for the prompt
+#     objs_list = json.dumps(text_contents, indent=2) if text_contents else "No products found."
 
-def process_langchain_query(query_string, question, collection_name, system_prompt):
-    components = setup_langchain(collection_name, system_prompt)
-    llm = components["llm"]
-    prompt_template = components["prompt_template"]
-    db = components["db"]
+#     processed_prompt = prompt_template.invoke({collection_name: objs_list, "question": question})
+#     result = llm.invoke(processed_prompt)
 
-    # Fetch documents with descriptions that include the word "yellow"
-    query = {"description": {"$regex": query_string, "$options": "i"}}
-    documents = db[collection_name].find(query)
-
-    # Extract text content from documents
-    text_contents = extract_text(documents)
-
-    # Prepare the product list for the prompt
-    objs_list = json.dumps(text_contents, indent=2) if text_contents else "No products found."
-
-    processed_prompt = prompt_template.invoke({collection_name: objs_list, "question": question})
-    result = llm.invoke(processed_prompt)
-
-    # Access the assistant's message content
-    response_content = result
-    return response_content
+#     # Access the assistant's message content
+#     response_content = result
+#     return response_content
 
 
-def get_cosmosdb_vector_store_retriever(db_name, collection_name, top_k=3):
-    CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
-    _, _, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
+# def get_cosmosdb_tool(collection_name):
+#     db_name = MongoDBClient.get_db_name()
 
-    vector_store = AzureCosmosDBVectorSearch.from_connection_string(
-        connection_string = CONNECTION_STRING, 
-        namespace = f"{db_name}.{collection_name}", 
-        embedding = AOAI_EMBEDDINGS, 
-        index_name =f"{db_name}_{collection_name}_index"
-    )
-    return vector_store.as_retriever(search_kwargs={"k": top_k})
+#     AOAI_ENDPOINT, AOAI_KEY, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
 
+#     loader = PyPDFLoader("./cognitive-behavioral.pdf")
+#     documents = loader.load()
+#     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
 
-def get_cosmosdb_tool(db_name, collection_name):
-    AOAI_ENDPOINT, AOAI_KEY, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
+#     docs = text_splitter.split_documents(documents)
 
-    loader = PyPDFLoader("./cognitive-behavioral.pdf")
-    documents = loader.load()
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+#     mongo_client = pymongo.MongoClient(os.environ.get("DB_CONNECTION_STRING"))
+#     collection = mongo_client[db_name][collection_name]
 
-    docs = text_splitter.split_documents(documents)
+#     openai_embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
+#         azure_deployment=AOAI_EMBEDDINGS,
+#         api_key=AOAI_KEY,
+#         azure_endpoint=AOAI_ENDPOINT
+#     )
 
-    mongo_client = pymongo.MongoClient(os.environ.get("DB_CONNECTION_STRING"))
-    collection = mongo_client[db_name][collection_name]
-
-    openai_embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
-        azure_deployment=AOAI_EMBEDDINGS,
-        api_key=AOAI_KEY,
-        azure_endpoint=AOAI_ENDPOINT
-    )
-
-    vectorstore = AzureCosmosDBVectorSearch.from_documents(
-        docs,
-        openai_embeddings,
-        collection=collection,
-        index_name=f"{db_name}-{collection_name}_index"
-    )
+#     vectorstore = AzureCosmosDBVectorSearch.from_documents(
+#         docs,
+#         openai_embeddings,
+#         collection=collection,
+#         index_name=f"{db_name}-{collection_name}_index"
+#     )
 
 
-    num_lists = 100
-    dimensions = 1536
-    similarity_algorithm = CosmosDBSimilarityType.COS
-    kind = CosmosDBVectorSearchType.VECTOR_IVF
-    m = 16
-    ef_construction = 64
+#     num_lists = 100
+#     dimensions = 1536
+#     similarity_algorithm = CosmosDBSimilarityType.COS
+#     kind = CosmosDBVectorSearchType.VECTOR_IVF
+#     m = 16
+#     ef_construction = 64
 
-    vectorstore.create_index(
-        num_lists,
-        dimensions,
-        similarity_algorithm,
-        kind,
-        m, 
-        ef_construction
-    )
+#     vectorstore.create_index(
+#         num_lists,
+#         dimensions,
+#         similarity_algorithm,
+#         kind,
+#         m, 
+#         ef_construction
+#     )
 
-    retriever = get_cosmosdb_vector_store_retriever("mentalhealthtestcollection")
-    cosmosdb_tool = Tool(
-        name = "vector_search_test",
-        func = retriever.invoke,
-        description = "Searches the Mental Health database for psychology theory."
-    )
+#     retriever = get_cosmosdb_vector_store_retriever("mentalhealthtestcollection")
+#     cosmosdb_tool = Tool(
+#         name = "vector_search_test",
+#         func = retriever.invoke,
+#         description = "Searches the Mental Health database for psychology theory."
+#     )
 
-    return cosmosdb_tool
+#     return cosmosdb_tool

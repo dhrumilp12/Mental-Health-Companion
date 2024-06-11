@@ -23,7 +23,7 @@ def signup():
         user = UserModel(**user_data)
 
         db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db()]
+        db = db_client[MongoDBClient.get_db_name()]
         
         # Check if user already exists with the same username or email
         logging.info("Checking for existing users")
@@ -98,7 +98,7 @@ def logout():
 @user_routes.get('/user/profile/<user_id>')
 def get_public_profile(user_id):
     db_client = MongoDBClient.get_client()
-    db = db_client[MongoDBClient.get_db()]
+    db = db_client[MongoDBClient.get_db_name()]
 
     user_data = db['users'].find_one({"_id": ObjectId(user_id)})
     if user_data is None:
@@ -113,7 +113,7 @@ def update_profile_fields(user_id):
     update_fields = request.get_json()
     
     db_client = MongoDBClient.get_client()
-    db = db_client[MongoDBClient.get_db()]
+    db = db_client[MongoDBClient.get_db_name()]
 
     result = db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
