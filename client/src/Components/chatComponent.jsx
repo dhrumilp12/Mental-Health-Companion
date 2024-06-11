@@ -132,10 +132,16 @@ const ChatComponent = () => {
                 setTurnId(prev => prev + 1);
                 setInput('');
             } else {
-                console.error('Failed to send message:', data);
+                console.error('Failed to send message:', data.error || "Unknown error occurred");
+                setSnackbarMessage(data.error || "An error occurred while sending the message.");
+                setSnackbarSeverity('error');
+                setOpen(true);
             } 
             }catch (error) {
                 console.error('Failed to send message:', error);
+                setSnackbarMessage('Network or server error occurred.');
+                setSnackbarSeverity('error');
+                setOpen(true);
             } finally {
                 setIsLoading(false);
                 

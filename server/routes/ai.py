@@ -4,7 +4,7 @@ import logging
 from flask import jsonify
 from flask import Blueprint, request
 from werkzeug.exceptions import InternalServerError
-
+import json
 from models.ai_request import AIRequest
 from classes.cosmic_works_ai_agent import CosmicWorksAIAgent
 
@@ -112,7 +112,11 @@ def run_mental_health_agent(user_id, chat_id):
                                                         ChatHistoryScope.ALL)
 
         return jsonify(response), 200
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error: {str(e)}")
+        return jsonify({"error": "Invalid JSON format"}), 400
     except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @ai_routes.post("/ai/mental_health/finalize/<user_id>/<chat_id>")

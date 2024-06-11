@@ -89,9 +89,15 @@ const ChatComponent = () => {
                 setInput('');
             } else {
                 console.error('Failed to send message:', data);
+                setSnackbarMessage(data.error || "An error occurred while sending the message.");
+                setSnackbarSeverity('error');
+                setOpen(true);
             } 
             }catch (error) {
                 console.error('Failed to send message:', error);
+                setSnackbarMessage('Network or server error occurred.');
+                setSnackbarSeverity('error');
+                setOpen(true);
             } finally {
                 setIsLoading(false);
                 
