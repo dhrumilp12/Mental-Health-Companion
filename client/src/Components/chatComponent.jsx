@@ -1,12 +1,24 @@
 import React, { useState, useEffect, useContext,useCallback } from 'react';
 import axios from 'axios';
-import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
+import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import PersonIcon from '@mui/icons-material/Person';
 import { UserContext } from './userContext';
-//import  '../Assets/Styles/ChatComponent.module.css';
+import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
+import { Avatar } from '@mui/material';
 
+const TypingIndicator = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+        <Avatar src={Aria} sx={{ width: 24, height: 24, marginRight: 1 }} alt="Aria" />
+        <div style={{ display: 'flex' }}>
+            <div style={{ animation: 'blink 1.4s infinite', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
+            <div style={{ animation: 'blink 1.4s infinite 0.2s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
+            <div style={{ animation: 'blink 1.4s infinite 0.4s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor' }}></div>
+        </div>
+    </Box>
+);
 
 const ChatComponent = () => {
     const { user } = useContext(UserContext);
@@ -15,8 +27,10 @@ const ChatComponent = () => {
     const [turnId, setTurnId] = useState(0);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([]);
+    
     const [isLoading, setIsLoading] = useState(false); 
     const [welcomeMessage, setWelcomeMessage] = useState('');
+    const [isFetchingMessage, setIsFetchingMessage] = useState(false);
     const [open, setOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
@@ -24,6 +38,7 @@ const ChatComponent = () => {
     const fetchWelcomeMessage = useCallback(async () => {
         if (!userId) return;
         setIsLoading(true);
+        setIsFetchingMessage(true);
         try {
         const response = await fetch(`/api/ai/mental_health/welcome/${userId}`, {
             method: 'POST',
@@ -45,6 +60,7 @@ const ChatComponent = () => {
         console.error('Network or server error:', error);
     }finally {
         setIsLoading(false);
+        setIsFetchingMessage(false);
     }      
 }, [userId]);
     // Fetch initial message when component mounts
@@ -97,6 +113,7 @@ const ChatComponent = () => {
             console.log(chatId);
             setIsLoading(true);
             
+            
             try {
                 const body = JSON.stringify({
                     prompt: input,
@@ -121,6 +138,7 @@ const ChatComponent = () => {
                 console.error('Failed to send message:', error);
             } finally {
                 setIsLoading(false);
+                
             }
         }, [input, userId, chatId, turnId]);
     
@@ -130,20 +148,105 @@ const ChatComponent = () => {
         }, []);
 
         return (
+            <>
+            <style>
+                {`
+                    @keyframes blink {
+                        0%, 100% { opacity: 0; }
+                        50% { opacity: 1; }
+                    }
+                `}
+            </style>
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh',borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%',borderRadius: 2,boxShadow: 3 }}>
                     <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3 }}>
+                    {messages.length === 0 && (
+                            <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                mt: -3,
+                                mb: 2,
+                                p: 2,
+                                overflow: 'hidden',  // Ensures nothing spills out of the box
+                                maxWidth: '100%',    // Limits the width to prevent overflow
+                                maxHeight: '80%',  // Adjusts the maximum height of the logo area
+                            }}>
+                                <img src={Aria} alt="App Logo" style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+                                    width: 'auto', // Ensures the width automatically adjusts based on height
+                                    height: 'auto', // Auto height for proper scaling without specifying vh
+                                    objectFit: 'contain',  // Ensures the image scales properly within its constraints
+                                    borderRadius: '50%' // Optional: Makes the image circular
+                                }} />
+                            </Box>
+                            
+                        )}
+                    <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
+                    <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2,  }} alt="Aria" />
                         <Typography variant="h4" component="h1" gutterBottom>
                             Welcome to Mental Health Companion
                         </Typography>
-                        <Typography variant="body1" gutterBottom>
+                        </Box>
+                        
+                        {isFetchingMessage ? <TypingIndicator /> : 
+                        <Box sx={{ display: 'flex'}}>
+                        <Avatar src={Aria} sx={{ width: 36, height: 36, marginRight: 1,  }} alt="Aria" />
+                        <Typography variant="body1" gutterBottom sx={{ bgcolor: 'grey.200',borderRadius: '16px',
+                                        px: 2, // padding left and right within the text
+                                        py: 1, // padding top and bottom within the text
+                                        display: 'inline-block',}}>
                             {welcomeMessage}
                         </Typography>
+                        </Box>
+                        }
                         <List sx={{ maxHeight: '100%', overflow: 'auto' }}>
                             {messages.map((msg, index) => (
-                                <ListItem key={index}>
-                                    <ListItemText primary={msg.message} sx={{ textAlign: msg.sender === 'user' ? 'right' : 'left' }} />
-                                </ListItem>
+                                <ListItem key={index}sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                                    //backgroundColor: msg.sender === 'user' ? 'primary.light' : 'grey.100',  // Adjust colors here
+                                    borderRadius: 2, // Optional: Adds rounded corners
+                                    mb: 0.5, // Margin bottom for spacing between messages
+                                    p: 1 // Padding inside each list item
+                                }}>
+                                    <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    color: msg.sender === 'user' ? 'common.white' : 'text.primary',
+                                    borderRadius: '16px',
+                                    
+                                    
+                                }}>
+                                    
+                                     {msg.sender === 'agent' && (
+                                        <Avatar src={Aria} sx={{ width: 36, height: 36, mr: 1 }} alt="Aria" />
+                                    )}
+                                    
+                                    
+                                    <ListItemText primary={msg.message} primaryTypographyProps={{
+                                        
+                                    sx: { 
+                                        color: msg.sender === 'user' ? 'common.white' : 'text.primary',
+                                        //textAlign: msg.sender === 'user' ? 'right' : 'left',
+                                        bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200', // You can adjust the background color here
+                                        borderRadius: '16px', // Adds rounded corners to the text
+                                        px: 2, // padding left and right within the text
+                                        py: 1, // padding top and bottom within the text
+                                        display: 'inline-block', // Ensures the background color wraps the text only
+                                    }
+                                    
+                                }} />
+                                {msg.sender === 'user' && (
+                                    <Avatar sx={{ width: 36, height: 36, ml: 1 }}>
+                                    <PersonIcon />
+                                  </Avatar>
+                                )}
+                                </Box>
+                                </ListItem>   
                             ))}
                         </List>
                     </CardContent>
@@ -187,6 +290,7 @@ const ChatComponent = () => {
                     </MuiAlert>
                 </Snackbar>
             </Box>
+            </>
         );
     };
     

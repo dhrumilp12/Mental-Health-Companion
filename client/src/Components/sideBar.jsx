@@ -5,12 +5,16 @@ import InsertEmoticonIcon from '@mui/icons-material/InsertEmoticon'; // Icon for
 import ListAltIcon from '@mui/icons-material/ListAlt'; // Icon for mood logs
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { UserContext } from './userContext';
-import { Link } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const drawerWidth = 230;
 
 function Sidebar() {
   const { logout } = useContext(UserContext);
+  const location = useLocation(); // This hook returns the location object that represents the current URL.
+
+  const isActive = (path) => location.pathname === path; // This function checks if the current path is the same as the path passed as an argument.
+  
   return (
     <Drawer
       sx={{
@@ -24,35 +28,35 @@ function Sidebar() {
           height: '91vh', // Ensuring it covers the full height of the viewport
           top: 0, // Aligning it to the top of the viewport
           overflowX: 'hidden', // Hiding horizontal overflow
+          borderRadius: 2, 
+          boxShadow: 1 
         },
       }}
       variant="permanent"
       anchor="left"
     >
       <List>
-      <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <ListItem button>
-          <ListItemIcon><DeckIcon /></ListItemIcon>
-          <ListItemText primary="Mind Chat" />
-        </ListItem>
-        </Link>
-        <Link to="/user/mood_logging" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <ListItem button>
-                        <ListItemIcon><InsertEmoticonIcon /></ListItemIcon>
-                        <ListItemText primary="Track Your Vibes" />
-                    </ListItem>
-                </Link>
-                <Link to="/user/mood_logs" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <ListItem button>
-                        <ListItemIcon><ListAltIcon /></ListItemIcon>
-                        <ListItemText primary="Mood Logs" />
-                    </ListItem>
-                </Link>
+        {[
+          { text: "Mind Chat", icon: <DeckIcon />, path: "/" },
+          { text: "Track Your Vibes", icon: <InsertEmoticonIcon />, path: "/user/mood_logging" },
+          { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
+        ].map((item) => (
+          <NavLink to={item.path} key={item.text} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <ListItem button  sx={{
+                backgroundColor: isActive(item.path) ? 'rgba(25, 118, 210, 0.5)' : 'inherit', // Adjust the background color for the active item
+                '&:hover': {
+                  bgcolor: 'grey.200', // Adjust the background color for the hovered item
+                },
+                }}>
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItem>
+          </NavLink>
+        ))}
         <ListItem button onClick={logout}>
           <ListItemIcon><ExitToAppIcon /></ListItemIcon>
-          <ListItemText primary="Logout" /> 
-        </ListItem>      
-        
+          <ListItemText primary="Logout" />
+        </ListItem>
       </List>
     </Drawer>
   );
