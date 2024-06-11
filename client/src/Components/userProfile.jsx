@@ -57,7 +57,7 @@ const theme = createTheme({
 });
 
 const StyledForm = styled(Paper)(({ theme }) => ({
-  marginTop: theme.spacing(10),
+  marginTop: theme.spacing(4),
   padding: theme.spacing(4),
   display: 'flex',
   flexDirection: 'column',

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-export const UserContext = createContext(null);
+export const UserContext = createContext({ user: null });
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);

@@ -72,7 +72,9 @@ def get_mental_health_agent_welcome(user_id):
 def run_mental_health_agent(user_id, chat_id):
     ENV = os.environ.get("FLASK_ENV")
     body = request.get_json()
-
+    if not body:
+        return jsonify({"error": "No data provided"}), 400
+    
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
@@ -98,19 +100,20 @@ def run_mental_health_agent(user_id, chat_id):
     """
 
     timestamp = datetime.now().isoformat()
+    try:
+        response = get_langchain_agent_response(f"mental-health-{ENV}", 
+                                                        "chatbot_logs", 
+                                                        system_message, 
+                                                        prompt, 
+                                                        user_id,
+                                                        int(chat_id),
+                                                        turn_id + 1, 
+                                                        timestamp,
+                                                        ChatHistoryScope.ALL)
 
-    response = get_langchain_agent_response(f"mental-health-{ENV}", 
-                                                    "chatbot_logs", 
-                                                    system_message, 
-                                                    prompt, 
-                                                    user_id,
-                                                    int(chat_id),
-                                                    turn_id + 1, 
-                                                    timestamp,
-                                                    ChatHistoryScope.ALL)
-
-    return jsonify(response), 200
-
+        return jsonify(response), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @ai_routes.post("/ai/mental_health/finalize/<user_id>/<chat_id>")
 def set_mental_health_end_state(user_id, chat_id):

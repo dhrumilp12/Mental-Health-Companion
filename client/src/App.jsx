@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect, useContext } from 'react';
 import { UserProvider } from './Components/userContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import ChatComponent from './Components/chatComponent';  // Ensure this path is correct
@@ -10,18 +10,21 @@ import ChatInterface from './Components/chatInterface';
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
 import { CssBaseline, Box } from '@mui/material';
+import { UserContext } from './Components/userContext';
 
 function App() {
+    const { user } = useContext(UserContext);
+    
     useEffect(() => {
         document.body.style.backgroundColor = '#f5f5f5';
         
       }, []);
     
     return (
-        <UserProvider>
+        
             <Layout>
                 <Routes>
-                    <Route path="/" element={<ChatComponent />} />
+                    <Route path="/" element={user?.userId ?<ChatComponent />:<ChatInterface />} />
                     <Route path="/chat" element={<ChatInterface />} />
                     <Route path="/auth" element={<AuthComponent />} />
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
@@ -29,11 +32,12 @@ function App() {
                     <Route path="/user/mood_logs" element={<MoodLogs />} />
                 </Routes>
             </Layout>
-        </ UserProvider>
+        
     );
 }
 
 function Layout({ children }) {
+    const { user } = useContext(UserContext);
     const location = useLocation();
     const noNavRoutes = ['/auth'];  // List of routes that shouldn't show the navbar or sidebar
     const showNav = !noNavRoutes.includes(location.pathname);
