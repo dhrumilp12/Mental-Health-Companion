@@ -8,7 +8,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.vectorstores import VectorStoreRetriever
 
 from services.azure_mongodb import MongoDBClient
-from services.azure import get_azure_openai_variables, get_azure_openai_llm, get_azure_openai_embeddings
+from services.my_azure import get_azure_openai_variables, get_azure_openai_llm, get_azure_openai_embeddings
 
 class AIAgent:
     def __init__(self, system_message:str, schema:list[str]=[]):

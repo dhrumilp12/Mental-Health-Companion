@@ -3,7 +3,7 @@ import logging
 from flask import jsonify
 from flask import Blueprint, request
 import json
-
+from services.speech_service import speech_to_text
 from agents.mental_health_agent import MentalHealthAIAgent, ChatHistoryScope
 from utils.consts import SYSTEM_MESSAGE
 
@@ -70,3 +70,20 @@ def set_mental_health_end_state(user_id, chat_id):
     except Exception as e:
         logger.error(f"Error during finalizing chat: {e}")
         return jsonify({"error": "Failed to finalize chat"}), 500
+    
+
+@ai_routes.post("/ai/mental_health/voice-to-text")
+def handle_voice_input():
+        # Check if the part 'audio' is present in files
+        if 'audio' not in request.files:
+            return jsonify({'error': 'Audio file is required'}), 400
+        # Assume the voice data is sent as a file or binary data
+        voice_data = request.files['audio']
+
+        # Save the temporary audio file if needed or pass directly to the speech_to_text function
+        text_output = speech_to_text(voice_data)
+        
+        if text_output:
+            return jsonify({'message': text_output}), 200
+        else:
+            return jsonify({'error': 'Speech recognition failed'}), 400

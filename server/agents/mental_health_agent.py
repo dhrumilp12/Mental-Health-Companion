@@ -153,29 +153,6 @@ class MentalHealthAIAgent(AIAgent):
 
         return invocation["output"]
 
-    def run(self, message:str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
-        if not with_history:
-            return super().run(message)
-        else:
-            #:TODO throw error if user_id, chat_id, or history_scope is set to None.
-            memory = self.get_agent_memory(user_id, chat_id, history_scope)
-            agent_with_history = self.get_agent_with_history(memory)
-            
-            if memory.buffer:
-                addendum = f"""
-                Previous Conversation Summary:
-                {memory.buffer}
-                """        
-                self.system_message.content = f"{self.system_message.content}\n{addendum}"
-
-            invocation = agent_with_history.invoke(
-                { "input": message },
-                config={"configurable": {"user_id": user_id, "chat_id": chat_id}} 
-            )
-
-            self.write_agent_response_to_db(invocation, user_id, chat_id, turn_id)
-
-            return invocation["output"]
         
     def analyze_chat(self, text):
         """Analyze the chat text to determine emotional state and detect triggers."""
