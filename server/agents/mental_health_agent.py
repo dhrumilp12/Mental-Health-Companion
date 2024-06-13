@@ -283,9 +283,10 @@ class MentalHealthAIAgent(AIAgent):
 
 
     def prepare_tools(self):
-        search = BingSearchAPIWrapper(k=5)
-
+        # search = BingSearchAPIWrapper(k=5)
+        search = TavilySearchResults()
         community_tools = [search]
+        
         # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
         user_journeys_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_journeys") | format_docs
         user_materials_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_materials") | format_docs
