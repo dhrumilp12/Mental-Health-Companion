@@ -39,16 +39,18 @@ def speech_to_text(audio_file):
         elif result.reason == speechsdk.ResultReason.NoMatch:
             print("No speech could be recognized")
             return "No speech could be recognized"
-        elif result.reason == speechsdk.ResultTimeOut:
-            print("Operation timed out")
-            return "Operation timed out"
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = result.cancellation_details
+            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print("Error details: {}".for_sessiondetails.error_details)
+            return "Speech Recognition canceled"
         else:
             print("Speech Recognition canceled: {}".format(result.cancellation_details.reason))
             if result.cancellation_details.reason == speechsdk.CancellationReason.Error:
                 print("Error details: {}".format(result.cancellation_details.error_details))
             return "Speech Recognition canceled"
 
-        return None
 
     except Exception as e:
         print(f"Error during speech recognition: {str(e)}")

@@ -4,6 +4,8 @@ import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem,L
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import StopIcon from '@mui/icons-material/Stop';
 import PersonIcon from '@mui/icons-material/Person';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
@@ -27,7 +29,9 @@ const ChatComponent = () => {
     const [turnId, setTurnId] = useState(0);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([]);
-    
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+    const [audioChunks, setAudioChunks] = useState([]);
     const [isLoading, setIsLoading] = useState(false); 
     const [welcomeMessage, setWelcomeMessage] = useState('');
     const [isFetchingMessage, setIsFetchingMessage] = useState(false);
@@ -147,6 +151,57 @@ const ChatComponent = () => {
                 
             }
         }, [input, userId, chatId, turnId]);
+
+        // Function to handle recording start
+        const startRecording = () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    const recorder = new MediaRecorder(stream);
+                    recorder.ondataavailable = (e) => setAudioChunks(current => [...current, e.data]);
+                    recorder.onstop = sendAudioToServer;
+                    recorder.start();
+                    setMediaRecorder(recorder);
+                    setIsRecording(true);
+                }).catch(console.error);
+        };
+
+        // Function to handle recording stop
+        const stopRecording = () => {
+            mediaRecorder.stop();
+            setIsRecording(false);
+            setMediaRecorder(null);
+        };
+
+        const sendAudioToServer = useCallback(() => {
+            const audioBlob = new Blob(audioChunks, { 'type': 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob);
+            setIsLoading(true);
+        
+            axios.post('/api/ai/mental_health/voice-to-text', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(response => {
+                const { message } = response.data;
+                setInput(message);
+                sendMessage();
+            })
+            .catch(error => {
+                console.error('Error uploading audio:', error);
+                setOpen(true);
+                setSnackbarMessage('Error processing voice input: ' + error.message);
+                setSnackbarSeverity('error');
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+        }, []);
+        
+
+
+
     
         // Handle input changes
         const handleInputChange = useCallback((event) => {
@@ -267,6 +322,12 @@ const ChatComponent = () => {
                             disabled={isLoading}
                             sx={{ mr: 1, flexGrow: 1 }}
                         />
+                            <Button onClick={isRecording ? stopRecording : startRecording} 
+                                variant="contained" 
+                                color="secondary" 
+                                startIcon={isRecording ? <StopIcon /> : <RecordVoiceOverIcon />}>
+                            {isRecording ? 'Stop Recording' : 'Start Recording'}
+                        </Button>
                         {isLoading ? <CircularProgress size={24} /> : (
                             <Button variant="contained" color="primary" onClick={sendMessage} disabled={isLoading || !input.trim()} endIcon={<SendIcon />}>
                                 Send
