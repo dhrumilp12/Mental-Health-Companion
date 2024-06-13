@@ -154,10 +154,15 @@ const ChatComponent = () => {
 
         // Function to handle recording start
         const startRecording = () => {
+            setAudioChunks([]);
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    const recorder = new MediaRecorder(stream);
-                    recorder.ondataavailable = (e) => setAudioChunks(current => [...current, e.data]);
+                    const options = { mimeType: 'audio/webm' };
+                    const recorder = new MediaRecorder(stream, options);
+                    recorder.ondataavailable = (e) => {
+                        console.log('Data available:', e.data.size); // Log size to check if data is present
+                        setAudioChunks(current => [...current, e.data]);
+                    };
                     recorder.onstop = sendAudioToServer;
                     recorder.start();
                     setMediaRecorder(recorder);
@@ -167,13 +172,21 @@ const ChatComponent = () => {
 
         // Function to handle recording stop
         const stopRecording = () => {
-            mediaRecorder.stop();
-            setIsRecording(false);
-            setMediaRecorder(null);
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+                setIsRecording(false);
+                setMediaRecorder(null);
+            }
         };
 
         const sendAudioToServer = useCallback(() => {
-            const audioBlob = new Blob(audioChunks, { 'type': 'audio/wav' });
+            console.log('Audio chunks size:', audioChunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
+            const audioBlob = new Blob(audioChunks, { 'type': 'audio/webm' });
+            if (audioBlob.size === 0) {
+                console.error('Audio Blob is empty');
+                return;
+            }
+            console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
             const formData = new FormData();
             formData.append('audio', audioBlob);
             setIsLoading(true);
@@ -197,7 +210,7 @@ const ChatComponent = () => {
             .finally(() => {
                 setIsLoading(false);
             });
-        }, []);
+        }, [audioChunks]);
         
 
 
