@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import spacy
 import json
@@ -11,12 +12,15 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables.utils import ConfigurableFieldSpec
 from langchain.memory import ConversationSummaryMemory
 from langchain_core.messages import SystemMessage
+from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
+from langchain.agents import Tool
 
 from .ai_agent import AIAgent
 from services.azure_mongodb import MongoDBClient
 from utils.consts import SYSTEM_MESSAGE
+from utils.docs import format_docs
 
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
@@ -44,7 +48,7 @@ class MentalHealthAIAgent(AIAgent):
 
         self.agent_executor = create_conversational_retrieval_agent(
             llm=self.llm,
-            tools= MentalHealthAIAgent.prepare_tools(),
+            tools= self.prepare_tools(),
             system_message = self.system_message,
             verbose=True
         )
@@ -62,11 +66,9 @@ class MentalHealthAIAgent(AIAgent):
 
     def get_chat_history(self, user_id, chat_id, history_scope:ChatHistoryScope):
         """
-        Used to find personal details from previous conversations with the user.
+        Used to find details from previous conversations with the user.
         """
-        db_client = MongoDBClient.get_client()
-        db = db_client[MongoDBClient.get_db_name()]
-        collection = db["chat_turns"]
+        collection = self.db["chat_turns"]
 
         # Check if the 'timestamp' index already exists
         indexes = collection.list_indexes()
@@ -216,7 +218,7 @@ class MentalHealthAIAgent(AIAgent):
 
         return {"emotions": emotions, "triggers": triggers, "patterns": patterns}
     
-    def run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
+    def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
         try:
             if not with_history:
                 return super().run(message)
@@ -248,6 +250,7 @@ class MentalHealthAIAgent(AIAgent):
         except Exception as e:
             return f"An error occurred: {str(e)}"
 
+
     def format_response_addendum(self, analysis_results):
         patterns = analysis_results['patterns']
         response_addendum = ""
@@ -256,11 +259,42 @@ class MentalHealthAIAgent(AIAgent):
         return response_addendum.strip()
 
 
-
-    def prepare_tools():
+    def prepare_tools(self):
+        # search = BingSearchAPIWrapper(k=5)
         search = TavilySearchResults()
+        community_tools = [search]
+        
         # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
-        return [search]#, cosmosdb_tool
+        user_journeys_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_journeys") | format_docs
+        user_materials_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_materials") | format_docs
+        user_entities_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_entities") | format_docs
+        agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
+
+        custom_tools = [
+            Tool(
+                name = "vector_search_user_journeys",
+                func = user_journeys_retriever_chain.invoke,
+                description = "Searches a mental health patient's user journey for "
+            ),
+            Tool(
+                name = "vector_search_user_materials",
+                func = user_materials_retriever_chain.invoke,
+                description = ""
+            ),
+            Tool(
+                name = "vector_search_user_entities",
+                func = user_entities_retriever_chain.invoke,
+                description = ""
+            ),
+            Tool(
+                name = "vector_search_agent_facts",
+                func = agent_facts_retriever_chain.invoke,
+                description = ""
+            )
+        ]
+
+        all_tools = community_tools #+ custom_tools
+        return all_tools
 
 
     def get_initial_greeting(self, user_id):
@@ -329,9 +363,46 @@ class MentalHealthAIAgent(AIAgent):
                 "chat_id": new_chat_id
             }
         
+
+    def get_user_journey_by_user_id(self, user_id:str) -> str:
+        """
+        Retrieves a user journey by the user's ID.
+        """
+        doc = self.db["user_journeys"].find_one({"user_id": user_id})
+        if "contentVector" in doc:
+            del doc["contentVector"]
+        return json.dumps(doc)
     
+    
+    def get_chat_summary_by_composite_id(self, user_id:str, chat_id:str) -> str:
+        """
+        Retrieves a summary of a chat between a user and the agent by a
+        combination of the user's ID and the chat instance ID.
+        """
+        doc = self.db["chat_summaries"].find_one({"user_id": user_id, "chat_id": chat_id})
+        if "contentVector" in doc:
+            del doc["contentVector"]
+        return json.dumps(doc)
+        
+
+    def get_user_material_by_user_id(self, user_id: str) -> str:
+        """
+        Retrieves a user's therapy material by the user's ID.
+        """
+        doc = self.db["user_materials"].find_one({"user_id": user_id})
+        if "contentVector" in doc:
+            del doc["contentVector"]
+        return json.dumps(doc)
 
 
+    def get_user_entity_by_user_id(self, user_id: str):
+        """
+        Retrieves a user's known entity by the user's ID.
+        """
+        doc = self.db["user_entities"].find_one({"user_id": user_id})
+        if "contentVector" in doc:
+            del doc["contentVector"]
+        return json.dumps(doc)
 
 # def process_langchain_query(query_string, question, collection_name, system_prompt):
 #     components = setup_langchain(collection_name, system_prompt)

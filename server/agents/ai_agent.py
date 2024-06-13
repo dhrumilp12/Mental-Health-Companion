@@ -12,7 +12,7 @@ from services.my_azure import get_azure_openai_variables, get_azure_openai_llm, 
 
 class AIAgent:
     def __init__(self, system_message:str, schema:list[str]=[]):
-        self.db_client = MongoDBClient.get_client()
+        self.db = (MongoDBClient.get_client())[MongoDBClient.get_db_name()]
         self.llm = get_azure_openai_llm()
         self.embedding_model = get_azure_openai_embeddings()
 
@@ -34,7 +34,8 @@ class AIAgent:
         return result["output"]
     
 
-    def __get_cosmosdb_vector_store_retriever(db_name, collection_name, top_k=3) -> VectorStoreRetriever:
+    def _get_cosmosdb_vector_store_retriever(self, collection_name, top_k=3) -> VectorStoreRetriever:
+        db_name = MongoDBClient.get_db_name()
         CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
         _, _, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
 
