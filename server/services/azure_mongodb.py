@@ -8,6 +8,7 @@ import requests
 import pymongo
 from pymongo import UpdateOne, ReturnDocument
 import mongomock
+from langchain_community.document_loaders.mongodb import MongodbLoader
 
 from utils.consts import APP_NAME
 
@@ -44,6 +45,20 @@ class MongoDBClient:
 
         return cls._client
     
+    @staticmethod
+    def get_mongodb_loader(collection_name, db_filter):
+        CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
+        
+        loader = MongodbLoader(
+            connection_string=CONNECTION_STRING,
+            db_name= MongoDBClient.get_db_name(),
+            collection_name=collection_name,
+            filter_criteria=db_filter
+        )
+
+        return loader
+
+
     @classmethod
     def get_db_name(cls):
         ENV = os.environ.get("FLASK_ENV")
