@@ -9,6 +9,8 @@ from flask_jwt_extended import JWTManager
 from routes.user import user_routes 
 from routes.ai import ai_routes
 
+from agents.mental_health_agent import MentalHealthAIAgent
+
 # Set up the app
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = 't54WKRE5t5UaZnEWDvUd75Qe5ilYAKKe9n8tbUGv3_Q' #FIXME: This should be an environment variable.
@@ -19,6 +21,8 @@ CORS(app)
 app.register_blueprint(user_routes)
 app.register_blueprint(ai_routes)
 
+# DB pre-load
+MentalHealthAIAgent.load_agent_facts_to_db()
 
 # Base endpoint
 @app.get("/")

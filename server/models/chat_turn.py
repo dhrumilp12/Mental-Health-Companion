@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 class ChatTurn(BaseModel):
     user_id: str
-    chat_id: str
-    turn_id: str
+    chat_id: int
+    turn_id: int
     human_message: str
     ai_message: str
     timestamp: datetime

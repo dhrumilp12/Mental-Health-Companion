@@ -6,6 +6,5 @@
 from pydantic import BaseModel
 
 class AgentFact(BaseModel):
-    fact_id: str
     sample_query: str
     fact: str
