@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
-import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
+import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PersonIcon from '@mui/icons-material/Person';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
-import { Avatar } from '@mui/material';
+
 
 const TypingIndicator = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
@@ -22,8 +24,9 @@ const TypingIndicator = () => (
     </Box>
 );
 
+
 const ChatComponent = () => {
-    const { user } = useContext(UserContext);
+    const { user,voiceEnabled } = useContext(UserContext);
     const userId = user?.userId; 
     const [chatId, setChatId] = useState(null);
     const [turnId, setTurnId] = useState(0);
@@ -38,7 +41,38 @@ const ChatComponent = () => {
     const [open, setOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+    const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
+    
+    
+    const speak = (text) => {
+        
+        if (!voiceEnabled || text === currentPlayingMessage) {
+            setCurrentPlayingMessage(null);
+            window.speechSynthesis.cancel(); // Stop the current speech synthesis
+            return;
+          }
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = synth.getVoices();
+        console.log(voices.map(voice => `${voice.name} - ${voice.lang} - ${voice.gender}`));
 
+        const femaleVoice = voices.find(voice => voice.name.includes("Microsoft Zira - English (United States)")); // Example: Adjust based on available voices
+
+    if (femaleVoice) {
+        utterance.voice = femaleVoice;
+    } else {
+        console.log("No female voice found");
+    }
+
+    utterance.onend = () => {
+        setCurrentPlayingMessage(null); // Reset after speech has ended
+      };
+
+    setCurrentPlayingMessage(text);
+    synth.speak(utterance);
+};
+
+    
     const fetchWelcomeMessage = useCallback(async () => {
         if (!userId) return;
         setIsLoading(true);
@@ -54,6 +88,9 @@ const ChatComponent = () => {
         console.log(data);
         if (response.ok) {
             setWelcomeMessage(data.message);
+            if (voiceEnabled && data.message) { // Ensure voice is enabled and the message is not empty
+                speak(data.message);
+            }
             setChatId(data.chat_id);
             console.log(data.chat_id);
         } else {
@@ -132,7 +169,11 @@ const ChatComponent = () => {
             const data = await response.json();
             console.log(data);    
             if (response.ok) {
-                setMessages(prev => [...prev, { message: input, sender: 'user' }, { message: data, sender: 'agent' }]);
+                setMessages(prev =>[...prev, { message: input, sender: 'user' }, { message: data, sender: 'agent' }]);
+                    // Speak the agent's message immediately after it's received and processed
+                if (voiceEnabled && data) { // Ensure voice is enabled and the message is not empty
+                    speak(data);
+                }
                 setTurnId(prev => prev + 1);
                 setInput('');
             } else {
@@ -216,13 +257,14 @@ const ChatComponent = () => {
         }; // Remove audioChunks from dependencies to prevent re-creation
         
 
-
-
-    
         // Handle input changes
         const handleInputChange = useCallback((event) => {
             setInput(event.target.value);
         }, []);
+
+        const messageIcon = (message) => {
+            return message === currentPlayingMessage ? <VolumeOffIcon /> : <VolumeUpIcon />;
+          }
 
         return (
             <>
@@ -274,8 +316,12 @@ const ChatComponent = () => {
                         <Typography variant="body1" gutterBottom sx={{ bgcolor: 'grey.200',borderRadius: '16px',
                                         px: 2, // padding left and right within the text
                                         py: 1, // padding top and bottom within the text
-                                        display: 'inline-block',}}>
+                                        display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap'}}>
                             {welcomeMessage}
+                            {voiceEnabled && welcomeMessage && (
+                                            <IconButton onClick={() => speak(welcomeMessage)} size="small" sx={{ ml: 1, }}>
+                                                {messageIcon(welcomeMessage)}
+                                            </IconButton>)}
                         </Typography>
                         </Box>
                         }
@@ -300,11 +346,17 @@ const ChatComponent = () => {
                                 }}>
                                     
                                      {msg.sender === 'agent' && (
-                                        <Avatar src={Aria} sx={{ width: 36, height: 36, mr: 1 }} alt="Aria" />
+                                            <Avatar src={Aria} sx={{ width: 36, height: 36, mr: 1 }} alt="Aria" />  
                                     )}
                                     
                                     
-                                    <ListItemText primary={msg.message} primaryTypographyProps={{
+                                    <ListItemText primary={<Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                    {msg.message}
+                                    {voiceEnabled && msg.sender === 'agent' && (
+                                            <IconButton onClick={() => speak(msg.message)} size="small" sx={{ ml: 1, }}>
+                                                {messageIcon(msg.message)}
+                                            </IconButton>)}
+                                            </Box>} primaryTypographyProps={{
                                         
                                     sx: { 
                                         color: msg.sender === 'user' ? 'common.white' : 'text.primary',

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export const UserContext = createContext({ user: null });
 
 export const UserProvider = ({ children }) => {
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const logout = useCallback(async () => {
@@ -32,7 +33,7 @@ export const UserProvider = ({ children }) => {
   }, [navigate]);
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled }}>
       {children}
     </UserContext.Provider>
   );
