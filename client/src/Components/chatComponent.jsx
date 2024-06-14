@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext,useCallback } from 'react';
+import React, { useState, useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
 import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
@@ -31,7 +31,7 @@ const ChatComponent = () => {
     const [messages, setMessages] = useState([]);
     const [isRecording, setIsRecording] = useState(false);
     const [mediaRecorder, setMediaRecorder] = useState(null);
-    const [audioChunks, setAudioChunks] = useState([]);
+    const audioChunksRef = useRef([]);
     const [isLoading, setIsLoading] = useState(false); 
     const [welcomeMessage, setWelcomeMessage] = useState('');
     const [isFetchingMessage, setIsFetchingMessage] = useState(false);
@@ -154,16 +154,16 @@ const ChatComponent = () => {
 
         // Function to handle recording start
         const startRecording = () => {
-            setAudioChunks([]);
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
+                    audioChunksRef.current = []; // Clear the ref at the start of recording
                     const options = { mimeType: 'audio/webm' };
                     const recorder = new MediaRecorder(stream, options);
                     recorder.ondataavailable = (e) => {
                         console.log('Data available:', e.data.size); // Log size to check if data is present
-                        setAudioChunks(current => [...current, e.data]);
+                        audioChunksRef.current.push(e.data);
                     };
-                    recorder.onstop = sendAudioToServer;
+                    
                     recorder.start();
                     setMediaRecorder(recorder);
                     setIsRecording(true);
@@ -173,15 +173,18 @@ const ChatComponent = () => {
         // Function to handle recording stop
         const stopRecording = () => {
             if (mediaRecorder) {
-                mediaRecorder.stop();
-                setIsRecording(false);
-                setMediaRecorder(null);
+                mediaRecorder.onstop = () => {
+                    sendAudioToServer(audioChunksRef.current); // Ensure sendAudioToServer is called only after recording has fully stopped
+                    setIsRecording(false);
+                    setMediaRecorder(null);
+                };
+                mediaRecorder.stop(); // Stop recording, onstop will be triggered after this
             }
         };
 
-        const sendAudioToServer = useCallback(() => {
-            console.log('Audio chunks size:', audioChunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
-            const audioBlob = new Blob(audioChunks, { 'type': 'audio/webm' });
+        const sendAudioToServer = chunks => {
+            console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
+            const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
             if (audioBlob.size === 0) {
                 console.error('Audio Blob is empty');
                 return;
@@ -208,9 +211,9 @@ const ChatComponent = () => {
                 setSnackbarSeverity('error');
             })
             .finally(() => {
-                setIsLoading(false);
-            });
-        }, [audioChunks]);
+                        setIsLoading(false);
+                    });
+        }; // Remove audioChunks from dependencies to prevent re-creation
         
 
 
