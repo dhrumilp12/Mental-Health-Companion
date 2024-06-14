@@ -4,7 +4,7 @@ from flask import jsonify
 from flask import Blueprint, request
 import json
 from services.speech_service import speech_to_text
-from agents.mental_health_agent import MentalHealthAIAgent, ChatHistoryScope
+from agents.mental_health_agent import MentalHealthAIAgent
 from utils.consts import SYSTEM_MESSAGE
 
 # Configure logging
@@ -44,7 +44,6 @@ def run_mental_health_agent(user_id, chat_id):
                                 user_id=user_id,
                                 chat_id=int(chat_id),
                                 turn_id=turn_id + 1, 
-                                history_scope=ChatHistoryScope.ALL
                             )
 
         return jsonify(response), 200

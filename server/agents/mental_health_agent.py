@@ -1,19 +1,15 @@
-import os
 from datetime import datetime
 import spacy
 import json
-from enum import Enum
-import pymongo
 
-from langchain_openai import AzureOpenAIEmbeddings
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.memory import ConversationSummaryMemory
 from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 from langchain.agents import Tool, create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
+from langchain_core.messages import SystemMessage
 
 from .ai_agent import AIAgent
 from services.azure_mongodb import MongoDBClient
@@ -29,11 +25,6 @@ from models.chat_turn import ChatTurn
 # Load spaCy model
 nlp = spacy.load("en_core_web_sm")
 
-class ChatHistoryScope(Enum):
-    ALL = "all",
-    PREVIOUS = "previous"
-    CURRENT = "current"
-
 
 class MentalHealthAIAgent(AIAgent):
     """
@@ -45,26 +36,33 @@ class MentalHealthAIAgent(AIAgent):
     """
 
     def __init__(self, system_message=SYSTEM_MESSAGE, schema=[]):
-        self.system_message = system_message
-
         super().__init__(system_message, schema)
 
-        self.agent_executor:AgentExecutor = create_conversational_retrieval_agent(
-            llm=self.llm,
-            tools=self.prepare_tools(),
-            system_message=self.system_message,
-            verbose=True,
-            kwargs={}
-        )
+        self.system_message = SystemMessage(system_message)
+        self.prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", self.system_message.content),
+                    MessagesPlaceholder(variable_name="history"),
+                    ("human", "{input}"),
+                    MessagesPlaceholder(variable_name="agent_scratchpad"),
+                ]
+            )
+        
+        self.agent_executor = self.get_agent_executor(self.prompt)
 
 
     def get_session_history(self, session_id: str) -> MongoDBChatMessageHistory:
-        return MongoDBChatMessageHistory(
+        history = MongoDBChatMessageHistory(
             MongoDBClient.get_mongodb_variables(),
             session_id,
             MongoDBClient.get_db_name(),
             collection_name="history"
         )
+
+        if history is None:
+            return []
+        else:
+            return history
 
 
     def get_agent_memory(self, user_id, chat_id, history_scope=ChatHistoryScope.ALL):
@@ -88,55 +86,102 @@ class MentalHealthAIAgent(AIAgent):
             verbose=True
         )
 
-        return agent_with_history
+        return agent_with_history    
 
 
-    def run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
-        if not with_history:
-            return super().run(message)
-        else:
+    def prepare_tools(self):
+        # search = BingSearchAPIWrapper(k=5)
+        search = TavilySearchResults()
+        community_tools = [search]
+
+        # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
+        agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
+        # user_profiles_retriever_chain = self._get_cosmosdb_vector_store_retriever("users") | format_docs
+        # user_journeys_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_journeys") | format_docs
+        # user_materials_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_materials") | format_docs
+        # user_entities_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_entities") | format_docs
+        # agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
+
+        custom_tools = [
+            Tool(
+                name="vector_search_agent_facts",
+                func=agent_facts_retriever_chain.invoke,
+                description="Searches for facts about the agent itself."
+            ),
+            # Tool(
+            #     name = "vector_search_user_journeys",
+            #     func = user_profiles_retriever_chain.invoke,
+            #     description = "Searches a user's profile for personal information."
+            # ),
+            # Tool(
+            #     name = "vector_search_user_journeys",
+            #     func = user_journeys_retriever_chain.invoke,
+            #     description = "Searches a mental health patient's user journey."
+            # ),
+            # Tool(
+            #     name = "vector_search_user_materials",
+            #     func = user_materials_retriever_chain.invoke,
+            #     description = ""
+            # ),
+            # Tool(
+            #     name = "vector_search_user_entities",
+            #     func = user_entities_retriever_chain.invoke,
+            #     description = ""
+            # ),
+            # Tool(
+            #     name = "vector_search_agent_facts",
+            #     func = agent_facts_retriever_chain.invoke,
+            #     description = ""
+            # )
+        ]
+
+        all_tools = community_tools + custom_tools
+        return all_tools
+
+    
+    def get_agent_executor(self, prompt):
+        tools = self.prepare_tools()
+        agent = create_tool_calling_agent(self.llm, tools, prompt)
+        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+        return agent_executor  
+    
+
+    def run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
+        # if not with_history:
+        #     return super().run(message)
+        # else:
 
             # TODO: throw error if user_id, chat_id, or history_scope is set to None.
-            session_id = f"{user_id}-{chat_id}"
+        session_id = f"{user_id}-{chat_id}"
 
-            prompt = ChatPromptTemplate.from_messages(
-                [
-                    ("system", self.system_message.content),
-                    MessagesPlaceholder(variable_name="history"),
-                    ("human", "{input}"),
-                    MessagesPlaceholder(variable_name="agent_scratchpad"),
-                ]
-            )
 
-            tools = self.prepare_tools()
-            agent = create_tool_calling_agent(self.llm, self.prepare_tools(), prompt)
-            agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+        agent_with_history = self.get_agent_with_history(self.agent_executor)
 
-            agent_with_history = self.get_agent_with_history(agent_executor)
+        invocation = agent_with_history.invoke(
+            {"input": message, "agent_scratchpad": []},
+            config={"configurable": {"session_id": session_id}}
+        )
 
-            invocation = agent_with_history.invoke(
-                {"input": message, "agent_scratchpad": []},
-                config={"configurable": {"session_id": session_id}}
-            )
+        # This updates certain collections in the database based on recent history
+        if (turn_id + 1) % PROCESSING_STEP == 0:
+            # TODO
+            # Chat Summary:
+            # Update every 5 chat turns
+            # Therapy Material
+            # Maybe not get it from DB at all? Just perform Bing search?
+            # User Entity:
+            # Can be saved from chat summary step, every 5 chat turns
+            # User Journey:
+            # Can be either updated at the end of the chat, or every 5 chat turns
+            # User Material:
+            # Possibly updated every 5 chat turns, at the end of a chat, or not at all
 
-            # This updates certain collections in the database based on recent history
-            if (turn_id + 1) % PROCESSING_STEP == 0:
-                # Chat Summary:
-                # Update every 5 chat turns
-                # Therapy Material
-                # Maybe not get it from DB at all? Just perform Bing search?
-                # User Entity:
-                # Can be saved from chat summary step, every 5 chat turns
-                # User Journey:
-                # Can be either updated at the end of the chat, or every 5 chat turns
-                # User Material:
-                # Possibly updated every 5 chat turns, at the end of a chat, or not at all
+            self.update_chat_summary(user_id, chat_id)
+            self.update_user_entities()
+            self.update_user_journey()
 
-                self.update_chat_summary(user_id, chat_id)
-                self.update_user_entities()
-                self.update_user_journey()
-
-            return invocation["output"]
+        return invocation["output"]
 
     def update_chat_summary(self, user_id, chat_id):
         # TODO: Redo this function
@@ -220,17 +265,6 @@ class MentalHealthAIAgent(AIAgent):
         # TODO
         pass
 
-    @staticmethod
-    def generate_embeddings(text: str):
-        embeddings_model = AzureOpenAIEmbeddings(
-            azure_endpoint= os.environ["AOAI_ENDPOINT"],
-            api_key= os.environ["AOAI_KEY"],
-            azure_deployment= os.environ["EMBEDDINGS_DEPLOYMENT_NAME"]
-        )
-        embeddings = embeddings_model.embed_query(text)
-
-        return embeddings
-
 
     @staticmethod
     def load_agent_facts_to_db():
@@ -244,23 +278,9 @@ class MentalHealthAIAgent(AIAgent):
             facts_to_load = [AgentFact.model_dump(
                 fact_model) for fact_model in validated_models]
             collection.insert_many(facts_to_load)
-
-            bulk_operations = []
-            for doc in collection.find():
-                if "contentVector" in doc:
-                    del doc["contentVector"]
-                
-                content = json.dumps(doc, default=str)
-                content_vector = MentalHealthAIAgent.generate_embeddings(content)
-
-                bulk_operations.append(pymongo.UpdateOne(
-                    {"_id": doc["_id"]},
-                    {"$set": {"contentVector": content_vector}},
-                    upsert=True
-                ))
-            collection.bulk_write(bulk_operations)
         else:
             print("Agent facts are already populated. Skipping step.")
+
 
     def analyze_chat(self, text):
         """Analyze the chat text to determine emotional state and detect triggers."""
@@ -364,54 +384,7 @@ class MentalHealthAIAgent(AIAgent):
                 "; ".join(suggestions) + "\n"
         return response_addendum.strip()
 
-    def prepare_tools(self):
-        # search = BingSearchAPIWrapper(k=5)
-        search = TavilySearchResults()
-        community_tools = [search]
 
-        # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
-        agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") #| format_docs
-        # user_profiles_retriever_chain = self._get_cosmosdb_vector_store_retriever("users") | format_docs
-        # user_journeys_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_journeys") | format_docs
-        # user_materials_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_materials") | format_docs
-        # user_entities_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_entities") | format_docs
-        # agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
-
-        custom_tools = [
-            # Tool(
-            #     name="vector_search_agent_facts",
-            #     func=agent_facts_retriever_chain.invoke,
-            #     description="Searches for facts about the agent itself."
-            # ),
-            # Tool(
-            #     name = "vector_search_user_journeys",
-            #     func = user_profiles_retriever_chain.invoke,
-            #     description = "Searches a user's profile for personal information."
-            # ),
-            # Tool(
-            #     name = "vector_search_user_journeys",
-            #     func = user_journeys_retriever_chain.invoke,
-            #     description = "Searches a mental health patient's user journey."
-            # ),
-            # Tool(
-            #     name = "vector_search_user_materials",
-            #     func = user_materials_retriever_chain.invoke,
-            #     description = ""
-            # ),
-            # Tool(
-            #     name = "vector_search_user_entities",
-            #     func = user_entities_retriever_chain.invoke,
-            #     description = ""
-            # ),
-            # Tool(
-            #     name = "vector_search_agent_facts",
-            #     func = agent_facts_retriever_chain.invoke,
-            #     description = ""
-            # )
-        ]
-
-        all_tools = community_tools + custom_tools
-        return all_tools
 
     def get_initial_greeting(self, user_id):
         db_client = MongoDBClient.get_client()
@@ -447,7 +420,6 @@ class MentalHealthAIAgent(AIAgent):
                 user_id=user_id,
                 chat_id=0,
                 turn_id=0,
-                history_scope=ChatHistoryScope.ALL,
             )
 
             return {
@@ -456,13 +428,15 @@ class MentalHealthAIAgent(AIAgent):
             }
 
         else:
+            # TODO: Must implement either remembering from previous conversation or knowing things from user profile
             try:
-                last_turn = db.chat_turns.find({"user_id": user_id}).sort(
+                # SessionIds in history are expected to start with the user_id and end with the chat_id
+                last_turn = db["history"].find({"SessionId": {"$regex": user_id}}).sort(
                     {"timestamp": -1}).limit(1).next()
             except StopIteration:
                 last_turn = {}
 
-            old_chat_id = last_turn.get("chat_id", -1)
+            old_chat_id = int(last_turn["SessionId"].split('-')[-1])
             new_chat_id = old_chat_id + 1
 
             response = self.run(
@@ -471,7 +445,6 @@ class MentalHealthAIAgent(AIAgent):
                 user_id=user_id,
                 chat_id=new_chat_id,
                 turn_id=0,
-                history_scope=ChatHistoryScope.PREVIOUS
             )
 
             return {
@@ -525,83 +498,6 @@ class MentalHealthAIAgent(AIAgent):
         if "contentVector" in doc:
             del doc["contentVector"]
         return json.dumps(doc)
-
-# def process_langchain_query(query_string, question, collection_name, system_prompt):
-#     components = setup_langchain(collection_name, system_prompt)
-#     llm = components["llm"]
-#     prompt_template = components["prompt_template"]
-#     db = components["db"]
-
-#     # Fetch documents with descriptions that include the word "yellow"
-#     query = {"description": {"$regex": query_string, "$options": "i"}}
-#     documents = db[collection_name].find(query)
-
-#     # Extract text content from documents
-#     text_contents = extract_text(documents)
-
-#     # Prepare the product list for the prompt
-#     objs_list = json.dumps(text_contents, indent=2) if text_contents else "No products found."
-
-#     processed_prompt = prompt_template.invoke({collection_name: objs_list, "question": question})
-#     result = llm.invoke(processed_prompt)
-
-#     # Access the assistant's message content
-#     response_content = result
-#     return response_content
-
-
-# def get_cosmosdb_tool(collection_name):
-#     db_name = MongoDBClient.get_db_name()
-
-#     AOAI_ENDPOINT, AOAI_KEY, _, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
-
-#     loader = PyPDFLoader("./cognitive-behavioral.pdf")
-#     documents = loader.load()
-#     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-
-#     docs = text_splitter.split_documents(documents)
-
-#     mongo_client = pymongo.MongoClient(os.environ.get("DB_CONNECTION_STRING"))
-#     collection = mongo_client[db_name][collection_name]
-
-#     openai_embeddings: AzureOpenAIEmbeddings = AzureOpenAIEmbeddings(
-#         azure_deployment=AOAI_EMBEDDINGS,
-#         api_key=AOAI_KEY,
-#         azure_endpoint=AOAI_ENDPOINT
-#     )
-
-#     vectorstore = AzureCosmosDBVectorSearch.from_documents(
-#         docs,
-#         openai_embeddings,
-#         collection=collection,
-#         index_name=f"{db_name}-{collection_name}_index"
-#     )
-
-
-#     num_lists = 100
-#     dimensions = 1536
-#     similarity_algorithm = CosmosDBSimilarityType.COS
-#     kind = CosmosDBVectorSearchType.VECTOR_IVF
-#     m = 16
-#     ef_construction = 64
-
-#     vectorstore.create_index(
-#         num_lists,
-#         dimensions,
-#         similarity_algorithm,
-#         kind,
-#         m,
-#         ef_construction
-#     )
-
-#     retriever = get_cosmosdb_vector_store_retriever("mentalhealthtestcollection")
-#     cosmosdb_tool = Tool(
-#         name = "vector_search_test",
-#         func = retriever.invoke,
-#         description = "Searches the Mental Health database for psychology theory."
-#     )
-
-#     return cosmosdb_tool
 
 
 # Agent Fact:

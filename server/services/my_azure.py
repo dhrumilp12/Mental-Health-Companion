@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 
+from utils.consts import CONTEXT_LENGTH_LIMIT
+
 def get_azure_openai_variables():
     load_dotenv()
     AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
@@ -20,20 +22,21 @@ def get_azure_openai_llm():
         openai_api_version = AOAI_API_VERSION,
         azure_endpoint = AOAI_ENDPOINT,
         openai_api_key = AOAI_KEY,
-        azure_deployment = AOAI_COMPLETIONS
+        azure_deployment = AOAI_COMPLETIONS,
+        max_tokens=2034
     )
 
     return llm
 
 
 def get_azure_openai_embeddings():
-    AOAI_ENDPOINT, AOAI_KEY, AOAI_API_VERSION, _, AOAI_COMPLETIONS = get_azure_openai_variables()
+    AOAI_ENDPOINT, AOAI_KEY, AOAI_API_VERSION, AOAI_EMBEDDINGS, _ = get_azure_openai_variables()
 
     embedding_model = AzureOpenAIEmbeddings(
         openai_api_version = AOAI_API_VERSION,
         azure_endpoint = AOAI_ENDPOINT,
         openai_api_key = AOAI_KEY,
-        azure_deployment = AOAI_COMPLETIONS,
+        azure_deployment = AOAI_EMBEDDINGS,
         chunk_size=10
     )
 

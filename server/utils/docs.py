@@ -23,10 +23,17 @@ def format_docs(docs:list[Document]) -> str:
     str_docs = []
 
     for doc in docs:
+        metadata = doc.metadata.copy()
+        del metadata["_id"]
+        del metadata["vectorContent"]
+
         doc_dict = {"_id": doc.page_content}
-        doc_dict.update(doc.metadata)
+        doc_dict.update(metadata)
         if "contentVector" in doc_dict:
             del doc_dict["contentVector"]
+        if "vectorContent" in doc_dict:
+            del doc_dict["vectorContent"]
+        json_string = json.dumps(doc_dict, default=str)
         str_docs.append(json.dumps(doc_dict, default=str))
     
     return "\n\n".join(str_docs)
