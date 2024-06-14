@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
+import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import StopIcon from '@mui/icons-material/Stop';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import PersonIcon from '@mui/icons-material/Person';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
@@ -337,13 +337,29 @@ const ChatComponent = () => {
                             onChange={handleInputChange}
                             disabled={isLoading}
                             sx={{ mr: 1, flexGrow: 1 }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            color="primary.main"
+                                            aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                                            size="large"
+                                            edge="end"
+                                            disabled={isLoading}
+                                        >
+                                            {isRecording ? <MicOffIcon size="small" /> : <MicIcon size="small" />}
+                                            {isRecording && <CircularProgress size={30} sx={{
+                                                color: 'primary.main',
+                                                position: 'absolute',
+                                                zIndex: 1
+                                            }} />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
-                            <Button onClick={isRecording ? stopRecording : startRecording} 
-                                variant="contained" 
-                                color="secondary" 
-                                startIcon={isRecording ? <StopIcon /> : <RecordVoiceOverIcon />}>
-                            {isRecording ? 'Stop Recording' : 'Start Recording'}
-                        </Button>
+
                         {isLoading ? <CircularProgress size={24} /> : (
                             <Button variant="contained" color="primary" onClick={sendMessage} disabled={isLoading || !input.trim()} endIcon={<SendIcon />}>
                                 Send
