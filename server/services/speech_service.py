@@ -46,8 +46,8 @@ def speech_to_text(audio_file):
         audio_stream.seek(0)
         print(f"Size of audio file: {audio_stream.getbuffer().nbytes} bytes")
         # Set up the speech config with your subscription details
-        speech_key = "c833c8ef4bb0441b98971cc2d850f462"
-        service_region = "eastus"
+        speech_key = os.environ.get("SPEECH_KEY")
+        service_region = os.environ.get("SERVICE_REGION")
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
         speech_config.set_property(speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000")  # Timeout in milliseconds
         # Create a push stream that can be used with the speech recognizer

@@ -1,7 +1,7 @@
 """
 API entrypoint for backend API.
 """
-
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -13,7 +13,7 @@ from agents.mental_health_agent import MentalHealthAIAgent
 
 # Set up the app
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 't54WKRE5t5UaZnEWDvUd75Qe5ilYAKKe9n8tbUGv3_Q' #FIXME: This should be an environment variable.
+app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 CORS(app)
 
