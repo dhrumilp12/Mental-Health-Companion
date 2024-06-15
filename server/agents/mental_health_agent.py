@@ -65,8 +65,8 @@ class MentalHealthAIAgent(AIAgent):
             return history
 
 
-    def get_agent_memory(self, user_id, chat_id, history_scope=ChatHistoryScope.ALL):
-        chat_history = self.get_chat_history(user_id, chat_id, history_scope)
+    def get_agent_memory(self, user_id, chat_id):
+        chat_history = self.get_chat_history(user_id, chat_id)
 
         memory = ConversationSummaryMemory.from_messages(
             llm=self.llm,
@@ -152,7 +152,7 @@ class MentalHealthAIAgent(AIAgent):
         #     return super().run(message)
         # else:
 
-            # TODO: throw error if user_id, chat_id, or history_scope is set to None.
+            # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
 
 
@@ -344,12 +344,15 @@ class MentalHealthAIAgent(AIAgent):
 
         return {"emotions": emotions, "triggers": triggers, "patterns": patterns}
 
-    def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None, history_scope=None):
+    def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
         try:
             if not with_history:
                 return super().run(message)
 
-            memory = self.get_agent_memory(user_id, chat_id, history_scope)
+            # memory = self.get_agent_memory(user_id, chat_id)
+            memory = {
+                "buffer": []
+            }
             if not memory:
                 return "Error: Unable to retrieve conversation history."
 
