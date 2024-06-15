@@ -7,6 +7,7 @@ export const UserProvider = ({ children }) => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
   const logout = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -32,8 +33,35 @@ export const UserProvider = ({ children }) => {
     }
   }, [navigate]);
 
+  const changePassword = async (userId, currentPassword, newPassword) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(`/api/user/change_password/${userId}`, {
+        current_password: currentPassword,
+        new_password: newPassword
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Make sure the token is being managed in your context or retrieved from somewhere secure
+        }
+      });
+  
+      if (response.status === 200) {
+        return { success: true, message: 'Password updated successfully!' };
+      } else {
+        return { success: false, message: response.data.message || 'Update failed!' };
+      }
+    } catch (error) {
+      if(error.response.status === 403) {
+        return { success: false, message: error.response.data.message || 'Incorrect current password' };
+      }
+      else {
+        return { success: false, message: error.response?.data?.message || 'Network error' };
+      }
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled }}>
+    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword }}>
       {children}
     </UserContext.Provider>
   );

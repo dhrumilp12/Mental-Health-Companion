@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import PasswordUpdateTab from './passwordUpdateTab';
 import axios from 'axios';
+
 import {
-  TextField, Button, Container, Typography, Paper, CssBaseline, Snackbar, Alert, FormControl, InputLabel, Select, MenuItem,IconButton
+  TextField, Button, Container, Typography, Paper, CssBaseline, Snackbar, Alert, FormControl, InputLabel, Select, MenuItem,IconButton,Tabs,Tab,Box
 } from '@mui/material';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import EmailIcon from '@mui/icons-material/Email';
@@ -13,6 +15,37 @@ import HomeIcon from '@mui/icons-material/Home'; // Icon for place of residence
 import WorkIcon from '@mui/icons-material/Work';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import UpdateIcon from '@mui/icons-material/Update';
+
+const CustomTabs = styled(Tabs)({
+  background: '#fff', // Set the background color you prefer
+  borderRadius: '8px', // Optional: rounded corners
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)', // Optional: adds a subtle shadow for depth
+  margin: '20px 0', // Adds margin around the tabs for spacing
+  maxWidth: '100%', // Ensures it doesn't overflow its container
+  overflow: 'hidden', // Prevents any internal content from overflowing
+});
+
+const CustomTab = styled(Tab)({
+  fontSize: '1rem', // Sets the font size to 16px
+  fontWeight: 'bold', // Makes the font weight bold
+  color: '#3F51B5', // Uses the primary color defined in the theme
+  marginRight: '4px', // Adds space between tabs
+  marginLeft: '4px', // Adds space between tabs
+  flex: 1, // Each tab flexes to fill available space
+  maxWidth: 'none', // Allows the tab to grow as needed
+  '&.Mui-selected': { // Styles for the selected tab
+    color: '#F6AE2D', // Changes text color when selected
+    background: '#e0e0e0', // Light grey background on selection
+  },
+  '&:hover': { // Styles for hover state
+    background: '#f4f4f4', // Lighter grey background on hover
+    transition: 'background-color 0.3s', // Smooth transition for background color
+  },
+  '@media (max-width: 720px)': { // Responsive adjustment for smaller screens
+    padding: '6px 12px', // Reduces padding on smaller screens
+    fontSize: '0.8rem', // Reduces font size to fit on smaller devices
+}});
+
 const theme = createTheme({
     palette: {
         primary: {
@@ -57,12 +90,12 @@ const theme = createTheme({
 });
 
 const StyledForm = styled(Paper)(({ theme }) => ({
-  marginTop: theme.spacing(4),
+  marginTop: theme.spacing(2),
   padding: theme.spacing(4),
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: theme.spacing(3),
+  gap: theme.spacing(2),
   boxShadow: theme.shadows[3], // Subtle shadow for depth
 }));
 
@@ -77,6 +110,11 @@ function UserProfile() {
     placeOfResidence: '',
     fieldOfWork: ''
   });
+  const [tabValue, setTabValue] = useState(0); // To control the active tab
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
   const [severity, setSeverity] = useState('info');
@@ -136,6 +174,12 @@ function UserProfile() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container component="main" maxWidth="md">
+      <CustomTabs value={tabValue} onChange={handleTabChange} centered>
+          <CustomTab label="Profile" />
+          <CustomTab label="Update Password" />
+        </CustomTabs>
+
+        {tabValue === 0 && (
         <StyledForm component="form" onSubmit={handleSubmit}>
         <Typography variant="h5" style={{ fontWeight: 700 }}><AccountCircleIcon style={{ marginRight: '10px' }} /> {user.username}</Typography>
           <TextField
@@ -223,7 +267,10 @@ function UserProfile() {
           <Button type="submit" color="primary" variant="contained">
           <UpdateIcon style={{ marginRight: '10px' }} />Update Profile
           </Button>
-        </StyledForm>
+        </StyledForm>)}
+        {tabValue === 1 && (
+          <PasswordUpdateTab userId={userId} />
+        )}
         <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
           <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
             {message}

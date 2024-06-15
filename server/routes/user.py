@@ -123,6 +123,40 @@ def update_profile_fields(user_id):
     return jsonify({"message": "User has been updated successfully."}), 200
 
 
+@user_routes.patch('/user/change_password/<user_id>')
+def change_password(user_id):
+    try:
+        # Authenticate user
+        user_data = request.get_json()
+        current_password = user_data['current_password']
+        new_password = user_data['new_password']
+
+        user = UserModel.find_by_id(user_id)
+        if not user:
+                logging.error("User not found")
+                return jsonify({"error": "User not found"}), 404
+
+        # Verify current password
+        if not check_password_hash(user.password, current_password):
+            logging.error("Incorrect current password")
+            return jsonify({"error": "Incorrect current password"}), 403
+
+        # Update to new password
+        new_password_hash = generate_password_hash(new_password)
+        if user.update_password(user.username, new_password_hash):
+            logging.info("Password updated successfully")
+            return jsonify({"message": "Password successfully updated"}), 200
+        else:
+            logging.error("Password update failed")
+            return jsonify({"error": "Password update failed"}), 500
+    except KeyError as e:
+        logging.error(f"Missing data: {str(e)}")
+        return jsonify({"error": "Missing data"}), 400
+    except Exception as e:
+        logging.error(f"Error changing password: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+
 @user_routes.post('/user/log_mood')
 @jwt_required()
 def log_mood():
