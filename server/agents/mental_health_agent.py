@@ -66,13 +66,16 @@ class MentalHealthAIAgent(AIAgent):
 
 
     def get_agent_memory(self, user_id, chat_id):
-        chat_history = self.get_chat_history(user_id, chat_id)
+        # chat_history = self.get_chat_history(user_id, chat_id)
 
-        memory = ConversationSummaryMemory.from_messages(
-            llm=self.llm,
-            chat_memory=chat_history,
-            return_messages=True
-        )
+        # memory = ConversationSummaryMemory.from_messages(
+        #     llm=self.llm,
+        #     chat_memory=chat_history,
+        #     return_messages=True
+        # )
+
+        # TODO: Rewrite function or remove if not used anymore
+        memory = None
 
         return memory
 
