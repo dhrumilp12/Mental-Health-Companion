@@ -442,12 +442,7 @@ class MentalHealthAIAgent(AIAgent):
             except StopIteration:
                 last_turn = {}
 
-             # Check if 'SessionId' is in last_turn and extract old_chat_id
-        if 'SessionId' in last_turn:
             old_chat_id = int(last_turn["SessionId"].split('-')[-1])
-        else:
-            # Initialize old_chat_id if SessionId is not found
-            old_chat_id = 0
 
             new_chat_id = old_chat_id + 1
 

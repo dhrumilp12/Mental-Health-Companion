@@ -22,7 +22,11 @@ def get_mental_health_agent_welcome(user_id):
                                     user_id=user_id
                                 )
     
-    return response
+    if response is None:
+        logger.error(f"No greeting found for user {user_id}")
+        return jsonify({"error": "Greeting not found"}), 404
+    
+    return jsonify(response), 200
 
 
 @ai_routes.post("/ai/mental_health/<user_id>/<chat_id>")
