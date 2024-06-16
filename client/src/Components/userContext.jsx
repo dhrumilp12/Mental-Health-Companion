@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useState, useCallback,useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 export const UserContext = createContext({ user: null });
@@ -7,7 +7,23 @@ export const UserProvider = ({ children }) => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  // Load user from local storage on initial load
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
 
+  // Persist user to local storage on changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
+  
   const logout = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
