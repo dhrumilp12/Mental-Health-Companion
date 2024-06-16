@@ -48,7 +48,10 @@ function Layout({ children }) {
         setSidebarOpen(!sidebarOpen);  // Toggle the state
     };
     return (
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex',
+            overflow: 'hidden', // Adjust overflow properties as needed
+            maxHeight: '100vh', // Limit height to viewport to prevent outer scrolling
+         }}>
             <CssBaseline />
             {showNav && <Navbar toggleSidebar={toggleSidebar}/>}
             {showNav && sidebarOpen && <Sidebar />}

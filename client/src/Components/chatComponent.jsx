@@ -279,38 +279,19 @@ const ChatComponent = () => {
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh',borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%',borderRadius: 2,boxShadow: 3 }}>
                     <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3 }}>
-                    {messages.length === 0 && (
-                            <Box sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                mt: -3,
-                                mb: 2,
-                                p: 2,
-                                overflow: 'hidden',  // Ensures nothing spills out of the box
-                                maxWidth: '100%',    // Limits the width to prevent overflow
-                                maxHeight: '80%',  // Adjusts the maximum height of the logo area
-                            }}>
-                                <img src={Aria} alt="App Logo" style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '100%',
-                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                    width: 'auto', // Ensures the width automatically adjusts based on height
-                                    height: 'auto', // Auto height for proper scaling without specifying vh
-                                    objectFit: 'contain',  // Ensures the image scales properly within its constraints
-                                    borderRadius: '50%' // Optional: Makes the image circular
-                                }} />
-                            </Box>
-                            
-                        )}
+                
+                        
+                        {welcomeMessage.length === 0 && (
                     <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
                     <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2,  }} alt="Aria" />
                         <Typography variant="h4" component="h1" gutterBottom>
                             Welcome to Mental Health Companion
                         </Typography>
-                        </Box>
+                        </Box>)}
                         
-                        {isFetchingMessage ? <TypingIndicator /> : 
+                        
+                        {isFetchingMessage ? <TypingIndicator /> :
+                        (messages.length === 0 && (
                         <Box sx={{ display: 'flex'}}>
                         <Avatar src={Aria} sx={{ width: 36, height: 36, marginRight: 1,  }} alt="Aria" />
                         <Typography variant="body1" gutterBottom sx={{ bgcolor: 'grey.200',borderRadius: '16px',
@@ -323,7 +304,7 @@ const ChatComponent = () => {
                                                 {messageIcon(welcomeMessage)}
                                             </IconButton>)}
                         </Typography>
-                        </Box>
+                        </Box>))
                         }
                         <List sx={{ maxHeight: '100%', overflow: 'auto' }}>
                             {messages.map((msg, index) => (
@@ -334,7 +315,14 @@ const ChatComponent = () => {
                                     //backgroundColor: msg.sender === 'user' ? 'primary.light' : 'grey.100',  // Adjust colors here
                                     borderRadius: 2, // Optional: Adds rounded corners
                                     mb: 0.5, // Margin bottom for spacing between messages
-                                    p: 1 // Padding inside each list item
+                                    p: 1, // Padding inside each list item
+                                    border: 'none', // Added to remove any border or underline
+                                    '&:before': { // Targeting pseudo-elements which might create lines
+                                        display: 'none'
+                                    },
+                                    '&:after': { // Same as above
+                                        display: 'none'
+                                    }
                                 }}>
                                     <Box sx={{
                                     display: 'flex',
