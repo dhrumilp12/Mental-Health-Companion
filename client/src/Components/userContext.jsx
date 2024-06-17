@@ -6,6 +6,17 @@ export const UserContext = createContext({ user: null });
 export const UserProvider = ({ children }) => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [user, setUser] = useState(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (notification) => {
+    setNotifications((prev) => [...prev, notification]);
+};
+
+  const incrementNotificationCount = () => {
+    setNotificationCount(notificationCount + 1);
+  };
+
   const navigate = useNavigate();
   // Load user from local storage on initial load
   useEffect(() => {
@@ -77,7 +88,7 @@ export const UserProvider = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword }}>
+    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword,incrementNotificationCount, notifications, addNotification }}>
       {children}
     </UserContext.Provider>
   );

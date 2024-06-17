@@ -5,6 +5,9 @@ self.addEventListener('push', event => {
         body: data.body,
         icon: './Images/Aria.jpg'
     });
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => client.postMessage({ msg: 'updateCount' }));
+    });
 } catch (error) {
     console.error('Error parsing push notification data:', error);
     self.registration.showNotification('Notification', {

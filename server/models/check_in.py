@@ -2,8 +2,8 @@
 This model represents a check-in.
 """
 
-from datetime import datetime
-from pydantic import BaseModel, Field, constr
+from datetime import datetime, timedelta
+from pydantic import BaseModel, Field, constr, validator
 from enum import Enum
 
 class Frequency(str, Enum):
@@ -18,6 +18,7 @@ class CheckIn(BaseModel):
     status: str = "upcoming" # default status is upcoming
     last_conversation: str = ""  # default empty string, updated later
     notify: bool = False  # Default to False, updated based on user preference
+    reminder_times: list[timedelta] = Field(default_factory=list)
 
     def save(self, db):
         # Convert model to dictionary and save to MongoDB
@@ -53,3 +54,15 @@ class CheckIn(BaseModel):
                 return False  # Conflict found if within an hour of another check-in
 
         return True  # No conflicts found
+    
+    @validator('reminder_times')
+    def validate_reminder_times(cls, value):
+        valid_reminder_times = [
+            timedelta(weeks=1),
+            timedelta(days=1),
+            timedelta(hours=1)
+        ]
+        for reminder_time in value:
+            if reminder_time not in valid_reminder_times:
+                raise ValueError("Invalid reminder time")
+        return value

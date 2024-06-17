@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import ValidationError
 from models.check_in import CheckIn, Frequency
 from dotenv import load_dotenv
@@ -7,6 +7,8 @@ from services.azure_mongodb import MongoDBClient
 from bson import ObjectId
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
+from .scheduler_main import scheduler
+
 
 
 load_dotenv()
@@ -44,6 +46,8 @@ def schedule_check_in():
 
         # Insert the new check-in into MongoDB
         result = db.check_ins.insert_one(check_in_dict)
+        # Start scheduling notifications right after check-in creation
+        scheduler.schedule_notifications(check_in_dict)
         return jsonify({'message': 'Check-in scheduled successfully', 'check_in_id': str(result.inserted_id)}), 201
 
     except ValidationError as e:
@@ -77,6 +81,9 @@ def update_check_in(check_in_id):
             return_document=ReturnDocument.AFTER
         )
         if update_result:
+            # clear any previous notifications before creating new ones based on new check-in data.
+            scheduler.clear_check_in_notifications(check_in_id, update_result['user_id'])
+            scheduler.schedule_notifications(update_result)
             return jsonify({'message': 'Check-in updated successfully'}), 200
         else:
             return jsonify({'message': 'No check-in found with provided ID or no update needed'}), 404
@@ -92,14 +99,15 @@ def update_check_in(check_in_id):
 @checkIn_routes.get('/checkIn/missed')
 def check_missed_check_ins():
     user_id = request.args.get('user_id')
-    now = datetime.now()
+    now = datetime.now() - timedelta(minutes=10)
     missed_check_ins = db.check_ins.find({
         'user_name': user_id,
         'check_in_time': {'$lt': now},
         'status': 'upcoming'  # Assuming 'upcoming' means not yet checked in
     })
 
-    if missed_check_ins.count() > 0:
+    missed = list(missed_check_ins)  # Convert cursor to a list 
+    if len(missed) > 0:  # Check length of list to get count
         db.check_ins.update_many(
             {'user_id': user_id, 'check_in_time': {
                 '$lt': now}, 'status': 'upcoming'},

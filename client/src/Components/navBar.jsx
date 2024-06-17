@@ -1,6 +1,6 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, MenuItem } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
@@ -11,9 +11,18 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 
 
 function Navbar({ toggleSidebar }) {
-  
+  const { incrementNotificationCount, notifications, addNotification } = useContext(UserContext);
   const navigate = useNavigate();
   const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleNotificationClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+      setAnchorEl(null);
+  };
 
   const handleProfileClick = () => {
     if (user && user.userId) {
@@ -27,6 +36,20 @@ function Navbar({ toggleSidebar }) {
     event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
     setVoiceEnabled(!voiceEnabled);
   };
+
+  useEffect(() => {
+    const handleServiceWorkerMessage = (event) => {
+      if (event.data && event.data.msg === 'updateCount') {
+        incrementNotificationCount();
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, []);
   
   return (
     <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -67,11 +90,22 @@ function Navbar({ toggleSidebar }) {
             />
           </IconButton>
         </Tooltip>
-        <IconButton color="inherit">
-          <Badge badgeContent={4} color="secondary">
+        <IconButton color="inherit" onClick={handleNotificationClick}>
+          <Badge badgeContent={notifications.length} color="secondary">
             <NotificationsIcon />
           </Badge>
         </IconButton>
+        <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                >
+                    {notifications.map((notification, index) => (
+                        <MenuItem key={index} onClick={handleClose}>
+                            {notification.title}
+                        </MenuItem>
+                    ))}
+                </Menu>
         <IconButton color="inherit">
           <SearchIcon />
         </IconButton>
