@@ -1,12 +1,17 @@
+import os
+import random
 from datetime import datetime
 import spacy
 import json
+
+from bson.objectid import ObjectId
 
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.memory import ConversationSummaryMemory
 from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain.agents import Tool, create_tool_calling_agent, AgentExecutor
+from langchain.tools import StructuredTool
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import SystemMessage
@@ -20,6 +25,10 @@ from utils.docs import format_docs
 from models.agent_fact import AgentFact
 from models.chat_summary import ChatSummary
 from models.chat_turn import ChatTurn
+
+from azure.core.credentials import AzureKeyCredential
+from azure.maps.search import MapsSearchClient
+from azure.maps.search.models import BoundingBox
 
 
 # Load spaCy model
@@ -91,6 +100,28 @@ class MentalHealthAIAgent(AIAgent):
 
         return agent_with_history    
 
+    def get_maps_results(self, query):
+        client = MapsSearchClient(credential=AzureKeyCredential(os.environ["AZURE_CLIENT_SECRET"]))
+
+        location_name = self.llm.invoke(f"Extract the location from this query. Return nothing else. ```{query}```").content
+        location_obj = client.search_address(f"{location_name}").results[0].additional_properties["boundingBox"]
+        location_bbox:BoundingBox = BoundingBox(
+            west=location_obj["topLeftPoint"]["lon"],
+            north=location_obj["topLeftPoint"]["lat"],
+            east=location_obj["btmRightPoint"]["lon"],
+            south=location_obj["btmRightPoint"]["lat"],
+        )
+
+        results = client.fuzzy_search(query=query, bounding_box=location_bbox).results
+        
+        agent_results = [{"name": result.point_of_interest.name, 
+                          "phone": result.point_of_interest.phone, 
+                          "address": result.address.freeform_address} for result in results]
+        
+        trunc_agent_results = random.sample(agent_results, 3)
+
+        return json.dumps(trunc_agent_results, default=str)
+    
 
     def prepare_tools(self):
         # search = BingSearchAPIWrapper(k=5)
@@ -111,6 +142,12 @@ class MentalHealthAIAgent(AIAgent):
                 func=agent_facts_retriever_chain.invoke,
                 description="Searches for facts about the agent itself."
             ),
+            # Tool(
+            #     name="get_maps_results",
+            #     func=lambda q: self.get_maps_results(q),
+            #     description="Look for places offering mental health services in a map based on a query."
+            # ),
+            StructuredTool.from_function(self.get_user_profile_by_user_id)
             # Tool(
             #     name = "vector_search_user_journeys",
             #     func = user_profiles_retriever_chain.invoke,
@@ -145,7 +182,7 @@ class MentalHealthAIAgent(AIAgent):
     def get_agent_executor(self, prompt):
         tools = self.prepare_tools()
         agent = create_tool_calling_agent(self.llm, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
         return agent_executor  
     
@@ -158,11 +195,10 @@ class MentalHealthAIAgent(AIAgent):
             # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
 
-
         agent_with_history = self.get_agent_with_history(self.agent_executor)
 
         invocation = agent_with_history.invoke(
-            {"input": message, "agent_scratchpad": []},
+            {"input": f"{message}\nuser_id:{user_id}", "agent_scratchpad": []},
             config={"configurable": {"session_id": session_id}}
         )
 
@@ -382,6 +418,7 @@ class MentalHealthAIAgent(AIAgent):
         except Exception as e:
             return f"An error occurred: {str(e)}"
 
+
     def format_response_addendum(self, analysis_results):
         patterns = analysis_results['patterns']
         response_addendum = ""
@@ -461,12 +498,13 @@ class MentalHealthAIAgent(AIAgent):
 
     def get_user_profile_by_user_id(self, user_id: str) -> str:
         """
-        Retrieves a user journey by the user's ID.
+        Retrieves a user's profile information by the user's ID to be used when brought up in conversation.
+        Includes age, name and location.
         """
-        doc = self.db["users"].find_one({"user_id": user_id})
+        doc = self.db["users"].find_one({"_id": ObjectId(user_id)})
         if "contentVector" in doc:
             del doc["contentVector"]
-        return json.dumps(doc)
+        return json.dumps(doc, default=str)
 
     def get_user_journey_by_user_id(self, user_id: str) -> str:
         """
