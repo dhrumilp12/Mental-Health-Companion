@@ -382,6 +382,7 @@ class MentalHealthAIAgent(AIAgent):
         except Exception as e:
             return f"An error occurred: {str(e)}"
 
+
     def format_response_addendum(self, analysis_results):
         patterns = analysis_results['patterns']
         response_addendum = ""
