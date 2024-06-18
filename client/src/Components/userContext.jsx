@@ -22,6 +22,7 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
+      console.log('Loaded user from storage:', savedUser);
       setUser(JSON.parse(savedUser));
     }
   }, []);

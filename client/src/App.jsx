@@ -9,6 +9,8 @@ import Navbar from './Components/navBar';
 import ChatInterface from './Components/chatInterface';
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
+import CheckInForm from './Components/checkInForm';
+import CheckInsList from './Components/checkInsList';
 import { CssBaseline, Box } from '@mui/material';
 import { UserContext } from './Components/userContext';
 
@@ -30,6 +32,9 @@ function App() {
                     <Route path="/user/profile/:userId" element={<UserProfile />} />
                     <Route path="/user/mood_logging" element={<MoodLogging />} />
                     <Route path="/user/mood_logs" element={<MoodLogs />} />
+                    <Route path="/user/check_in" element={<CheckInForm userId={user?.userId} checkInId="" update={false} />} />
+                    <Route path="/user/check_in/:checkInId" element={<CheckInForm userId={user?.userId} update={true} />} /> 
+                    <Route path="/user/check_ins/:userId" element={<CheckInsList />} />
                 </Routes>
             </Layout>
         

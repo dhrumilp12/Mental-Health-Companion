@@ -1,10 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app,Response
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from models.check_in import CheckIn, Frequency
 from dotenv import load_dotenv
 from services.azure_mongodb import MongoDBClient
-from bson import ObjectId
+from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
 from .scheduler_main import scheduler
@@ -93,6 +93,49 @@ def update_check_in(check_in_id):
     except InvalidId:
         return jsonify({'error': 'Invalid check-in ID'}), 400
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@checkIn_routes.get('/checkIn/retrieve/<check_in_id>')
+def retrieve_check_in(check_in_id):
+    try:
+        check_in = db.check_ins.find_one({'_id': ObjectId(check_in_id)})
+        if check_in:
+            return jsonify(check_in), 200
+        else:
+            return jsonify({'message': 'Check-in not found'}), 404
+    except InvalidId:
+        return jsonify({'error': 'Invalid check-in ID format'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@checkIn_routes.delete('/checkIn/delete/<check_in_id>')
+def delete_check_in(check_in_id):
+    try:
+        result = db.check_ins.delete_one({'_id': ObjectId(check_in_id)})
+        if result.deleted_count:
+            return jsonify({'message': 'Check-in deleted successfully'}), 200
+        else:
+            return jsonify({'message': 'Check-in not found'}), 404
+    except InvalidId:
+        return jsonify({'error': 'Invalid check-in ID format'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@checkIn_routes.get('/checkIn/retrieveAll')
+def retrieve_all_check_ins():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User ID is required'}), 400
+    
+    try:
+        check_ins = db.check_ins.find({'user_id': user_id})
+        check_ins_list = list(check_ins)  # Convert the cursor to a list
+        if check_ins_list:
+            return Response(json_util.dumps(check_ins_list), mimetype='application/json'), 200
+        else:
+            return jsonify({'message': 'No check-ins found for the user'}), 404
+    except Exception as e:
+        current_app.logger.error(f'Error retrieving check-ins: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 
