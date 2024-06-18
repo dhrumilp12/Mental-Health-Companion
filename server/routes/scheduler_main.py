@@ -2,7 +2,7 @@
 
 import schedule
 import time
-from .scheduler import send_push_notification
+from services.scheduler import send_push_notification
 from models.check_in import CheckIn
 from services.azure_mongodb import MongoDBClient
 from datetime import datetime, timedelta
@@ -13,16 +13,35 @@ db_client = MongoDBClient.get_client()
 db = db_client[MongoDBClient.get_db_name()]
 
 class NotificationScheduler:
-    def __init__(self):
+    def __init__(self,db):
         self.scheduler = schedule.Scheduler()
+        self.db = MongoDBClient.get_client()[MongoDBClient.get_db_name()]
+
+    def format_delta(self, delta):
+        if delta == timedelta(days=1):
+            return "1 day"
+        elif delta == timedelta(weeks=1):
+            return "1 week"
+        elif delta == timedelta(days=30):  # Approximating 1 month
+            return "1 month"
+        else:
+            return str(delta)
 
     def schedule_notifications(self, check_in):
-        for reminder_time in check_in['reminder_times']:
-            scheduled_time = check_in['check_in_time'] - reminder_time
-            self.scheduler.every().day.at(scheduled_time.strftime("%H:%M")).do(
-                lambda: self.send_notification(check_in)
-            )
-            print(f"Notification for {check_in['user_id']} scheduled at {scheduled_time}")
+        user_id = check_in['user_id']
+        check_in_id = check_in['_id']
+        check_in_time = check_in['check_in_time']
+        reminder_times = check_in['reminder_times']
+
+        for reminder_time in reminder_times:
+            scheduled_time = check_in_time - reminder_time
+            if scheduled_time > datetime.now():
+                reminder_text = self.format_delta(reminder_time)
+                self.scheduler.every().day.at(scheduled_time.strftime("%H:%M")).do(
+                    self.send_notification, user_id=user_id, check_in_id=check_in['_id'],
+                    message=f"Reminder: Your check-in is in {self.format_delta(reminder_time)}"
+                )
+                print(f"Notification for {user_id} scheduled at {scheduled_time}")
 
     def send_notification(self, check_in):
         with app.app_context():  # To access app configuration
@@ -54,7 +73,9 @@ class NotificationScheduler:
 
 
 # Create a single global instance of the scheduler
-scheduler = NotificationScheduler()
+db= MongoDBClient.get_client()[MongoDBClient.get_db_name()]
+scheduler = NotificationScheduler(db)
+
 
 # Start the scheduler in a background thread
 from threading import Thread

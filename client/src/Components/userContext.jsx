@@ -9,9 +9,9 @@ export const UserProvider = ({ children }) => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
 
-  const addNotification = (notification) => {
+  const addNotification = useCallback((notification) => {
     setNotifications((prev) => [...prev, notification]);
-};
+  }, [setNotifications]);
   const removeNotification = index => {
     setNotifications(prevNotifications => prevNotifications.filter((_, i) => i !== index));
   };
@@ -89,6 +89,28 @@ export const UserProvider = ({ children }) => {
       }
     }
   };
+
+  // Handle messages from the service worker
+  useEffect(() => {
+    const handleServiceWorkerMessages = event => {
+        if (event.data && event.data.type === 'NEW_NOTIFICATION') {
+          console.log('Notification received:', event.data.data);
+            addNotification({
+                title: event.data.data.title,
+                message: event.data.data.body
+                
+            });
+        }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessages);
+
+    // Cleanup this effect
+    return () => {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessages);
+    };
+}, [addNotification]);
+
 
   return (
     <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword,incrementNotificationCount, notifications,removeNotification, addNotification }}>

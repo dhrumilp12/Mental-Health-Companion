@@ -6,12 +6,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required , get_jwt_identity
 from models.subscription import Subscription,db
-
+import json
 from routes.user import user_routes 
 from routes.ai import ai_routes
 from routes.checkIn import checkIn_routes
 from services.azure_mongodb import MongoDBClient
-from routes.scheduler import send_push_notification
+from services.scheduler import send_push_notification
 from agents.mental_health_agent import MentalHealthAIAgent
 
 # Set up the app
@@ -39,13 +39,13 @@ def subscribe():
         return jsonify({'error': 'Missing required fields'}), 400
     
     
-    subscription_info = {
+    subscription_info = json.dumps({
         'endpoint': data['endpoint'],
         'keys': {
             'p256dh': data['keys']['p256dh'],
             'auth': data['keys']['auth']
         }
-    }
+    })
 
     user_id = get_jwt_identity()
 

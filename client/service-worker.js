@@ -1,21 +1,33 @@
 self.addEventListener('push', event => {
+  let data;
   try {
-    const data = event.data.json();  // Tries to parse JSON data
-    self.registration.showNotification(data.title, {
-        body: data.body,
-        icon: './Images/Aria.jpg'
-    });
-    self.clients.matchAll().then(clients => {
-      clients.forEach(client => client.postMessage({ msg: 'updateCount' }));
-    });
-} catch (error) {
-    console.error('Error parsing push notification data:', error);
-    self.registration.showNotification('Notification', {
-      body: event.data.text(),
-      icon: './Images/Aria.jpg'
-    });
-}
+    // Try to parse the incoming push message data as JSON
+    data = event.data.json();
+  } catch (error) {
+    // If JSON parsing fails, treat it as a plain text
+    console.error('Error parsing push notification data as JSON:', error);
+    data = { 
+      title: 'Notification', // Default title if not parsing JSON
+      body: event.data ? event.data.text() : 'No data received' // Use the plain text data or a default message
+    };
+  }
+
+  console.log('Final data to display:', data);
+  self.registration.showNotification(data.title, {
+    body: data.user,
+    icon: './Images/Aria.jpg'
+  });
+
+  // Broadcast update message to clients
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => client.postMessage({
+      msg: 'updateCount',
+      title: data.title,
+      body: data.body
+    }));
+  });
 });
+
   
   self.addEventListener('notificationclick', event => {
     event.notification.close();

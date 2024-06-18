@@ -13,6 +13,8 @@ def send_push_notification(user_id, message):
         return False
     
     try:
+            print("Subscription info:", subscription.subscription_info)
+
             webpush(
                 subscription_info=json.loads(subscription.subscription_info),
                 data=json.dumps({
@@ -28,3 +30,6 @@ def send_push_notification(user_id, message):
             print(f"Failed to send notification: {e}")
             if e.response and e.response.json():
                 print(e.response.json())
+    except json.JSONDecodeError as json_error:
+        print(f"JSON decoding error with subscription_info: {json_error}")
+        return False

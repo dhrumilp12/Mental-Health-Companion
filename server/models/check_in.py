@@ -14,25 +14,27 @@ class Frequency(str, Enum):
 class CheckIn(BaseModel):
     user_id: str
     check_in_time: datetime
-    @validator('check_in_time', pre=True)
-    def check_future_date(cls, v):
-        if v < datetime.now():
-            raise ValueError("Check-in time must be in the future")
-        return v
-    
     frequency: Frequency
     status: str = "upcoming" # default status is upcoming
     last_conversation: str = ""  # default empty string, updated later
     notify: bool = False  # Default to False, updated based on user preference
-    reminder_times: list[timedelta] = Field(default_factory=list)
+    reminder_times: list[timedelta] = Field(default_factory=lambda: [
+        timedelta(days=1),
+        timedelta(weeks=1),
+        timedelta(days=30)  # Approximately 1 month
+    ])
 
     def save(self, db):
         # Convert model to dictionary and save to MongoDB
         document = self.dict()
         db.check_ins.insert_one(document)
 
+    @validator('check_in_time', pre=True)
+    def check_future_date(cls, v):
+        if v < datetime.now():
+            raise ValueError("Check-in time must be in the future")
+        return v
     
-
     @staticmethod
     def count_user_check_ins(db, user_id, date):
         start_of_day = datetime.combine(date, datetime.min.time())

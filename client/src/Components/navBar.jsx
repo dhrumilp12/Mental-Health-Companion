@@ -1,7 +1,7 @@
 import React, {useContext, useState, useEffect} from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, MenuItem } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, MenuItem, Card, CardContent } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
@@ -9,6 +9,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { UserContext } from './userContext';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 
 function Navbar({ toggleSidebar }) {
@@ -16,6 +17,7 @@ function Navbar({ toggleSidebar }) {
   const navigate = useNavigate();
   const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
   const [anchorEl, setAnchorEl] = useState(null);
+  
   const userId = user?.userId;
   console.log("User ID:", userId);
 
@@ -39,14 +41,14 @@ function Navbar({ toggleSidebar }) {
       console.log("Missed check-ins:", missedCheckIns);
       if (missedCheckIns.length > 0) {
         missedCheckIns.forEach(checkIn => {
-          addNotification({ title: `Missed Check-in on ${new Date(checkIn.check_in_time).toLocaleString()}` });
+          addNotification({ title: `Missed Check-in on ${new Date(checkIn.check_in_time).toLocaleString()}`, message: 'Please complete your check-in.' });
         });
       } else {
-        addNotification({ title: "You have no missed check-ins." });
+        addNotification({ title: "You have no missed check-ins.", message: ''});
       }
     } catch (error) {
       console.error('Failed to fetch missed check-ins:', error);
-      addNotification({ title: "Failed to fetch missed check-ins. Please check the console for more details." });
+      addNotification({ title: "Failed to fetch missed check-ins. Please check the console for more details.", message: ''});  
     }
   };
 
@@ -75,6 +77,8 @@ function Navbar({ toggleSidebar }) {
   useEffect(() => {
     const handleServiceWorkerMessage = (event) => {
       if (event.data && event.data.msg === 'updateCount') {
+        console.log('Received message from service worker:', event.data);
+        addNotification({ title: event.data.title, message: event.data.body });
         incrementNotificationCount();
       }
     };
@@ -85,6 +89,7 @@ function Navbar({ toggleSidebar }) {
       navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
     };
   }, []);
+
   
   return (
     <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -132,7 +137,22 @@ function Navbar({ toggleSidebar }) {
         </IconButton>
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)}  onClose={() => handleClose(null)}>
           {notifications.map((notification, index) => (
-            <MenuItem key={index} onClick={handleClose}>{notification.title}</MenuItem>
+            <MenuItem key={index} onClick={() => handleClose(index)} sx={{ whiteSpace: 'normal',maxWidth: 350, padding: 1}}>
+              <Card elevation={2} sx={{display: 'flex', alignItems: 'center', width: '100%'}}>
+              
+                <CancelIcon color="error" />
+
+                <CardContent sx={{ flex: '1 1 auto' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                    {notification.title}
+                  </Typography>
+                  
+                  <Typography variant="body2" color="text.secondary">
+                    {notification.message}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </MenuItem>
           ))}
         </Menu>
         <IconButton color="inherit">
