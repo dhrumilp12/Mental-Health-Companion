@@ -39,6 +39,14 @@ class NotificationScheduler:
                 self.scheduler.cancel_job(job)  # Cancel the job
                 print(f"Canceled scheduled notification for check-in {check_in_id}")
 
+    def delete_past_check_ins(self):
+        now = datetime.now()
+        result = db.check_ins.delete_many({'check_in_time': {'$lt': now}})
+        print(f"Deleted {result.deleted_count} past check-ins at {now}")
+
+    def schedule_delete_past_check_ins(self):
+        self.scheduler.every().day.at("00:00").do(self.delete_past_check_ins)  # Adjust the time as needed
+
     def run_scheduler(self):
         while True:
             self.scheduler.run_pending()

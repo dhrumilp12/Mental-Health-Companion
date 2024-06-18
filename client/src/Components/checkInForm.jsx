@@ -48,6 +48,13 @@ function CheckInForm({ userId, checkInId, update }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const selectedTime = new Date(checkInTime);
+    const now = new Date();
+    if (selectedTime < now) {
+      alert("Cannot schedule check-in in the past. Please choose a future time.");
+      return;
+    }
+
     const url = update ? `/api/checkIn/update/${checkInId}` : '/api/checkIn/schedule';
     const method = update ? 'patch' : 'post';
     const data = { user_id: userId, check_in_time: checkInTime, frequency, notify };
