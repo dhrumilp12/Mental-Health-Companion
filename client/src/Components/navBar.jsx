@@ -1,4 +1,5 @@
 import React, {useContext, useState, useEffect} from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, MenuItem } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -8,14 +9,46 @@ import SearchIcon from '@mui/icons-material/Search';
 import { UserContext } from './userContext';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-
+import { useParams } from 'react-router-dom';
 
 function Navbar({ toggleSidebar }) {
   const { incrementNotificationCount, notifications, addNotification } = useContext(UserContext);
   const navigate = useNavigate();
   const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
   const [anchorEl, setAnchorEl] = useState(null);
+  const { userId } = useParams();
+  
 
+  useEffect(() => {
+    if (userId) {
+      fetchMissedCheckIns();
+    }
+    else {
+      console.error("No user ID available from URL parameters.");
+    }
+  }, [userId]); // This effect depends on the `user` object
+  
+
+const fetchMissedCheckIns = async () => {
+  if (!user || !user.userId) {
+    console.error("User ID is missing in context");
+    return; // Exit the function if no user ID is available
+  }
+  try {
+      const response = await axios.get('/api/checkIn/missed?user_id={userId}'); // Replace {userId} with actual user ID
+      const missedCheckIns = response.data.missed;
+      if (missedCheckIns.length > 0) {
+        missedCheckIns.forEach(checkIn => {
+          addNotification({ title: `Missed Check-in on ${new Date(checkIn.check_in_time).toLocaleString()}` });
+        });
+      } else {
+        addNotification({ title: "You have no missed check-ins." });
+      }
+  } catch (error) {
+      console.error('Failed to fetch missed check-ins:', error);
+      addNotification({ title: "Failed to fetch missed check-ins. Please check the console for more details." });
+  }
+};
   const handleNotificationClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -95,17 +128,11 @@ function Navbar({ toggleSidebar }) {
             <NotificationsIcon />
           </Badge>
         </IconButton>
-        <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={handleClose}
-                >
-                    {notifications.map((notification, index) => (
-                        <MenuItem key={index} onClick={handleClose}>
-                            {notification.title}
-                        </MenuItem>
-                    ))}
-                </Menu>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+          {notifications.map((notification, index) => (
+            <MenuItem key={index} onClick={handleClose}>{notification.title}</MenuItem>
+          ))}
+        </Menu>
         <IconButton color="inherit">
           <SearchIcon />
         </IconButton>
