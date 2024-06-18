@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import {
@@ -12,14 +12,39 @@ import {
     TextField,
     Box,
     Tooltip,
+    Typography
   } from '@mui/material';
 
+  import { formatISO, parseISO } from 'date-fns';
   
 function CheckInForm({ userId, checkInId, update }) {
   const [checkInTime, setCheckInTime] = useState('');
   const [frequency, setFrequency] = useState('daily');
   const [notify, setNotify] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+
+  useEffect(() => {
+    if (update && checkInId) {
+      // Fetch existing check-in data
+      setLoading(true);
+      axios.get(`/api/checkIn/retrieve/${checkInId}`)
+        .then(response => {
+          const data = response.data;
+          console.log('Fetched check-in data:', data);
+           // Format the date for datetime-local input
+           const formattedCheckInTime = formatISO(parseISO(data.check_in_time), { representation: 'date' });
+           setCheckInTime(formattedCheckInTime.slice(0, 16)); // Ensures the datetime string is properly formatted
+           setFrequency(data.frequency);
+           setNotify(data.notify);
+           setLoading(false);
+         })
+         .catch(error => {
+           console.error('Failed to fetch check-in details:', error);
+           setLoading(false);
+         });
+    }
+  }, [update, checkInId]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -35,6 +60,8 @@ function CheckInForm({ userId, checkInId, update }) {
       console.error('Error:', error.response?.data || error);
     }
   };
+
+  if (loading) return <Typography>Loading...</Typography>;
 
 return (
     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 4, padding: 3, borderRadius: 2, boxShadow: 3 }}>
