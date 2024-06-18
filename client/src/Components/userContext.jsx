@@ -12,7 +12,9 @@ export const UserProvider = ({ children }) => {
   const addNotification = (notification) => {
     setNotifications((prev) => [...prev, notification]);
 };
-
+  const removeNotification = index => {
+    setNotifications(prevNotifications => prevNotifications.filter((_, i) => i !== index));
+  };
   const incrementNotificationCount = () => {
     setNotificationCount(notificationCount + 1);
   };
@@ -89,7 +91,7 @@ export const UserProvider = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword,incrementNotificationCount, notifications, addNotification }}>
+    <UserContext.Provider value={{ user, setUser, logout,voiceEnabled, setVoiceEnabled, changePassword,incrementNotificationCount, notifications,removeNotification, addNotification }}>
       {children}
     </UserContext.Provider>
   );

@@ -9,15 +9,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import { UserContext } from './userContext';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import { useParams } from 'react-router-dom';
+
 
 function Navbar({ toggleSidebar }) {
-  const { incrementNotificationCount, notifications, addNotification } = useContext(UserContext);
+  const { incrementNotificationCount, notifications, addNotification, removeNotification } = useContext(UserContext);
   const navigate = useNavigate();
   const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
   const [anchorEl, setAnchorEl] = useState(null);
-  const { userId } = useParams();
-  
+  const userId = user?.userId;
+  console.log("User ID:", userId);
 
   useEffect(() => {
     if (userId) {
@@ -27,16 +27,16 @@ function Navbar({ toggleSidebar }) {
       console.error("No user ID available from URL parameters.");
     }
   }, [userId]); // This effect depends on the `user` object
-  
 
-const fetchMissedCheckIns = async () => {
-  if (!user || !user.userId) {
-    console.error("User ID is missing in context");
-    return; // Exit the function if no user ID is available
-  }
-  try {
-      const response = await axios.get('/api/checkIn/missed?user_id={userId}'); // Replace {userId} with actual user ID
-      const missedCheckIns = response.data.missed;
+  const fetchMissedCheckIns = async () => {
+    if (!userId) {
+      console.error("User ID is missing in context");
+      return; // Exit the function if no user ID is available
+    }
+    try {
+      const response = await axios.get(`/api/checkIn/missed?user_id=${userId}`); // Replace {userId} with actual user ID
+      const missedCheckIns = response.data;
+      console.log("Missed check-ins:", missedCheckIns);
       if (missedCheckIns.length > 0) {
         missedCheckIns.forEach(checkIn => {
           addNotification({ title: `Missed Check-in on ${new Date(checkIn.check_in_time).toLocaleString()}` });
@@ -44,17 +44,19 @@ const fetchMissedCheckIns = async () => {
       } else {
         addNotification({ title: "You have no missed check-ins." });
       }
-  } catch (error) {
+    } catch (error) {
       console.error('Failed to fetch missed check-ins:', error);
       addNotification({ title: "Failed to fetch missed check-ins. Please check the console for more details." });
-  }
-};
+    }
+  };
+
   const handleNotificationClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleClose = (index) => {
       setAnchorEl(null);
+      removeNotification(index);
   };
 
   const handleProfileClick = () => {
@@ -128,7 +130,7 @@ const fetchMissedCheckIns = async () => {
             <NotificationsIcon />
           </Badge>
         </IconButton>
-        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)}  onClose={() => handleClose(null)}>
           {notifications.map((notification, index) => (
             <MenuItem key={index} onClick={handleClose}>{notification.title}</MenuItem>
           ))}
