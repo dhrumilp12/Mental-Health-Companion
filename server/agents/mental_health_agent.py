@@ -1,63 +1,86 @@
-import os
-import random
-from datetime import datetime
-import spacy
-import json
-import requests
-from bson.objectid import ObjectId
+# -- Standard libraries --
+# -- 3rd Party libraries --
+# Azure
+# Langchain
+# MongoDB
+# -- Custom modules --
 
+"""
+This module defines a class used to generate AI agents centered around mental health applications.
+"""
+
+# -- Standard libraries --
+from datetime import datetime
+
+# -- 3rd Party libraries --
+# import spacy
+
+# Azure
+# Langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.memory.chat_memory import BaseChatMemory
 from langchain.memory import ConversationSummaryMemory
-from langchain_community.utilities import BingSearchAPIWrapper
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.agents import Tool, create_tool_calling_agent, AgentExecutor
-from langchain.tools import StructuredTool
+from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
-from langchain_core.messages import SystemMessage
-
+# MongoDB
+# -- Custom modules --
 from .ai_agent import AIAgent
-from services.azure_mongodb import MongoDBClient
+from server.services.azure_mongodb import MongoDBClient
+# Constants
 from utils.consts import SYSTEM_MESSAGE
-from utils.consts import AGENT_FACTS
 from utils.consts import PROCESSING_STEP
-from utils.docs import format_docs
-from models.agent_fact import AgentFact
-from models.chat_summary import ChatSummary
-from models.chat_turn import ChatTurn
-
-
 
 # Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+# nlp = spacy.load("en_core_web_sm")
 
 
 class MentalHealthAIAgent(AIAgent):
     """
-    The MentalHealthAIAgent creates Aria, an AI agent
-    that can provide support and guidance to users.
-    It has access to user profiles, user journeys,
+    A class that captures the data and methods required for
+    mental health applications.
+    It accesses to user profiles, user journeys,
     user entities, chat summaries, chat turns, resources, 
     and user resources.
     """
 
-    def __init__(self, system_message=SYSTEM_MESSAGE, schema=[]):
-        super().__init__(system_message, schema)
+    def __init__(self, system_message: str = SYSTEM_MESSAGE, tool_names: list[str] = []):
+        """
+        Initializes a MentalHealthAgent object.
 
-        self.system_message = SystemMessage(system_message)
+        Args:
+            system_message (str): The system message to be displayed at the beginning of the conversation.
+            schema (list[str]): A list of object names that defines which custom tools the agent will use.
+
+        Returns:
+            None
+        """
+        super().__init__(system_message, tool_names)
+
         self.prompt = ChatPromptTemplate.from_messages(
-                [
-                    ("system", self.system_message.content),
-                    MessagesPlaceholder(variable_name="history"),
-                    ("human", "{input}"),
-                    MessagesPlaceholder(variable_name="agent_scratchpad"),
-                ]
-            )
-        
-        self.agent_executor = self.get_agent_executor(self.prompt)
+            [
+                ("system", self.system_message.content),
+                MessagesPlaceholder(variable_name="history"),
+                ("human", "{input}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
+        )
+
+        tools = self._create_agent_tools(tool_names)
+        agent = create_tool_calling_agent(self.llm, tools, self.prompt)
+        executor:AgentExecutor = AgentExecutor(
+            agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+        self.agent_executor = self.get_agent_with_history(executor)
 
 
     def get_session_history(self, session_id: str) -> MongoDBChatMessageHistory:
+        """
+        Retrieves the chat history for a given session ID from the database.
+
+        Args:
+            session_id (str): The session ID to retrieve the chat history for.
+        """
+
         history = MongoDBChatMessageHistory(
             MongoDBClient.get_mongodb_variables(),
             session_id,
@@ -70,23 +93,38 @@ class MentalHealthAIAgent(AIAgent):
         else:
             return history
 
+    def get_agent_memory(self, user_id:str, chat_id:int) -> BaseChatMemory:
+            """
+            Retrieves the agent's memory given the ID's for a specific user and chat instance.
 
-    def get_agent_memory(self, user_id, chat_id):
-        # chat_history = self.get_chat_history(user_id, chat_id)
+            Args:
+                user_id (str): The ID of the user.
+                chat_id (int): The ID of the chat.
 
-        # memory = ConversationSummaryMemory.from_messages(
-        #     llm=self.llm,
-        #     chat_memory=chat_history,
-        #     return_messages=True
-        # )
+            Returns:
+                BaseChatMemory: The agent's memory for the specified user and chat.
+            """
+            # chat_history = self.get_chat_history(user_id, chat_id)
 
-        # TODO: Rewrite function or remove if not used anymore
-        memory = None
+            # memory = ConversationSummaryMemory.from_messages(
+            #     llm=self.llm,
+            #     chat_memory=chat_history,
+            #     return_messages=True
+            # )
 
-        return memory
+            # TODO: Rewrite function or remove if not used anymore
+            memory = None
 
+            return memory
 
-    def get_agent_with_history(self, agent_executor):
+    def get_agent_with_history(self, agent_executor) -> RunnableWithMessageHistory:
+        """
+        Wraps the agent executor with a message history object to use history within the conversation.
+
+        Args:
+            agent_executor (AgentExecutor): The agent executor to wrap with message history.
+        """
+
         agent_with_history = RunnableWithMessageHistory(
             agent_executor,
             get_session_history=self.get_session_history,
@@ -95,136 +133,56 @@ class MentalHealthAIAgent(AIAgent):
             verbose=True
         )
 
-        return agent_with_history    
+        return agent_with_history
 
-    def get_maps_results(self, query):
-        # Azure Maps API Key
-        api_key = os.environ["AZURE_MAPS_KEY"]
 
-        # Define the base URL for the Azure Maps search address API
-        base_url = "https://atlas.microsoft.com/search/address/json"
-        
-        # Parameters for the API request
-        params = {
-            'api-version': '1.0',
-            'subscription-key': api_key,
-            'query': query
-        }
-
-        # Make the API request to get address information
-        response = requests.get(base_url, params=params)
-        results = response.json()
-
-        # Check if results were found
-        if results.get('results'):
-            # Extract bounding box from the first result
-            location_bbox = results['results'][0]['viewport']
-
-            # Define the base URL for the fuzzy search API
-            fuzzy_search_url = "https://atlas.microsoft.com/search/fuzzy/json"
-
-            # Parameters for the fuzzy search, including the bounding box
-            fuzzy_params = {
-                'api-version': '1.0',
-                'subscription-key': api_key,
-                'query': query,
-                'topLeft': f"{location_bbox['topLeftPoint']['lat']},{location_bbox['topLeftPoint']['lon']}",
-                'btmRight': f"{location_bbox['btmRightPoint']['lat']},{location_bbox['btmRightPoint']['lon']}"
-            }
-
-            # Make the API request for fuzzy search within the bounding box
-            fuzzy_response = requests.get(fuzzy_search_url, params=fuzzy_params)
-            fuzzy_results = fuzzy_response.json()
-
-            # Extract relevant details from the results
-            agent_results = [{
-                'name': result['poi']['name'],
-                'phone': result['poi']['phone'],
-                'address': result['address']['freeformAddress']
-            } for result in fuzzy_results.get('results', [])]
-
-            # Randomly sample up to 3 results to return
-            trunc_agent_results = random.sample(agent_results, min(len(agent_results), 3))
-
-            return json.dumps(trunc_agent_results, default=str)
-        else:
-            return json.dumps({"error": "No results found"}, default=str)
-
-    def prepare_tools(self):
-        # search = BingSearchAPIWrapper(k=5)
-        search = TavilySearchResults()
-        community_tools = [search]
-
-        # cosmosdb_tool = get_cosmosdb_tool(db_name, collection_name)
-        agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
-        # user_profiles_retriever_chain = self._get_cosmosdb_vector_store_retriever("users") | format_docs
-        # user_journeys_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_journeys") | format_docs
-        # user_materials_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_materials") | format_docs
-        # user_entities_retriever_chain = self._get_cosmosdb_vector_store_retriever("user_entities") | format_docs
-        # agent_facts_retriever_chain = self._get_cosmosdb_vector_store_retriever("agent_facts") | format_docs
-
-        custom_tools = [
-            Tool(
-                name="vector_search_agent_facts",
-                func=agent_facts_retriever_chain.invoke,
-                description="Searches for facts about the agent itself."
-            ),
-            # Tool(
-            #     name="get_maps_results",
-            #     func=lambda q: self.get_maps_results(q),
-            #     description="Look for places offering mental health services in a map based on a query."
-            # ),
-            StructuredTool.from_function(self.get_user_profile_by_user_id)
-            # Tool(
-            #     name = "vector_search_user_journeys",
-            #     func = user_profiles_retriever_chain.invoke,
-            #     description = "Searches a user's profile for personal information."
-            # ),
-            # Tool(
-            #     name = "vector_search_user_journeys",
-            #     func = user_journeys_retriever_chain.invoke,
-            #     description = "Searches a mental health patient's user journey."
-            # ),
-            # Tool(
-            #     name = "vector_search_user_materials",
-            #     func = user_materials_retriever_chain.invoke,
-            #     description = ""
-            # ),
-            # Tool(
-            #     name = "vector_search_user_entities",
-            #     func = user_entities_retriever_chain.invoke,
-            #     description = ""
-            # ),
-            # Tool(
-            #     name = "vector_search_agent_facts",
-            #     func = agent_facts_retriever_chain.invoke,
-            #     description = ""
-            # )
-        ]
-
-        all_tools = community_tools + custom_tools
-        return all_tools
-
-    
     def get_agent_executor(self, prompt):
-        tools = self.prepare_tools()
+        """
+        Retrieves an agent executor that runs the agent workflow.
+
+        Args:
+            prompt (ChatPromptTemplate): The LangChain prompt object to be passed to the executor.
+        """
+        tools = self.get_agent_tools()
         agent = create_tool_calling_agent(self.llm, tools, prompt)
-        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+        agent_executor = AgentExecutor(
+            agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
-        return agent_executor  
-    
+        return agent_executor
 
-    def run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
+
+    def exec_update_step():
+        # Chat Summary:
+        # Update every 5 chat turns
+        # Therapy Material
+        # Maybe not get it from DB at all? Just perform Bing search?
+        # User Entity:
+        # Can be saved from chat summary step, every 5 chat turns
+        # User Journey:
+        # Can be either updated at the end of the chat, or every 5 chat turns
+        # User Material:
+        # Possibly updated every 5 chat turns, at the end of a chat, or not at all
+        pass
+
+    def run(self, message: str, with_history:bool =True, user_id: str=None, chat_id:int=None, turn_id:int=None) -> str:
+        """
+        Runs the agent with the given message and context.
+
+        Args:
+            message (str): The message to be processed by the agent.
+            with_history (bool): A flag indicating whether to use history in the conversation.
+            user_id (str): A unique identifier for the user.
+            chat_id (int): A unique identifier for the conversation.
+            turn_id (int): A unique identifier for the evaluated turn in the conversation.
+        """
+
         # if not with_history:
         #     return super().run(message)
         # else:
-
-            # TODO: throw error if user_id, chat_id is set to None.
+        # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
 
-        agent_with_history = self.get_agent_with_history(self.agent_executor)
-
-        invocation = agent_with_history.invoke(
+        invocation = self.agent_executor.invoke(
             {"input": f"{message}\nuser_id:{user_id}", "agent_scratchpad": []},
             config={"configurable": {"session_id": session_id}}
         )
@@ -232,231 +190,19 @@ class MentalHealthAIAgent(AIAgent):
         # This updates certain collections in the database based on recent history
         if (turn_id + 1) % PROCESSING_STEP == 0:
             # TODO
-            # Chat Summary:
-            # Update every 5 chat turns
-            # Therapy Material
-            # Maybe not get it from DB at all? Just perform Bing search?
-            # User Entity:
-            # Can be saved from chat summary step, every 5 chat turns
-            # User Journey:
-            # Can be either updated at the end of the chat, or every 5 chat turns
-            # User Material:
-            # Possibly updated every 5 chat turns, at the end of a chat, or not at all
-
-            self.update_chat_summary(user_id, chat_id)
-            self.update_user_entities()
-            self.update_user_journey()
+            self.exec_update_step()
+            pass
 
         return invocation["output"]
 
-    def update_chat_summary(self, user_id, chat_id):
-        # TODO: Redo this function
-        pass
 
-        # collection: Collection = self.db["chat_summaries"]
-        # loader = None
-        # last_summary = None
-        # latest_turns = None
-        # current_summary = None
+    def get_initial_greeting(self, user_id:str) -> dict:
+        """
+        Retrieves the initial greeting message for a user.
 
-        # query_filter = {
-        #     "user_id": user_id,
-        #     "chat_id": chat_id
-        # }
-        # If chat summary is empty, use the chat summary from last session.
-        # if collection.count_documents(query_filter):
-        #     last_summary = MongoDBClient.get_mongodb_loader("chat_summaries", {
-        #         "user_id": user_id,
-        #         "chat_id": int(chat_id) - 1
-        #     }).load()
-
-        #     pass
-
-        #     # last_summary:ChatSummary = ChatSummary.model_validate(collection.find_one())
-        # else:
-
-        # If chat summary is not empty, use the latest chat summary and grab the latest 5 turns
-        # loader_output = MongoDBClient.get_mongodb_loader("chat_summaries", {
-        #     "user_id": user_id,
-        #     "chat_id": int(chat_id) - 1
-        # }).load()
-        # last_summary:ChatSummary = ChatSummary.model_validate(collection.find_one(query_filter))
-        # latest_turns = list(collection.find({"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}).limit(5))
-        # pass
-        # try:
-        #     last_summary: ChatSummary = ChatSummary.model_validate(collection.find_one({
-        #         "user_id": user_id,
-        #         "chat_id": int(chat_id) - 1
-        #     }))
-        # except ValidationError as e:
-        #     print(e)
-        #     last_summary = ChatSummary.model_construct()
-
-        # summary_message = AIMessage(last_summary.summary_text)
-
-        # turns = self.db["chat_turns"].find(
-        #     {"user_id": user_id, "chat_id": chat_id}).sort({"timestamp": -1}).limit(5)
-        # latest_turns: list[ChatTurn] = [
-        #     ChatTurn.model_validate(turn) for turn in turns]
-        # conversation_log = []
-
-        # for turn in latest_turns:
-        #     conversation_log.append(HumanMessage(turn.human_message))
-        #     conversation_log.append(AIMessage(turn.ai_message))
-
-        # summary_template = """
-        #     Given the following summary and most recent conversation log, generate a new summary that updates and rewrites the existing summary as needed to
-        #     capture the most salient points of the conversation log.
-        #     Summary so far:
-        #     {summary}
-
-        #     Latest conversation log:
-        #     {conversation_log}
-        # """
-
-        # summary_prompt = PromptTemplate.from_template(summary_template)
-
-        # result = summary_prompt.invoke(
-        #     {"summary": summary_message, "conversation_log": conversation_log})
-
-    def update_user_entities(self):
-        # TODO
-        pass
-
-    def update_user_journey(self):
-        # TODO
-        pass
-
-    def update_collections(self):
-        # TODO
-        pass
-
-
-    @staticmethod
-    def load_agent_facts_to_db():
-        db = MongoDBClient.get_client()[MongoDBClient.get_db_name()]
-        collection = db["agent_facts"]
-
-        if collection.count_documents({}) == 0:
-            print("There are no documents in Agent Facts. writing documents...")
-            validated_models: list[AgentFact] = [
-                AgentFact.model_validate(fact_dict) for fact_dict in AGENT_FACTS]
-            facts_to_load = [AgentFact.model_dump(
-                fact_model) for fact_model in validated_models]
-            collection.insert_many(facts_to_load)
-        else:
-            print("Agent facts are already populated. Skipping step.")
-
-
-    def analyze_chat(self, text):
-        """Analyze the chat text to determine emotional state and detect triggers."""
-        doc = nlp(text)
-        emotions = [token for token in doc if token.dep_ == "amod" and token.head.pos_ == "NOUN"]
-        triggers = [ent.text for ent in doc.ents if ent.label_ in ["PERSON", "ORG", "GPE"]]
-
-         # Initialize a dictionary to hold detected patterns and suggested interventions
-        patterns = {}
-
-        # Detecting various emotional states based on keywords
-        lower_text = text.lower()  # Convert text to lower case for case insensitive matching
-        if any(keyword in lower_text for keyword in ["overwhelmed", "stressed", "too much", "can't handle", "pressure"]):
-            patterns['Stress or Overwhelm'] = [
-                "Consider taking a short break to clear your mind.",
-                "Engage in some deep breathing exercises or meditation to relax.",
-                "Explore these resources on time management to help organize your tasks better."
-            ]
-        if any(keyword in lower_text for keyword in ["anxious", "worry", "nervous", "scared", "panic"]):
-            patterns['Anxiety'] = [
-                "Try grounding techniques like the 5-4-3-2-1 method to calm your senses.",
-                "It might be helpful to talk to a friend or counselor about your feelings.",
-                "Check out these tips for managing anxiety and reducing stress."
-            ]
-        if any(word in lower_text for word in ["angry", "mad", "frustrated", "upset", "annoyed"]):
-            patterns['Anger or Frustration'] = [
-                "Try counting to ten or practicing deep breathing.",
-                "Engage in some physical activity to release energy.",
-                "Consider learning more about conflict resolution skills."
-            ]
-        if any(word in lower_text for word in ["lonely", "alone", "isolated", "no one", "abandoned"]):
-            patterns['Loneliness'] = [
-                "Consider joining community groups or online forums to connect with others.",
-                "Reach out to family or friends for a chat.",
-                "Explore resources to develop social skills or find social activities."
-            ]
-        if any(word in lower_text for word in ["scared", "fear", "terrified", "fright", "panic"]):
-            patterns['Fear'] = [
-                "Practice controlled breathing to manage acute fear.",
-                "Explore exposure therapy techniques under professional guidance.",
-                "Seek professional help if fears persist."
-            ]
-        if any(word in lower_text for word in ["confused", "lost", "unclear", "disoriented", "bewildered"]):
-            patterns['Confusion or Disorientation'] = [
-                "Organizational tools or apps might help structure daily tasks.",
-                "Try mindfulness exercises to enhance mental clarity.",
-                "Discussing these feelings with a mentor or counselor could be beneficial."
-            ]
-        if any(word in lower_text for word in ["grief", "loss", "mourn", "bereaved", "miss"]):
-            patterns['Grief or Loss'] = [
-                "Joining support groups for similar experiences might help.",
-                "Consider seeking grief counseling or therapy.",
-                "Healthy grieving practices, such as memorializing the lost one, can be therapeutic."
-            ]
-        if any(word in lower_text for word in ["excited", "nervous", "jittery", "thrilled", "restless"]):
-            patterns['Excitement or Nervousness'] = [
-                "Channel your excitement into productive activities.",
-                "Use techniques like visualization or positive affirmations to calm nerves.",
-                "Balance excitement with downtime to avoid burnout."
-            ]
-
-        return {"emotions": emotions, "triggers": triggers, "patterns": patterns}
-
-    def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
-        try:
-            if not with_history:
-                return super().run(message)
-
-            # memory = self.get_agent_memory(user_id, chat_id)
-            memory = {
-                "buffer": []
-            }
-            if not memory:
-                return "Error: Unable to retrieve conversation history."
-
-            if memory.buffer:
-                addendum = f"""
-                Previous Conversation Summary:
-                {memory.buffer}
-                """
-                self.system_message.content = f"{self.system_message.content}\n{addendum}"
-
-            agent_with_history = self.get_agent_with_history(memory)
-
-            # Analyze the message for emotional content
-            analysis_results = self.analyze_chat(message)
-            response_addendum = self.format_response_addendum(analysis_results)
-
-            # Invoke the agent with history context
-            invocation = agent_with_history.invoke({"input": f"{message}\n{response_addendum}"}, config={"configurable": {"user_id": user_id, "chat_id": chat_id}})
-
-            self.write_agent_response_to_db(invocation, user_id, chat_id, turn_id)
-
-            return invocation["output"]
-
-        except Exception as e:
-            return f"An error occurred: {str(e)}"
-
-
-    def format_response_addendum(self, analysis_results):
-        patterns = analysis_results['patterns']
-        response_addendum = ""
-        for state, suggestions in patterns.items():
-            response_addendum += f"Detected {state}: " + \
-                "; ".join(suggestions) + "\n"
-        return response_addendum.strip()
-
-
-
-    def get_initial_greeting(self, user_id):
+        Args:
+            user_id (str): The unique identifier for the user.
+        """
         db_client = MongoDBClient.get_client()
         db_name = MongoDBClient.get_db_name()
         db = db_client[db_name]
@@ -522,54 +268,118 @@ class MentalHealthAIAgent(AIAgent):
                 "message": response,
                 "chat_id": new_chat_id
             }
+        
 
-    def get_user_profile_by_user_id(self, user_id: str) -> str:
-        """
-        Retrieves a user's profile information by the user's ID to be used when brought up in conversation.
-        Includes age, name and location.
-        """
-        doc = self.db["users"].find_one({"_id": ObjectId(user_id)})
-        if "contentVector" in doc:
-            del doc["contentVector"]
-        return json.dumps(doc, default=str)
+    # def analyze_chat(self, text):
+    #     """Analyze the chat text to determine emotional state and detect triggers."""
+    #     doc = nlp(text)
+    #     emotions = [token for token in doc if token.dep_ ==
+    #                 "amod" and token.head.pos_ == "NOUN"]
+    #     triggers = [ent.text for ent in doc.ents if ent.label_ in [
+    #         "PERSON", "ORG", "GPE"]]
 
-    def get_user_journey_by_user_id(self, user_id: str) -> str:
-        """
-        Retrieves a user journey by the user's ID.
-        """
-        doc = self.db["user_journeys"].find_one({"user_id": user_id})
-        if "contentVector" in doc:
-            del doc["contentVector"]
-        return json.dumps(doc)
+    #     # Initialize a dictionary to hold detected patterns and suggested interventions
+    #     patterns = {}
 
-    def get_chat_summary_by_composite_id(self, user_id: str, chat_id: str) -> str:
-        """
-        Retrieves a summary of a chat between a user and the agent by a
-        combination of the user's ID and the chat instance ID.
-        """
-        doc = self.db["chat_summaries"].find_one(
-            {"user_id": user_id, "chat_id": chat_id})
-        if "contentVector" in doc:
-            del doc["contentVector"]
-        return json.dumps(doc)
+    #     # Detecting various emotional states based on keywords
+    #     lower_text = text.lower()  # Convert text to lower case for case insensitive matching
+    #     if any(keyword in lower_text for keyword in ["overwhelmed", "stressed", "too much", "can't handle", "pressure"]):
+    #         patterns['Stress or Overwhelm'] = [
+    #             "Consider taking a short break to clear your mind.",
+    #             "Engage in some deep breathing exercises or meditation to relax.",
+    #             "Explore these resources on time management to help organize your tasks better."
+    #         ]
+    #     if any(keyword in lower_text for keyword in ["anxious", "worry", "nervous", "scared", "panic"]):
+    #         patterns['Anxiety'] = [
+    #             "Try grounding techniques like the 5-4-3-2-1 method to calm your senses.",
+    #             "It might be helpful to talk to a friend or counselor about your feelings.",
+    #             "Check out these tips for managing anxiety and reducing stress."
+    #         ]
+    #     if any(word in lower_text for word in ["angry", "mad", "frustrated", "upset", "annoyed"]):
+    #         patterns['Anger or Frustration'] = [
+    #             "Try counting to ten or practicing deep breathing.",
+    #             "Engage in some physical activity to release energy.",
+    #             "Consider learning more about conflict resolution skills."
+    #         ]
+    #     if any(word in lower_text for word in ["lonely", "alone", "isolated", "no one", "abandoned"]):
+    #         patterns['Loneliness'] = [
+    #             "Consider joining community groups or online forums to connect with others.",
+    #             "Reach out to family or friends for a chat.",
+    #             "Explore resources to develop social skills or find social activities."
+    #         ]
+    #     if any(word in lower_text for word in ["scared", "fear", "terrified", "fright", "panic"]):
+    #         patterns['Fear'] = [
+    #             "Practice controlled breathing to manage acute fear.",
+    #             "Explore exposure therapy techniques under professional guidance.",
+    #             "Seek professional help if fears persist."
+    #         ]
+    #     if any(word in lower_text for word in ["confused", "lost", "unclear", "disoriented", "bewildered"]):
+    #         patterns['Confusion or Disorientation'] = [
+    #             "Organizational tools or apps might help structure daily tasks.",
+    #             "Try mindfulness exercises to enhance mental clarity.",
+    #             "Discussing these feelings with a mentor or counselor could be beneficial."
+    #         ]
+    #     if any(word in lower_text for word in ["grief", "loss", "mourn", "bereaved", "miss"]):
+    #         patterns['Grief or Loss'] = [
+    #             "Joining support groups for similar experiences might help.",
+    #             "Consider seeking grief counseling or therapy.",
+    #             "Healthy grieving practices, such as memorializing the lost one, can be therapeutic."
+    #         ]
+    #     if any(word in lower_text for word in ["excited", "nervous", "jittery", "thrilled", "restless"]):
+    #         patterns['Excitement or Nervousness'] = [
+    #             "Channel your excitement into productive activities.",
+    #             "Use techniques like visualization or positive affirmations to calm nerves.",
+    #             "Balance excitement with downtime to avoid burnout."
+    #         ]
 
-    def get_user_material_by_user_id(self, user_id: str) -> str:
-        """
-        Retrieves a user's therapy material by the user's ID.
-        """
-        doc = self.db["user_materials"].find_one({"user_id": user_id})
-        if "contentVector" in doc:
-            del doc["contentVector"]
-        return json.dumps(doc)
+    #     return {"emotions": emotions, "triggers": triggers, "patterns": patterns}
 
-    def get_user_entity_by_user_id(self, user_id: str):
-        """
-        Retrieves a user's known entity by the user's ID.
-        """
-        doc = self.db["user_entities"].find_one({"user_id": user_id})
-        if "contentVector" in doc:
-            del doc["contentVector"]
-        return json.dumps(doc)
+    # def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
+    #     try:
+    #         if not with_history:
+    #             return super().run(message)
+
+    #         # memory = self.get_agent_memory(user_id, chat_id)
+    #         memory = {
+    #             "buffer": []
+    #         }
+    #         if not memory:
+    #             return "Error: Unable to retrieve conversation history."
+
+    #         if memory.buffer:
+    #             addendum = f"""
+    #             Previous Conversation Summary:
+    #             {memory.buffer}
+    #             """
+    #             self.system_message.content = f"{self.system_message.content}\n{addendum}"
+
+    #         agent_with_history = self.get_agent_with_history(memory)
+
+    #         # Analyze the message for emotional content
+    #         analysis_results = self.analyze_chat(message)
+    #         response_addendum = self.format_response_addendum(analysis_results)
+
+    #         # Invoke the agent with history context
+    #         invocation = agent_with_history.invoke({"input": f"{message}\n{response_addendum}"}, config={
+    #                                                "configurable": {"user_id": user_id, "chat_id": chat_id}})
+
+    #         self.write_agent_response_to_db(
+    #             invocation, user_id, chat_id, turn_id)
+
+    #         return invocation["output"]
+
+    #     except Exception as e:
+    #         return f"An error occurred: {str(e)}"
+
+    # def format_response_addendum(self, analysis_results):
+    #     patterns = analysis_results['patterns']
+    #     response_addendum = ""
+    #     for state, suggestions in patterns.items():
+    #         response_addendum += f"Detected {state}: " + \
+    #             "; ".join(suggestions) + "\n"
+    #     return response_addendum.strip()
+
+
 
 
 # Agent Fact:

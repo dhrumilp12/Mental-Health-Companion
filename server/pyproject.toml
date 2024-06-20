@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "earlent-server"
+version = "0.1.0"
+description = "An application meant to help students and professionals with stress and anxiety."
+authors = ["Dhrumil Patel <you@example.com>", "Anthony Santana <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+langchain = "^0.2.5"
+pymongo = "^4.7.3"
+pydantic = {extras = ["email"], version = "^2.7.4"}
+Flask = "^3.0.3"
+Flask-JWT-Extended = "^4.6.0"
+python-dotenv = "^1.0.1"
+mongomock = "^4.1.2"
+azure-cognitiveservices-speech = "^1.38.0"
+langchain-community = "^0.2.5"
+flask-cors = "^4.0.1"
+langchain-mongodb = "^0.1.6"
+langchain-openai = "^0.1.8"
+
+
+[tool.poetry.group.dev.dependencies]
+langsmith = "^0.1.80"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

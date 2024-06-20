@@ -2,7 +2,7 @@ import sys
 sys.path.append(".")
 
 from app import app
-from services.azure_mongodb import MongoDBClient
+from server.services.azure_mongodb import MongoDBClient
 
 user_data = {
     "username": "user1",
