@@ -5,7 +5,6 @@ import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, M
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import SearchIcon from '@mui/icons-material/Search';
 import { UserContext } from './userContext';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -155,9 +154,6 @@ function Navbar({ toggleSidebar }) {
             </MenuItem>
           ))}
         </Menu>
-        <IconButton color="inherit">
-          <SearchIcon />
-        </IconButton>
         <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
         </IconButton>
