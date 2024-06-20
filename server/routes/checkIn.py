@@ -1,14 +1,17 @@
+import json
+
 from flask import Blueprint, request, jsonify, current_app,Response
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from models.check_in import CheckIn, Frequency
 from dotenv import load_dotenv
-from services.azure_mongodb import MongoDBClient
+from server.services.azure_mongodb import MongoDBClient
 from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
 from .scheduler_main import scheduler
-
+from models.subscription import Subscription,db
 
 
 load_dotenv()
@@ -159,3 +162,50 @@ def check_missed_check_ins():
         return jsonify({'message': 'You have missed check-ins, would you like to complete them now?', 'missed': list(missed_check_ins)}), 200
     else:
         return jsonify({'message': 'No missed check-ins'}), 200
+
+
+@checkIn_routes.route('/subscribe', methods=['POST'])
+@jwt_required()
+def subscribe():
+    data = request.json
+    print(f"Received subscription data: {data}")
+    
+    if not data or 'endpoint' not in data or 'keys' not in data or 'p256dh' not in data['keys'] or 'auth' not in data['keys']:
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    
+    subscription_info = json.dumps({
+        'endpoint': data['endpoint'],
+        'keys': {
+            'p256dh': data['keys']['p256dh'],
+            'auth': data['keys']['auth']
+        }
+    })
+
+    user_id = get_jwt_identity()
+
+    # Check if the subscription already exists
+    existing_subscription = Subscription.query.filter_by(user_id=user_id).first()
+    if existing_subscription:
+         # Update existing subscription
+        existing_subscription.subscription_info = subscription_info
+    else:
+        # Create new subscription
+        new_subscription = Subscription(user_id=user_id, subscription_info=subscription_info)
+        db.session.add(new_subscription)
+    
+    db.session.commit()
+
+    return jsonify({'message': 'Subscription saved successfully'}), 200
+
+@checkIn_routes.route('/send_push', methods=['POST'])
+@jwt_required()
+def send_push():
+    data = request.json
+    user_id = data['user_id']
+    message = data['message']
+    success = send_push_notification(user_id, message)
+    if success:
+        return jsonify({'message': 'Push notification sent successfully'}), 200
+    else:
+        return jsonify({'error': 'Failed to send push notification'}), 500

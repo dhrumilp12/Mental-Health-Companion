@@ -9,7 +9,7 @@ from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models.user import User as UserModel
-from services.azure_mongodb import MongoDBClient
+from server.services.azure_mongodb import MongoDBClient
 
 user_routes = Blueprint("user", __name__)
 

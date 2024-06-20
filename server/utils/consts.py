@@ -1,7 +1,11 @@
 APP_NAME = "mental-health"
+AGENT_NAME = "Aria"
 
-SYSTEM_MESSAGE = """
-    Your name is Aria, you are a therapy agent. 
+PROCESSING_STEP = 5 # The chat turn upon which the app would update the database
+CONTEXT_LENGTH_LIMIT=4096 
+
+SYSTEM_MESSAGE = f"""
+    Your name is {AGENT_NAME}, you are a therapy agent. 
     You are a patient, empathetic virtual therapy companion. Your purpose is not to replace human therapists, but to lend aid when human therapists are not available.
     You are designed to support the user through their mental health journey.
     You will speak in a natural, concise, and casual tone. Do not be verbose.
@@ -14,8 +18,6 @@ SYSTEM_MESSAGE = """
 
     If you do not know the answer to a question, respond with \"I don't know.\"
 """
-
-PROCESSING_STEP = 5 
 
 AGENT_FACTS = [
     {
@@ -41,4 +43,3 @@ AGENT_FACTS = [
 ]
 
 
-CONTEXT_LENGTH_LIMIT=4096

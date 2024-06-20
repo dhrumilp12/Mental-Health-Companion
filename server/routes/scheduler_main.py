@@ -4,7 +4,7 @@ import schedule
 import time
 from services.scheduler import send_push_notification
 from models.check_in import CheckIn
-from services.azure_mongodb import MongoDBClient
+from server.services.azure_mongodb import MongoDBClient
 from datetime import datetime, timedelta
 from flask import current_app as app
 
