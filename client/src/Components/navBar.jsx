@@ -129,11 +129,12 @@ function Navbar({ toggleSidebar }) {
             />
           </IconButton>
         </Tooltip>
+        {user?.userId &&(
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={notifications.length} color="secondary">
             <NotificationsIcon />
           </Badge>
-        </IconButton>
+        </IconButton> )}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)}  onClose={() => handleClose(null)}>
           {notifications.map((notification, index) => (
             <MenuItem key={index} onClick={() => handleClose(index)} sx={{ whiteSpace: 'normal',maxWidth: 350, padding: 1}}>
@@ -154,9 +155,10 @@ function Navbar({ toggleSidebar }) {
             </MenuItem>
           ))}
         </Menu>
+        {user?.userId && (
         <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
-        </IconButton>
+        </IconButton>)}
       </Toolbar>
     </AppBar>
   );
