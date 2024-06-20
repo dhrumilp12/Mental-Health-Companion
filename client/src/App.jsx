@@ -1,5 +1,6 @@
 import React, { useState,useEffect, useContext } from 'react';
 import { UserProvider } from './Components/userContext';
+import { Navigate } from 'react-router-dom';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import ChatComponent from './Components/chatComponent';  // Ensure this path is correct
 import AuthComponent from './Components/authComponent';
@@ -13,6 +14,7 @@ import CheckInForm from './Components/checkInForm';
 import CheckInsList from './Components/checkInsList';
 import { CssBaseline, Box } from '@mui/material';
 import { UserContext } from './Components/userContext';
+import ProtectedRoute from './protectedRoute';
 
 function App() {
     const { user } = useContext(UserContext);
@@ -26,15 +28,28 @@ function App() {
         
             <Layout>
                 <Routes>
-                    <Route path="/" element={user?.userId ?<ChatComponent />:<ChatInterface />} />
-                    <Route path="/chat" element={<ChatInterface />} />
+                    <Route path="/" element={<ProtectedRoute>{user?.userId ? <ChatComponent /> : <ChatInterface />}
+                  </ProtectedRoute>} />
+                  <Route path="/chat" element={
+                  <ProtectedRoute>
+                    <ChatInterface />
+                  </ProtectedRoute>
+                } />
                     <Route path="/auth" element={<AuthComponent />} />
-                    <Route path="/user/profile/:userId" element={<UserProfile />} />
-                    <Route path="/user/mood_logging" element={<MoodLogging />} />
-                    <Route path="/user/mood_logs" element={<MoodLogs />} />
-                    <Route path="/user/check_in" element={<CheckInForm userId={user?.userId} checkInId="" update={false} />} />
-                    <Route path="/user/check_in/:checkInId" element={<CheckInForm userId={user?.userId} update={true} />} /> 
-                    <Route path="/user/check_ins/:userId" element={<CheckInsList />} />
+                    <Route path="/user/profile/:userId" element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } />
+                    <Route path="/user/mood_logging" element={
+                  <ProtectedRoute>
+                    <MoodLogging />
+                  </ProtectedRoute>
+                } />
+                    <Route path="/user/mood_logs" element={<ProtectedRoute><MoodLogs /></ProtectedRoute>} />
+                    <Route path="/user/check_in" element={<ProtectedRoute><CheckInForm userId={user?.userId} checkInId="" update={false} /></ProtectedRoute>} />
+                    <Route path="/user/check_in/:checkInId" element={<ProtectedRoute><CheckInForm userId={user?.userId} update={true} /></ProtectedRoute>} /> 
+                    <Route path="/user/check_ins/:userId" element={<ProtectedRoute><CheckInsList /></ProtectedRoute>} />
                 </Routes>
             </Layout>
         

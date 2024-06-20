@@ -5,7 +5,6 @@ import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, M
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import SearchIcon from '@mui/icons-material/Search';
 import { UserContext } from './userContext';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -130,11 +129,12 @@ function Navbar({ toggleSidebar }) {
             />
           </IconButton>
         </Tooltip>
+        {user?.userId &&(
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={notifications.length} color="secondary">
             <NotificationsIcon />
           </Badge>
-        </IconButton>
+        </IconButton> )}
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)}  onClose={() => handleClose(null)}>
           {notifications.map((notification, index) => (
             <MenuItem key={index} onClick={() => handleClose(index)} sx={{ whiteSpace: 'normal',maxWidth: 350, padding: 1}}>
@@ -155,12 +155,10 @@ function Navbar({ toggleSidebar }) {
             </MenuItem>
           ))}
         </Menu>
-        <IconButton color="inherit">
-          <SearchIcon />
-        </IconButton>
+        {user?.userId && (
         <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
-        </IconButton>
+        </IconButton>)}
       </Toolbar>
     </AppBar>
   );
