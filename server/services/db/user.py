@@ -40,7 +40,7 @@ def get_user_profile_by_user_id(user_id: str) -> str:
         logger.error(f"Invalid user ID: {str(e)}")
         return ""
 
-    doc = db["users"].find_one({"_id": user_objectid})
+    doc = db["users"].find_one({"_id": user_objectid}, {"password": 0, "email": 0})
     if "contentVector" in doc:
         del doc["contentVector"]
     return json.dumps(doc, default=str)

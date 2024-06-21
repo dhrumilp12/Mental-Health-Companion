@@ -11,6 +11,9 @@ This module defines a class used to generate AI agents centered around mental he
 
 # -- Standard libraries --
 from datetime import datetime
+import time
+import asyncio
+from operator import itemgetter
 
 # -- 3rd Party libraries --
 # import spacy
@@ -18,11 +21,15 @@ from datetime import datetime
 # Azure
 # Langchain
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
 from langchain.memory.chat_memory import BaseChatMemory
-from langchain.memory import ConversationSummaryMemory
+from langchain.memory import ConversationSummaryMemory, ConversationBufferMemory
+from langchain_core.runnables import RunnablePassthrough
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
+from langchain_core.messages import trim_messages
+
 # MongoDB
 # -- Custom modules --
 from .ai_agent import AIAgent
@@ -60,16 +67,16 @@ class MentalHealthAIAgent(AIAgent):
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", self.system_message.content),
+                ("system", "user_id:{user_id}"),
                 MessagesPlaceholder(variable_name="history"),
                 ("human", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
 
-        tools = self._create_agent_tools(tool_names)
-        agent = create_tool_calling_agent(self.llm, tools, self.prompt)
+        self.agent = create_tool_calling_agent(self.llm, self.tools, self.prompt)
         executor:AgentExecutor = AgentExecutor(
-            agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+            agent=self.agent, tools=self.tools, verbose=True, handle_parsing_errors=True)
         self.agent_executor = self.get_agent_with_history(executor)
 
 
@@ -80,9 +87,10 @@ class MentalHealthAIAgent(AIAgent):
         Args:
             session_id (str): The session ID to retrieve the chat history for.
         """
+        CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
 
         history = MongoDBChatMessageHistory(
-            MongoDBClient.get_mongodb_variables(),
+            CONNECTION_STRING,
             session_id,
             MongoDBClient.get_db_name(),
             collection_name="history"
@@ -151,7 +159,7 @@ class MentalHealthAIAgent(AIAgent):
         return agent_executor
 
 
-    def exec_update_step():
+    def exec_update_step(self, user_id, chat_id=None, turn_id=None):
         # Chat Summary:
         # Update every 5 chat turns
         # Therapy Material
@@ -162,6 +170,60 @@ class MentalHealthAIAgent(AIAgent):
         # Can be either updated at the end of the chat, or every 5 chat turns
         # User Material:
         # Possibly updated every 5 chat turns, at the end of a chat, or not at all
+
+        history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
+        history_log = asyncio.run(history.aget_messages()) # Running async function as synchronous
+
+        # Get perceived mood
+        instructions = """
+        Given the messages provided, describe the user's mood in a single adjective. 
+        Do your best to capture their intensity, attitude and disposition in that single word.
+        Do not include anything in your response aside from that word.
+        If you cannot complete this task, just answer \"None\".
+        """
+
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", instructions),
+                MessagesPlaceholder(variable_name="messages"),
+            ]
+        )
+
+        trimmer = trim_messages(
+            max_tokens=65,
+            strategy="last",
+            token_counter=self.llm,
+            include_system=True,
+            allow_partial=False,
+            start_on="human",
+        )
+
+        trimmer.invoke(history_log)
+        chain = RunnablePassthrough.assign(messages=itemgetter("messages") | trimmer) | prompt | self.llm
+        response = chain.invoke({"messages": history_log})
+        user_mood = None if response.content == "None" else response.content
+
+        print("The user is feeling: ", user_mood)
+
+        # agent_with_history = RunnableWithMessageHistory(
+        #     chain,
+        #     get_session_history=lambda _: memory,
+        #     input_messages_key="input",
+        #     history_messages_key="history",
+        #     verbose=True
+        # )
+        
+
+        # self.agent = create_tool_calling_agent(self.llm, self.tools, self.prompt)
+        # stateless_agent_executor:AgentExecutor = AgentExecutor(
+        #     agent=self.agent, tools=self.tools, verbose=True, handle_parsing_errors=True)
+        
+        # history=self.get_session_history(f"{user_id}-{chat_id}-{}")
+        # Must invoke with an agent that will not write to DB
+        # invocation = stateless_agent_executor.invoke(
+        #     {"input": f"{message}\nuser_id:{user_id}", "agent_scratchpad": []})
+
+        # Get summary text
         pass
 
     def run(self, message: str, with_history:bool =True, user_id: str=None, chat_id:int=None, turn_id:int=None) -> str:
@@ -181,16 +243,18 @@ class MentalHealthAIAgent(AIAgent):
         # else:
         # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
+        # kwargs = {
+        #     "timestamp": curr_epoch_time
+        # }
 
         invocation = self.agent_executor.invoke(
-            {"input": f"{message}\nuser_id:{user_id}", "agent_scratchpad": []},
-            config={"configurable": {"session_id": session_id}}
-        )
+            {"input": message, "user_id": user_id, "agent_scratchpad": []},
+            config={"configurable": {"session_id": session_id}})
 
         # This updates certain collections in the database based on recent history
         if (turn_id + 1) % PROCESSING_STEP == 0:
             # TODO
-            self.exec_update_step()
+            self.exec_update_step(user_id, chat_id)
             pass
 
         return invocation["output"]

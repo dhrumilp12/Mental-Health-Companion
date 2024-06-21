@@ -1,7 +1,7 @@
 APP_NAME = "mental-health"
 AGENT_NAME = "Aria"
 
-PROCESSING_STEP = 5 # The chat turn upon which the app would update the database
+PROCESSING_STEP = 1 # The chat turn upon which the app would update the database
 CONTEXT_LENGTH_LIMIT=4096 
 
 SYSTEM_MESSAGE = f"""
