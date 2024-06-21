@@ -1,3 +1,7 @@
+"""
+This module contains utility functions for working with LangChain Documents.
+"""
+
 import json
 
 from langchain.schema.document import Document
@@ -33,7 +37,6 @@ def format_docs(docs:list[Document]) -> str:
             del doc_dict["contentVector"]
         if "vectorContent" in doc_dict:
             del doc_dict["vectorContent"]
-        json_string = json.dumps(doc_dict, default=str)
         str_docs.append(json.dumps(doc_dict, default=str))
     
     return "\n\n".join(str_docs)

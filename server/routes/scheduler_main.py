@@ -31,7 +31,10 @@ class NotificationScheduler:
         user_id = check_in['user_id']
         check_in_id = check_in['_id']
         check_in_time = check_in['check_in_time']
-        reminder_times = check_in['reminder_times']
+        reminder_times_seconds = check_in['reminder_times']
+
+        # Convert seconds back to timedelta objects
+        reminder_times = [timedelta(seconds=rt) for rt in reminder_times_seconds]
 
         for reminder_time in reminder_times:
             scheduled_time = check_in_time - reminder_time

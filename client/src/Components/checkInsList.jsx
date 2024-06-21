@@ -85,6 +85,7 @@ function CheckInsList() {
         const checkIn = checkIns.find(c => c._id === checkInId);
         if (checkIn) {
           setSelectedCheckIn(checkIn);
+          console.log("Selected check-in for details or update:", checkIn);
           setDialogOpen(true);
         }
       };
@@ -112,6 +113,7 @@ function CheckInsList() {
 
     const handleUpdateRedirect = () => {
         navigate(`/user/check_in/${selectedCheckIn._id}`);
+        console.log("Redirecting to update check-in form", selectedCheckIn._id);
     };
 
     const handleSnackbarClose = (event, reason) => {

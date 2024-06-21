@@ -2,11 +2,10 @@ import os
 import time
 import random
 import logging
-from datetime import datetime
 
 import requests
 import pymongo
-from pymongo import UpdateOne, ReturnDocument
+from pymongo import UpdateOne
 import mongomock
 from langchain_community.document_loaders.mongodb import MongodbLoader
 
@@ -38,10 +37,8 @@ class MongoDBClient:
         if cls._client is None:
             if ENV == "test":
                 cls._client = mongomock.MongoClient()
-                # g.db = cls.get_client
             else:
                 cls._client = pymongo.MongoClient(CONNECTION_STRING)
-                # g.db = cls.get_client
 
         return cls._client
     
@@ -137,42 +134,10 @@ class MongoDBClient:
                 raise
         raise Exception("Maximum retries exceeded")
     
-    @staticmethod
-    def save_user(db, user_data):
-        try:
-            result = db['users'].find_one_and_update(
-                {"username": user_data['username']},
-                {"$set": user_data},
-                upsert=True,
-                return_document=ReturnDocument.AFTER
-            )
-            logger.info("User saved or updated.")
-            return result
-        except Exception as e:
-            logger.error(f"Error saving user: {str(e)}")
-            raise
 
-    @staticmethod
-    def log_user_mood(user_id, mood, activities):
-        try:
-            client = MongoDBClient.get_client()
-            db = client[MongoDBClient.get_db_name()]  # Get the database instance
-            db.mood_logs.insert_one({
-                "user_id": user_id,
-                "mood": mood,
-                "activities": activities,
-                "timestamp": datetime.now()
-            })
-        except pymongo.errors.PyMongoError as e:
-            logging.error(f"Error logging mood: {str(e)}")
-            raise
-        
-    @staticmethod
-    def get_user_mood_logs(user_id):
-        try:
-            client = MongoDBClient.get_client()
-            db = client[MongoDBClient.get_db_name()]  # Get the database instance
-            return list(db.mood_logs.find({"user_id": user_id}))
-        except pymongo.errors.PyMongoError as e:
-            logging.error(f"Error retrieving mood logs: {str(e)}")
-            raise
+
+
+
+
+
+

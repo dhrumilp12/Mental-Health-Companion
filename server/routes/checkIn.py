@@ -1,4 +1,10 @@
+import json
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 from flask import Blueprint, request, jsonify, current_app,Response
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from models.check_in import CheckIn, Frequency
@@ -8,7 +14,10 @@ from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
 from .scheduler_main import scheduler
-
+from models.subscription import Subscription,db
+from services.scheduler import send_push_notification
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 load_dotenv()
@@ -53,6 +62,7 @@ def schedule_check_in():
     except ValidationError as e:
         return jsonify({'error': 'Data validation error', 'details': str(e)}), 400
     except Exception as e:
+        current_app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
@@ -97,16 +107,23 @@ def update_check_in(check_in_id):
 
 @checkIn_routes.get('/checkIn/retrieve/<check_in_id>')
 def retrieve_check_in(check_in_id):
+    logging.debug(f"Attempting to retrieve check-in with ID: {check_in_id}")
     try:
         check_in = db.check_ins.find_one({'_id': ObjectId(check_in_id)})
+        logging.debug(f"Database response: {check_in}")
         if check_in:
-            return jsonify(check_in), 200
+           return Response(
+                json_util.dumps(check_in),
+                mimetype='application/json'
+            )
         else:
             return jsonify({'message': 'Check-in not found'}), 404
     except InvalidId:
+        logging.error("Invalid check-in ID provided.")
         return jsonify({'error': 'Invalid check-in ID format'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.error(f"An unexpected error occurred: {str(e)}")
+        return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
 
 @checkIn_routes.delete('/checkIn/delete/<check_in_id>')
 def delete_check_in(check_in_id):
@@ -159,3 +176,50 @@ def check_missed_check_ins():
         return jsonify({'message': 'You have missed check-ins, would you like to complete them now?', 'missed': list(missed_check_ins)}), 200
     else:
         return jsonify({'message': 'No missed check-ins'}), 200
+
+
+@checkIn_routes.route('/subscribe', methods=['POST'])
+@jwt_required()
+def subscribe():
+    data = request.json
+    print(f"Received subscription data: {data}")
+    
+    if not data or 'endpoint' not in data or 'keys' not in data or 'p256dh' not in data['keys'] or 'auth' not in data['keys']:
+        return jsonify({'error': 'Missing required fields'}), 400
+    
+    
+    subscription_info = json.dumps({
+        'endpoint': data['endpoint'],
+        'keys': {
+            'p256dh': data['keys']['p256dh'],
+            'auth': data['keys']['auth']
+        }
+    })
+
+    user_id = get_jwt_identity()
+
+    # Check if the subscription already exists
+    existing_subscription = Subscription.query.filter_by(user_id=user_id).first()
+    if existing_subscription:
+         # Update existing subscription
+        existing_subscription.subscription_info = subscription_info
+    else:
+        # Create new subscription
+        new_subscription = Subscription(user_id=user_id, subscription_info=subscription_info)
+        db.session.add(new_subscription)
+    
+    db.session.commit()
+
+    return jsonify({'message': 'Subscription saved successfully'}), 200
+
+@checkIn_routes.route('/send_push', methods=['POST'])
+@jwt_required()
+def send_push():
+    data = request.json
+    user_id = data['user_id']
+    message = data['message']
+    success = send_push_notification(user_id, message)
+    if success:
+        return jsonify({'message': 'Push notification sent successfully'}), 200
+    else:
+        return jsonify({'error': 'Failed to send push notification'}), 500

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
+import { useParams } from 'react-router-dom';
 import {
     Button,
     Checkbox,
@@ -17,10 +18,11 @@ import {
 
   import { formatISO, parseISO } from 'date-fns';
   
-function CheckInForm({ userId, checkInId, update }) {
+function CheckInForm({ userId, update }) {
   const [checkInTime, setCheckInTime] = useState('');
   const [frequency, setFrequency] = useState('daily');
   const [notify, setNotify] = useState(false);
+  const { checkInId } = useParams();
   const [loading, setLoading] = useState(false);
 
 
@@ -56,6 +58,7 @@ function CheckInForm({ userId, checkInId, update }) {
     }
 
     const url = update ? `/api/checkIn/update/${checkInId}` : '/api/checkIn/schedule';
+    console.log('URL:', url);
     const method = update ? 'patch' : 'post';
     const data = { user_id: userId, check_in_time: checkInTime, frequency, notify };
     console.log('Submitting:', data);

@@ -5,7 +5,6 @@ from flask import Blueprint, request
 import json
 from services.speech_service import speech_to_text
 from agents.mental_health_agent import MentalHealthAIAgent
-from utils.consts import SYSTEM_MESSAGE
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,10 +12,9 @@ logger = logging.getLogger(__name__)
 
 ai_routes = Blueprint("ai", __name__)
 
-
 @ai_routes.post("/ai/mental_health/welcome/<user_id>")
 def get_mental_health_agent_welcome(user_id):
-    agent = MentalHealthAIAgent()
+    agent = MentalHealthAIAgent(tool_names=["web_search_tavily"])
 
     response = agent.get_initial_greeting(
                                     user_id=user_id
@@ -38,7 +36,7 @@ def run_mental_health_agent(user_id, chat_id):
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
-    agent = MentalHealthAIAgent()
+    agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
 
     try:
             
