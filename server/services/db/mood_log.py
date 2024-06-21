@@ -1,5 +1,5 @@
 import logging
-import datetime
+from datetime import datetime
 from pymongo.errors import PyMongoError
 
 from services.azure_mongodb import MongoDBClient

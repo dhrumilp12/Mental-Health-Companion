@@ -170,11 +170,13 @@ def log_mood():
         if not mood or not activities:
             return jsonify({"message": "Missing data for mood or activities"}), 400
         
+        # Example logging statement using datetime correctly
+        logging.info(f"Logging mood for {current_user} at {datetime.now()}")
+        
         mood_log.log_user_mood(current_user, mood, activities)
         return jsonify({"message": "Mood logged successfully"}), 200
     
-         # Example logging statement using datetime correctly
-        logging.info(f"Logging mood for {current_user} at {datetime.now()}")
+         
     
     except Exception as e:
         logging.error(f"Error logging mood: {str(e)}")
