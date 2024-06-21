@@ -48,7 +48,8 @@ function App() {
                 } />
                     <Route path="/user/mood_logs" element={<ProtectedRoute><MoodLogs /></ProtectedRoute>} />
                     <Route path="/user/check_in" element={<ProtectedRoute><CheckInForm userId={user?.userId} checkInId="" update={false} /></ProtectedRoute>} />
-                    <Route path="/user/check_in/:checkInId" element={<ProtectedRoute><CheckInForm userId={user?.userId} update={true} /></ProtectedRoute>} /> 
+                    <Route path="/user/check_in/:checkInId" element={<ProtectedRoute><CheckInForm userId={user?.userId} update={true} /></ProtectedRoute>} />
+
                     <Route path="/user/check_ins/:userId" element={<ProtectedRoute><CheckInsList /></ProtectedRoute>} />
                 </Routes>
             </Layout>

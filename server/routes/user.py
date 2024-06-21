@@ -9,7 +9,7 @@ from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models.user import User as UserModel
-from services.azure_mongodb import MongoDBClient
+from services.db import mood_log
 
 user_routes = Blueprint("user", __name__)
 
@@ -170,7 +170,7 @@ def log_mood():
         if not mood or not activities:
             return jsonify({"message": "Missing data for mood or activities"}), 400
         
-        MongoDBClient.log_user_mood(current_user, mood, activities)
+        mood_log.log_user_mood(current_user, mood, activities)
         return jsonify({"message": "Mood logged successfully"}), 200
     
     except Exception as e:
@@ -183,7 +183,7 @@ def log_mood():
 def get_mood_logs():
     try:
         current_user = get_jwt_identity()
-        mood_logs = MongoDBClient.get_user_mood_logs(current_user)
+        mood_logs = mood_log.get_user_mood_logs(current_user)
         mood_logs_json = json.loads(json_util.dumps(mood_logs))
         return jsonify({"mood_logs": mood_logs_json}), 200
     

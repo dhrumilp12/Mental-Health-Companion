@@ -1,8 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field, field_validator, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from services.azure_mongodb import MongoDBClient
 from bson import ObjectId
 
-import re
 class User(BaseModel):
     id: str = None
     username: str = Field(..., min_length=3, max_length=20)
