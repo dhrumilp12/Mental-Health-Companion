@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
-from datetime import timedelta
+from datetime import timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models.user import User as UserModel
@@ -172,6 +172,9 @@ def log_mood():
         
         MongoDBClient.log_user_mood(current_user, mood, activities)
         return jsonify({"message": "Mood logged successfully"}), 200
+    
+         # Example logging statement using datetime correctly
+        logging.info(f"Logging mood for {current_user} at {datetime.now()}")
     
     except Exception as e:
         logging.error(f"Error logging mood: {str(e)}")
