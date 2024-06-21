@@ -26,7 +26,7 @@ from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 # MongoDB
 # -- Custom modules --
 from .ai_agent import AIAgent
-from server.services.azure_mongodb import MongoDBClient
+from services.azure_mongodb import MongoDBClient
 # Constants
 from utils.consts import SYSTEM_MESSAGE
 from utils.consts import PROCESSING_STEP
