@@ -23,7 +23,7 @@ def get_azure_openai_llm():
         azure_endpoint = AOAI_ENDPOINT,
         openai_api_key = AOAI_KEY,
         azure_deployment = AOAI_COMPLETIONS,
-        max_tokens=2034
+        max_tokens=(CONTEXT_LENGTH_LIMIT//2)
     )
 
     return llm

@@ -12,14 +12,13 @@ from langchain_community.vectorstores.azure_cosmos_db import (
     CosmosDBSimilarityType,
     CosmosDBVectorSearchType,
 )
-from langchain.agents import Tool, AgentExecutor, create_react_agent
+from langchain.agents import Tool
 from langchain.tools import StructuredTool
 from langchain_core.messages import SystemMessage
 from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_community.document_loaders.mongodb import MongodbLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables.base import RunnableSerializable
 
 ## MongoDB
 from pymongo.database import Database

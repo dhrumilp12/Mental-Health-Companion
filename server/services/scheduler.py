@@ -1,5 +1,4 @@
-from flask import current_app as app
-from models.subscription import db, Subscription
+from models.subscription import Subscription
 from pywebpush import webpush, WebPushException
 import json
 import os
