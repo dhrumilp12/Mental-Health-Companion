@@ -3,7 +3,7 @@ This model represents a check-in.
 """
 
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, constr, validator
+from pydantic import BaseModel, Field, constr, field_validator
 from enum import Enum
 
 class Frequency(str, Enum):
@@ -31,7 +31,7 @@ class CheckIn(BaseModel):
         document = self.dict()
         db.check_ins.insert_one(document)
 
-    @validator('check_in_time', pre=True)
+    @field_validator('check_in_time', pre=True)
     def check_future_date(cls, v):
         if v < datetime.now():
             raise ValueError("Check-in time must be in the future")
