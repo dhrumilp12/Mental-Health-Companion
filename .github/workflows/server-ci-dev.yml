@@ -29,14 +29,22 @@ jobs:
       with:
         python-version: 3.11.9
 
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Configure Poetry
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        poetry config virtualenvs.create false
+
+    - name: Install dependencies with Poetry
+      run: |
+        poetry install
+
     - name: Run tests
       run: |
-        pytest tests/
+        poetry run pytest tests/
 
     - name: Run security checks with bandit
       uses: mdegis/bandit-action@v1.0
