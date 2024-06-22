@@ -66,7 +66,7 @@ class MentalHealthAIAgent(AIAgent):
             [
                 ("system", self.system_message.content),
                 ("system", "user_id:{user_id}"),
-                MessagesPlaceholder(variable_name="history"),
+                MessagesPlaceholder(variable_name="chat_turns"),
                 ("human", "{input}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
@@ -91,7 +91,7 @@ class MentalHealthAIAgent(AIAgent):
             CONNECTION_STRING,
             session_id,
             MongoDBClient.get_db_name(),
-            collection_name="history"
+            collection_name="chat_turns"
         )
 
         if history is None:
@@ -135,7 +135,7 @@ class MentalHealthAIAgent(AIAgent):
             agent_executor,
             get_session_history=self.get_session_history,
             input_messages_key="input",
-            history_messages_key="history",
+            history_messages_key="chat_turns",
             verbose=True
         )
 
@@ -309,7 +309,7 @@ class MentalHealthAIAgent(AIAgent):
             # TODO: Must implement either remembering from previous conversation or knowing things from user profile
             try:
                 # SessionIds in history are expected to start with the user_id and end with the chat_id
-                last_turn = db["history"].find({"SessionId": {"$regex": user_id}}).sort(
+                last_turn = db["chat_turns"].find({"SessionId": {"$regex": user_id}}).sort(
                     {"timestamp": -1}).limit(1).next()
             except StopIteration:
                 last_turn = {}

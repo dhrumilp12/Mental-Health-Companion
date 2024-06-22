@@ -56,8 +56,6 @@ def schedule_check_in():
         # Insert the new check-in into MongoDB
         result = db.check_ins.insert_one(check_in_dict)
         # Start scheduling notifications right after check-in creation
-        check_in_dict['reminder_times'] = [timedelta(seconds) for seconds in check_in_dict['reminder_times']]
-
         scheduler.schedule_notifications(check_in_dict)
         return jsonify({'message': 'Check-in scheduled successfully', 'check_in_id': str(result.inserted_id)}), 201
 

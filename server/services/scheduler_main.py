@@ -29,7 +29,6 @@ class NotificationScheduler:
 
     def schedule_notifications(self, check_in):
         user_id = check_in['user_id']
-        check_in_id = check_in['_id']
         check_in_time = check_in['check_in_time']
         reminder_times_seconds = check_in['reminder_times']
 
@@ -42,7 +41,7 @@ class NotificationScheduler:
                 reminder_text = self.format_delta(reminder_time)
                 self.scheduler.every().day.at(scheduled_time.strftime("%H:%M")).do(
                     self.send_notification, user_id=user_id, check_in_id=check_in['_id'],
-                    message=f"Reminder: Your check-in is in {self.format_delta(reminder_time)}"
+                    message=f"Reminder: Your check-in is in {reminder_text}"
                 )
                 print(f"Notification for {user_id} scheduled at {scheduled_time}")
 
