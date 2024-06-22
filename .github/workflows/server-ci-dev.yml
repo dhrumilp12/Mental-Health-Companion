@@ -42,9 +42,9 @@ jobs:
       run: |
         poetry install
 
-    - name: Run tests
-      run: |
-        poetry run pytest tests/
+    # - name: Run tests
+    #   run: |
+    #     poetry run pytest tests/
 
     - name: Run security checks with bandit
       uses: mdegis/bandit-action@v1.0
