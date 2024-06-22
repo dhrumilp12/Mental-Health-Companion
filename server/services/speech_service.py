@@ -3,7 +3,8 @@ import io
 import subprocess
 import os
 from dotenv import load_dotenv
-load_dotenv()  # This loads the environment variables from the .env file into the environment
+
+load_dotenv()
 
 def check_ffmpeg():
     try:
