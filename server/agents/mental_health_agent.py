@@ -22,11 +22,13 @@ from operator import itemgetter
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain.memory.chat_memory import BaseChatMemory
+from langchain.memory.summary import ConversationSummaryMemory
 from langchain_core.runnables import RunnablePassthrough
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import trim_messages
+from langchain_core.messages.human import HumanMessage
 
 # MongoDB
 # -- Custom modules --
@@ -156,19 +158,7 @@ class MentalHealthAIAgent(AIAgent):
 
         return agent_executor
 
-
-    def exec_update_step(self, user_id, chat_id=None, turn_id=None):
-        # Chat Summary:
-        # Update every 5 chat turns
-        # Therapy Material
-        # Maybe not get it from DB at all? Just perform Bing search?
-        # User Entity:
-        # Can be saved from chat summary step, every 5 chat turns
-        # User Journey:
-        # Can be either updated at the end of the chat, or every 5 chat turns
-        # User Material:
-        # Possibly updated every 5 chat turns, at the end of a chat, or not at all
-
+    def get_user_mood(self, user_id, chat_id):
         history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
         history_log = asyncio.run(history.aget_messages()) # Running async function as synchronous
 
@@ -202,6 +192,23 @@ class MentalHealthAIAgent(AIAgent):
         user_mood = None if response.content == "None" else response.content
 
         print("The user is feeling: ", user_mood)
+
+        return user_mood
+
+
+    def exec_update_step(self, user_id, chat_id=None, turn_id=None):
+        # Chat Summary:
+        # Update every 5 chat turns
+        # Therapy Material
+        # Maybe not get it from DB at all? Just perform Bing search?
+        # User Entity:
+        # Can be saved from chat summary step, every 5 chat turns
+        # User Journey:
+        # Can be either updated at the end of the chat, or every 5 chat turns
+        # User Material:
+        # Possibly updated every 5 chat turns, at the end of a chat, or not at all
+
+
 
         # agent_with_history = RunnableWithMessageHistory(
         #     chain,
@@ -269,10 +276,10 @@ class MentalHealthAIAgent(AIAgent):
             config={"configurable": {"session_id": session_id}})
 
         # This updates certain collections in the database based on recent history
-        if (turn_id + 1) % PROCESSING_STEP == 0:
-            # TODO
-            self.exec_update_step(user_id, chat_id)
-            pass
+        # if (turn_id + 1) % PROCESSING_STEP == 0:
+        #     # TODO
+        #     self.exec_update_step(user_id, chat_id)
+        #     pass
 
         return invocation["output"]
 
@@ -340,6 +347,38 @@ class MentalHealthAIAgent(AIAgent):
             "chat_id": chat_id
         }
         
+
+    def get_summary_from_chat_history(self, user_id, chat_id):
+        history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
+
+        memory = ConversationSummaryMemory.from_messages(
+            llm=self.llm,
+            chat_memory=history,
+            return_messages=True
+        )
+
+        return memory.buffer
+
+
+    def perform_final_processes(self, user_id, chat_id):
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+
+        chat_summary_collection = db["chat_summaries"]
+
+        mood = self.get_user_mood(user_id, chat_id)
+        summary = self.get_summary_from_chat_history(user_id, chat_id)
+
+        # Update the chat summary
+        result = chat_summary_collection.update_one(
+            {"user_id": user_id, "chat_id": int(chat_id)}, 
+            {"$set": {"perceived_mood": mood, "summary_text": summary}}
+        )
+
+        print(result)
+        pass
+
 
     # def analyze_chat(self, text):
     #     """Analyze the chat text to determine emotional state and detect triggers."""
