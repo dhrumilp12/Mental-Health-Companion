@@ -3,6 +3,7 @@ from pywebpush import webpush, WebPushException
 import json
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 def send_push_notification(user_id, message):
