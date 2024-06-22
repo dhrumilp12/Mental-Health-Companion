@@ -3,7 +3,7 @@ This model represents a check-in.
 """
 
 from datetime import datetime, timedelta
-from pydantic import BaseModel, Field, constr, field_validator
+from pydantic import BaseModel, Field, field_validator, validator
 from enum import Enum
 
 class Frequency(str, Enum):
@@ -31,7 +31,7 @@ class CheckIn(BaseModel):
         document = self.dict()
         db.check_ins.insert_one(document)
 
-    @field_validator('check_in_time', pre=True)
+    @field_validator('check_in_time', mode='before')
     def check_future_date(cls, v):
         if v < datetime.now():
             raise ValueError("Check-in time must be in the future")
@@ -68,7 +68,7 @@ class CheckIn(BaseModel):
         return True  # No conflicts found
     
      # Validator to ensure reminder times are valid
-    @validator('reminder_times', each_item=True, pre=True)
+    @validator('reminder_times', each_item=True, mode='True')
     def validate_reminder_times(cls, v):
         if v.total_seconds() not in [3600, 86400, 604800, 2592000]:  # 1 hour, 1 day, 1 week, ~1 month
             raise ValueError("Invalid reminder time")
