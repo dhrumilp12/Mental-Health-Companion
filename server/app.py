@@ -13,34 +13,43 @@ from services.db.agent_facts import load_agent_facts_to_db
 
 from routes.user import user_routes 
 from routes.ai import ai_routes
-from routes.checkIn import checkIn_routes
 
-# Set up the app
-app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY")
+def run_app():
+    # Set up the app
+    app = Flask(__name__)
+    app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY")
 
-jwt = JWTManager(app)
-CORS(app)
+    jwt = JWTManager(app)
+    CORS(app)
 
-# Register routes
-app.register_blueprint(user_routes)
-app.register_blueprint(ai_routes)
-app.register_blueprint(check_in_routes)
+    # Register routes
+    app.register_blueprint(user_routes)
+    app.register_blueprint(ai_routes)
+    app.register_blueprint(check_in_routes)
+
+    # Base endpoint
+    @app.get("/")
+    def root():
+        """
+        Health probe endpoint.
+        """    
+        return {"status": "ready"}
+
+    return app, jwt
+
+def setup_sub_db(app):
+    # Subscription db
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
+    sub_db.init_app(app)
+    ## Create the tables
+    with app.app_context():
+        sub_db.create_all()
+
+app, jwt = run_app()
 
 # DB pre-load
 load_agent_facts_to_db()
 
-# Subscription db
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
-sub_db.init_app(app)
-## Create the tables
-with app.app_context():
-    sub_db.create_all()
+setup_sub_db(app)
 
-# Base endpoint
-@app.get("/")
-def root():
-    """
-    Health probe endpoint.
-    """    
-    return {"status": "ready"}
+

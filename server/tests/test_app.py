@@ -1,5 +1,3 @@
-from app import app
-
 import sys
 sys.path.append(".")
 
@@ -8,7 +6,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*pkg_resources.*")
 
 
-def test_health_probe_endpoint():
+def test_health_probe_endpoint(app):
     """
     Test to ensure server is starting up.
     """

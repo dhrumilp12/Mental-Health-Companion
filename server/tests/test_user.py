@@ -1,8 +1,6 @@
 import sys
 sys.path.append(".")
 
-from app import app
-from server.services.azure_mongodb import MongoDBClient
 
 user_data = {
     "username": "user1",
@@ -10,10 +8,8 @@ user_data = {
     "password": "myTestPassword9!"
 }
 
-db_client = MongoDBClient.get_client()
-db = db_client[MongoDBClient.get_db()]
 
-def test_signup_response():
+def test_signup_response(app):
     """
     Test to ensure sign up returns a successful status upon completion.
     """
@@ -22,10 +18,11 @@ def test_signup_response():
     assert response.status_code == 201
 
 
-def test_signup_writes_to_db():
+def test_signup_writes_to_db(app, db):
     """
     Test to ensure sign up writes a new user to db.
     """
+    print(db)
     app.test_client().post("/user/signup", json=user_data)
 
     users = db["users"].find()
@@ -34,7 +31,7 @@ def test_signup_writes_to_db():
     assert users[0]["username"] == user_data["username"]
 
 
-def test_signup_fails_on_duplicate_username():
+def test_signup_fails_on_duplicate_username(app):
     """
     Test to ensure sign up writes a new user to db.
     """
@@ -51,7 +48,7 @@ def test_signup_fails_on_duplicate_username():
     assert response.status_code == 409
 
 
-def test_signup_fails_on_duplicate_email():
+def test_signup_fails_on_duplicate_email(app):
     """
     Test to ensure sign up writes a new user to db.
     """
@@ -68,7 +65,7 @@ def test_signup_fails_on_duplicate_email():
     assert response.status_code == 409
 
 
-def test_signup_password_is_hashed():
+def test_signup_password_is_hashed(app, db):
     """
     Test to ensure password was not saved as plaintext in db.
     """

@@ -33,6 +33,8 @@ class MongoDBClient:
     def get_client(cls):
         CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
         ENV = os.environ.get("FLASK_ENV")
+
+        logging.info(f"Env:{ENV}")
         
         if cls._client is None:
             if ENV == "test":

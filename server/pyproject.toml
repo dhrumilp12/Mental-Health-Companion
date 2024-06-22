@@ -28,6 +28,14 @@ flask-sqlalchemy = "^3.1.1"
 schedule = "^1.2.2"
 pywebpush = "^2.0.0"
 pytest = "^8.2.2"
+pytest-env = "^1.1.3"
+pytest-timeout = "^2.3.1"
+
+[tool.pytest.ini_options]
+env = [
+    "FLASK_ENV = test",
+    "cache_dir = ./server"
+]
 
 [build-system]
 requires = ["poetry-core"]
