@@ -68,7 +68,7 @@ class CheckIn(BaseModel):
         return True  # No conflicts found
     
      # Validator to ensure reminder times are valid
-    @validator('reminder_times', each_item=True, mode='True')
+    @validator('reminder_times', each_item=True, pre=True)
     def validate_reminder_times(cls, v):
         if v.total_seconds() not in [3600, 86400, 604800, 2592000]:  # 1 hour, 1 day, 1 week, ~1 month
             raise ValueError("Invalid reminder time")
