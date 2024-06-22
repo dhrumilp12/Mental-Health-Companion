@@ -15,7 +15,6 @@ class ConcernProgress(BaseModel):
 class ChatSummary(BaseModel):
     user_id: str
     chat_id: str
-    last_update: datetime = datetime.now()
     perceived_mood: str
     summary_text: str = ""
     concerns_progress: list[ConcernProgress]

@@ -223,6 +223,22 @@ class MentalHealthAIAgent(AIAgent):
 
         # Get summary text
         pass
+    
+    @staticmethod
+    def get_chat_id(user_id):
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+
+        chat_summary_collection = db["chat_summaries"]
+    
+        most_recent_chat_summary = chat_summary_collection.find_one(
+            {"user_id": user_id}, 
+            sort=[("chat_id", -1)]
+        )
+
+        return most_recent_chat_summary.get("chat_id")
+
 
     def run(self, message: str, with_history:bool =True, user_id: str=None, chat_id:int=None, turn_id:int=None) -> str:
         """
@@ -235,6 +251,9 @@ class MentalHealthAIAgent(AIAgent):
             chat_id (int): A unique identifier for the conversation.
             turn_id (int): A unique identifier for the evaluated turn in the conversation.
         """
+
+
+        chat_id = MentalHealthAIAgent.get_chat_id(user_id)
 
         # if not with_history:
         #     return super().run(message)
@@ -270,9 +289,22 @@ class MentalHealthAIAgent(AIAgent):
         db = db_client[db_name]
 
         user_journey_collection = db["user_journeys"]
+        chat_summary_collection = db["chat_summaries"]
         user_journey = user_journey_collection.find_one({"user_id": user_id})
 
         system_message = self.system_message
+
+
+        now = datetime.now()
+        chat_id = int(now.timestamp())
+
+        chat_summary_collection.insert_one({
+                "user_id": user_id,
+                "chat_id": chat_id,
+                "perceived_mood": "",
+                "summary_text": "",
+                "concerns_progress": []
+        })
 
         # Has user engaged with chatbot before?
         if user_journey is None:
@@ -292,44 +324,21 @@ class MentalHealthAIAgent(AIAgent):
 
             full_system_message = ''.join([system_message.content, addendum])
             system_message.content = full_system_message
-            response = self.run(
-                message="",
-                with_history=False,
-                user_id=user_id,
-                chat_id=0,
-                turn_id=0,
-            )
 
-            return {
-                "message": response,
-                "chat_id": 0
-            }
+        chat_id = MentalHealthAIAgent.get_chat_id(user_id)
 
-        else:
-            # TODO: Must implement either remembering from previous conversation or knowing things from user profile
-            try:
-                # SessionIds in history are expected to start with the user_id and end with the chat_id
-                last_turn = db["chat_turns"].find({"SessionId": {"$regex": user_id}}).sort(
-                    {"timestamp": -1}).limit(1).next()
-            except StopIteration:
-                last_turn = {}
+        response = self.run(
+            message="",
+            with_history=True,
+            user_id=user_id,
+            chat_id=chat_id,
+            turn_id=0,
+        )
 
-            old_chat_id = int(last_turn["SessionId"].split('-')[-1])
-
-            new_chat_id = old_chat_id + 1
-
-            response = self.run(
-                message="",
-                with_history=True,
-                user_id=user_id,
-                chat_id=new_chat_id,
-                turn_id=0,
-            )
-
-            return {
-                "message": response,
-                "chat_id": new_chat_id
-            }
+        return {
+            "message": response,
+            "chat_id": chat_id
+        }
         
 
     # def analyze_chat(self, text):
