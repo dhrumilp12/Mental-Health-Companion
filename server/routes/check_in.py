@@ -10,19 +10,20 @@ from server.services.azure_mongodb import MongoDBClient
 from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
-from .scheduler_main import scheduler
-from models.subscription import Subscription,db
-
+from services.scheduler_main import scheduler
+from models.subscription import Subscription, db as sub_db
+from services.scheduler import send_push_notification
 
 load_dotenv()
 
 db_client = MongoDBClient.get_client()
 db = db_client[MongoDBClient.get_db_name()]
 
-checkIn_routes = Blueprint("checkIn", __name__)
+check_in_routes = Blueprint("check-in", __name__)
 
 
-@checkIn_routes.post('/checkIn/schedule')
+@check_in_routes.post('/check-in/schedule')
+@jwt_required()
 def schedule_check_in():
     try:     # Parse and validate the request data using Pydantic model
         data = request.get_json()
@@ -43,13 +44,16 @@ def schedule_check_in():
         )
 
         # Convert Pydantic model to dictionary for MongoDB
-        check_in_dict = check_in.dict()
+        check_in_dict = check_in.model_dump()
         # Ensure datetime is handled correctly
         check_in_dict['check_in_time'] = check_in.check_in_time
+        check_in_dict['reminder_times'] = [delta.total_seconds() for delta in check_in_dict['reminder_times']]
 
         # Insert the new check-in into MongoDB
         result = db.check_ins.insert_one(check_in_dict)
         # Start scheduling notifications right after check-in creation
+        check_in_dict['reminder_times'] = [timedelta(seconds) for seconds in check_in_dict['reminder_times']]
+
         scheduler.schedule_notifications(check_in_dict)
         return jsonify({'message': 'Check-in scheduled successfully', 'check_in_id': str(result.inserted_id)}), 201
 
@@ -59,7 +63,8 @@ def schedule_check_in():
         return jsonify({'error': str(e)}), 500
 
 
-@checkIn_routes.patch('/checkIn/update/<check_in_id>')
+@check_in_routes.patch('/check-in/<check_in_id>')
+@jwt_required()
 def update_check_in(check_in_id):
     data = request.get_json()
     try:
@@ -98,7 +103,8 @@ def update_check_in(check_in_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@checkIn_routes.get('/checkIn/retrieve/<check_in_id>')
+@check_in_routes.get('/check-in/<check_in_id>')
+@jwt_required()
 def retrieve_check_in(check_in_id):
     try:
         check_in = db.check_ins.find_one({'_id': ObjectId(check_in_id)})
@@ -111,7 +117,8 @@ def retrieve_check_in(check_in_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@checkIn_routes.delete('/checkIn/delete/<check_in_id>')
+@check_in_routes.delete('/check-in/<check_in_id>')
+@jwt_required()
 def delete_check_in(check_in_id):
     try:
         result = db.check_ins.delete_one({'_id': ObjectId(check_in_id)})
@@ -124,7 +131,8 @@ def delete_check_in(check_in_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@checkIn_routes.get('/checkIn/retrieveAll')
+@check_in_routes.get('/check-in/all')
+@jwt_required()
 def retrieve_all_check_ins():
     user_id = request.args.get('user_id')
     if not user_id:
@@ -142,7 +150,8 @@ def retrieve_all_check_ins():
         return jsonify({'error': str(e)}), 500
 
 
-@checkIn_routes.get('/checkIn/missed')
+@check_in_routes.get('/check-in/missed')
+@jwt_required()
 def check_missed_check_ins():
     user_id = request.args.get('user_id')
     now = datetime.now() - timedelta(minutes=10)
@@ -164,7 +173,7 @@ def check_missed_check_ins():
         return jsonify({'message': 'No missed check-ins'}), 200
 
 
-@checkIn_routes.route('/subscribe', methods=['POST'])
+@check_in_routes.route('/subscribe', methods=['POST'])
 @jwt_required()
 def subscribe():
     data = request.json
@@ -192,13 +201,13 @@ def subscribe():
     else:
         # Create new subscription
         new_subscription = Subscription(user_id=user_id, subscription_info=subscription_info)
-        db.session.add(new_subscription)
+        sub_db.session.add(new_subscription)
     
-    db.session.commit()
+    sub_db.session.commit()
 
     return jsonify({'message': 'Subscription saved successfully'}), 200
 
-@checkIn_routes.route('/send_push', methods=['POST'])
+@check_in_routes.route('/send_push', methods=['POST'])
 @jwt_required()
 def send_push():
     data = request.json

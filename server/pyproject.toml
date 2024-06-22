@@ -24,6 +24,9 @@ langchain-openai = "^0.1.8"
 
 [tool.poetry.group.dev.dependencies]
 langsmith = "^0.1.80"
+flask-sqlalchemy = "^3.1.1"
+schedule = "^1.2.2"
+pywebpush = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]

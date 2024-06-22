@@ -1,4 +1,5 @@
 # scheduler.py
+from threading import Thread
 
 import schedule
 import time
@@ -10,10 +11,9 @@ from flask import current_app as app
 
 
 db_client = MongoDBClient.get_client()
-db = db_client[MongoDBClient.get_db_name()]
 
 class NotificationScheduler:
-    def __init__(self,db):
+    def __init__(self):
         self.scheduler = schedule.Scheduler()
         self.db = MongoDBClient.get_client()[MongoDBClient.get_db_name()]
 
@@ -60,7 +60,7 @@ class NotificationScheduler:
 
     def delete_past_check_ins(self):
         now = datetime.now()
-        result = db.check_ins.delete_many({'check_in_time': {'$lt': now}})
+        result = self.db.check_ins.delete_many({'check_in_time': {'$lt': now}})
         print(f"Deleted {result.deleted_count} past check-ins at {now}")
 
     def schedule_delete_past_check_ins(self):
@@ -73,12 +73,10 @@ class NotificationScheduler:
 
 
 # Create a single global instance of the scheduler
-db= MongoDBClient.get_client()[MongoDBClient.get_db_name()]
-scheduler = NotificationScheduler(db)
+scheduler = NotificationScheduler()
 
 
 # Start the scheduler in a background thread
-from threading import Thread
 notification_thread = Thread(target=scheduler.run_scheduler)
 notification_thread.start()
 

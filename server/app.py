@@ -7,8 +7,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
-# from models.subscription import Subscription,db
-# from routes.checkIn import checkIn_routes
+from models.subscription import db as sub_db
+from routes.check_in import check_in_routes
 from services.db.agent_facts import load_agent_facts_to_db
 
 from routes.user import user_routes 
@@ -24,17 +24,17 @@ CORS(app)
 # Register routes
 app.register_blueprint(user_routes)
 app.register_blueprint(ai_routes)
-# app.register_blueprint(checkIn_routes)
+app.register_blueprint(check_in_routes)
 
 # DB pre-load
 load_agent_facts_to_db()
 
 # Subscription db
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
-# db.init_app(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
+sub_db.init_app(app)
 ## Create the tables
-# with app.app_context():
-    # db.create_all()
+with app.app_context():
+    sub_db.create_all()
 
 # Base endpoint
 @app.get("/")
