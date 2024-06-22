@@ -62,11 +62,16 @@ jobs:
         export FLASK_APP=app
         export FLASK_ENV=production
         poetry run gunicorn -w 4 -b 0.0.0.0:8000 app:app &
-        sleep 5  # give Flask time to start
+        echo $! > gunicorn.pid
+        sleep 15  # give Flask time to start
 
     - name: Check application is running
       run: |
         curl --max-time 10 localhost:8000
+
+    - name: Stop application
+      run: |
+        kill $(cat gunicorn.pid)
         
 
   docker-build:

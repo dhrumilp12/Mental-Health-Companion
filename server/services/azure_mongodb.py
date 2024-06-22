@@ -82,7 +82,6 @@ class MongoDBClient:
             logger.error(f"Error clearing collections: {str(e)}")
             raise            
 
-
     @staticmethod 
     def load_products(db, dataset, Model, coll_name):
         try:
