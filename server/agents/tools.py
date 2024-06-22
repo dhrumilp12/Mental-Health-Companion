@@ -22,10 +22,8 @@ def get_maps_results(self, query):
     # Azure Maps API Key
     api_key = os.environ["AZURE_MAPS_KEY"]
 
-    # Define the base URL for the Azure Maps search address API
     base_url = "https://atlas.microsoft.com/search/address/json"
 
-    # Parameters for the API request
     params = {
         'api-version': '1.0',
         'subscription-key': api_key,
@@ -36,7 +34,6 @@ def get_maps_results(self, query):
     response = requests.get(base_url, params=params)
     results = response.json()
 
-    # Check if results were found
     if results.get('results'):
         # Extract bounding box from the first result
         location_bbox = results['results'][0]['viewport']
