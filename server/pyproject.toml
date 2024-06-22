@@ -20,6 +20,7 @@ langchain-community = "^0.2.5"
 flask-cors = "^4.0.1"
 langchain-mongodb = "^0.1.6"
 langchain-openai = "^0.1.8"
+gunicorn = "^22.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

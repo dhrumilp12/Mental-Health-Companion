@@ -37,6 +37,7 @@ def run_app():
 
     return app, jwt
 
+
 def setup_sub_db(app):
     # Subscription db
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
@@ -51,5 +52,4 @@ app, jwt = run_app()
 load_agent_facts_to_db()
 
 setup_sub_db(app)
-
 

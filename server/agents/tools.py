@@ -85,8 +85,8 @@ def vector_store_chain_factory(collection_name) -> callable:
 
 toolbox = {
     "community": {
-        "web_search_bing": BingSearchAPIWrapper(k=5),
-        "web_search_tavily": TavilySearchResults(), 
+        # "web_search_bing": BingSearchAPIWrapper(k=5),
+        # "web_search_tavily": TavilySearchResults(), 
     },
     "custom": {
         "agent_facts": {

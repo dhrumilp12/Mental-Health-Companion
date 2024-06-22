@@ -57,12 +57,16 @@ jobs:
 
     - name: Start application
       run: |
-        flask run &
+        sudo apt update && sudo apt upgrade -y
+        sudo apt install ffmpeg -y
+        export FLASK_APP=app
+        export FLASK_ENV=production
+        poetry run -w 4 -b 0.0.0.0:8000 app:app &
         sleep 5  # give Flask time to start
 
     - name: Check application is running
       run: |
-        curl localhost:5000
+        curl localhost:8000
         
 
   docker-build:
