@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
-import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar } from '@mui/material';
+import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import PersonIcon from '@mui/icons-material/Person';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
 
@@ -274,13 +274,42 @@ const ChatComponent = () => {
                         0%, 100% { opacity: 0; }
                         50% { opacity: 1; }
                     }
+                        @media (max-width: 720px) {
+                        .new-chat-button {
+                            
+                            top: 5px;
+                            right: 5px;
+                            padding: 4px 8px; /* Smaller padding */
+                            font-size: 0.8rem; /* Smaller font size */
+                        }
+                    }
                 `}
             </style>
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh',borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%',borderRadius: 2,boxShadow: 3 }}>
-                    <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3 }}>
+                    <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3, position: 'relative'  }}>
                 
-                        
+                    <Tooltip title="Start a new chat" placement="top" arrow>
+                        <IconButton
+                            aria-label="new chat"
+                            //variant="outlined"
+                            color="primary"
+                            onClick={finalizeChat}
+                            disabled={isLoading}
+                            sx={{
+                                position: 'absolute', // Positioning the button at the top-right corner
+                                top: 5, // Top margin
+                                right: 5, // Right margin
+                                '&:hover': {
+                                    backgroundColor: 'primary.main',
+                                    color: 'common.white',
+                                }
+                            }}
+                        >
+                            <LibraryAddIcon />
+                            </IconButton>
+                            </Tooltip>
+
                         {welcomeMessage.length === 0 && (
                     <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
                     <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2,  }} alt="Aria" />
@@ -406,22 +435,6 @@ const ChatComponent = () => {
                             </Button>
                         )}
                     </Box>
-                    <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<ExitToAppIcon />}
-                    onClick={finalizeChat}
-                    disabled={isLoading}
-                    sx={{mt: 1,backgroundColor: theme => theme.palette.error.light + '33', // Adds an alpha value for transparency, making it lighter
-                         
-                        '&:hover': {
-                            color: 'common.white',// White text for better contrast
-                            backgroundColor: theme => theme.palette.error.light, // Slightly darker on hover but still lighter than default
-                        } }
-                    }
-                >
-                    {isLoading ? <CircularProgress color="inherit" /> : 'End Chat'}
-                </Button>
                 </Card>
                 <Snackbar open={open} autoHideDuration={6000} onClose={handleSnackbarClose}>
                     <MuiAlert elevation={6} variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>

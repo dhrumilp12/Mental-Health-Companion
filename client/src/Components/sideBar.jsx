@@ -16,6 +16,17 @@ function Sidebar() {
   const location = useLocation(); // This hook returns the location object that represents the current URL.
 
   const isActive = (path) => location.pathname === path; // This function checks if the current path is the same as the path passed as an argument.
+
+  const items = [
+    { text: "Mind Chat", icon: <DeckIcon />, path: "/" },
+    ...(user?.userId ? [
+      { text: "Track Your Vibes", icon: <InsertEmoticonIcon />, path: "/user/mood_logging" },
+            { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
+            { text: "Schedule Check-In", icon: <ScheduleIcon />, path: "/user/check_in" }, // New item for check-in page
+            { text: "Check-In Reporting", icon: <EventAvailableIcon />, path: `/user/check_ins/${user?.userId}` }  // Dynamically inserting userId
+    ] : [])
+  ];
+
   
   return (
     <Drawer
@@ -38,13 +49,8 @@ function Sidebar() {
       anchor="left"
     >
       <List>
-        {[
-          { text: "Mind Chat", icon: <DeckIcon />, path: "/" },
-          { text: "Track Your Vibes", icon: <InsertEmoticonIcon />, path: "/user/mood_logging" },
-          { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
-          { text: "Schedule Check-In", icon: <ScheduleIcon />, path: "/user/check_in" }, // New item for check-in page
-          { text: "Check-In Reporting", icon: <EventAvailableIcon />, path: `/user/check_ins/${user?.userId}` }  // Dynamically inserting userId
-        ].map((item) => (
+        
+      {items.map((item) => (
           <NavLink to={item.path} key={item.text} style={{ textDecoration: 'none', color: 'inherit' }}>
             <ListItem button  sx={{
                 backgroundColor: isActive(item.path) ? 'rgba(25, 118, 210, 0.5)' : 'inherit', // Adjust the background color for the active item

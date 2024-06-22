@@ -5,11 +5,11 @@ import json
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
-from datetime import timedelta
+from datetime import timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from models.user import User as UserModel
-from server.services.azure_mongodb import MongoDBClient
+from services.db import mood_log
 
 user_routes = Blueprint("user", __name__)
 
@@ -170,8 +170,13 @@ def log_mood():
         if not mood or not activities:
             return jsonify({"message": "Missing data for mood or activities"}), 400
         
-        MongoDBClient.log_user_mood(current_user, mood, activities)
+        # Example logging statement using datetime correctly
+        logging.info(f"Logging mood for {current_user} at {datetime.now()}")
+        
+        mood_log.log_user_mood(current_user, mood, activities)
         return jsonify({"message": "Mood logged successfully"}), 200
+    
+         
     
     except Exception as e:
         logging.error(f"Error logging mood: {str(e)}")
@@ -183,7 +188,7 @@ def log_mood():
 def get_mood_logs():
     try:
         current_user = get_jwt_identity()
-        mood_logs = MongoDBClient.get_user_mood_logs(current_user)
+        mood_logs = mood_log.get_user_mood_logs(current_user)
         mood_logs_json = json.loads(json_util.dumps(mood_logs))
         return jsonify({"mood_logs": mood_logs_json}), 200
     

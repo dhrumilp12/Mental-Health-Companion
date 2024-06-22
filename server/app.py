@@ -13,6 +13,7 @@ from services.db.agent_facts import load_agent_facts_to_db
 
 from routes.user import user_routes 
 from routes.ai import ai_routes
+from routes.checkIn import checkIn_routes
 
 # Set up the app
 app = Flask(__name__)

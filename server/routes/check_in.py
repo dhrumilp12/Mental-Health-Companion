@@ -1,18 +1,22 @@
-import json
-
 from flask import Blueprint, request, jsonify, current_app,Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from models.check_in import CheckIn, Frequency
 from dotenv import load_dotenv
-from server.services.azure_mongodb import MongoDBClient
+from services.azure_mongodb import MongoDBClient
 from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
 from services.scheduler_main import scheduler
 from models.subscription import Subscription, db as sub_db
 from services.scheduler import send_push_notification
+
+import json
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 load_dotenv()
 
@@ -60,6 +64,7 @@ def schedule_check_in():
     except ValidationError as e:
         return jsonify({'error': 'Data validation error', 'details': str(e)}), 400
     except Exception as e:
+        current_app.logger.error(f"An error occurred: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 
@@ -106,16 +111,23 @@ def update_check_in(check_in_id):
 @check_in_routes.get('/check-in/<check_in_id>')
 @jwt_required()
 def retrieve_check_in(check_in_id):
+    logging.debug(f"Attempting to retrieve check-in with ID: {check_in_id}")
     try:
         check_in = db.check_ins.find_one({'_id': ObjectId(check_in_id)})
+        logging.debug(f"Database response: {check_in}")
         if check_in:
-            return jsonify(check_in), 200
+           return Response(
+                json_util.dumps(check_in),
+                mimetype='application/json'
+            )
         else:
             return jsonify({'message': 'Check-in not found'}), 404
     except InvalidId:
+        logging.error("Invalid check-in ID provided.")
         return jsonify({'error': 'Invalid check-in ID format'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.error(f"An unexpected error occurred: {str(e)}")
+        return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
 
 @check_in_routes.delete('/check-in/<check_in_id>')
 @jwt_required()

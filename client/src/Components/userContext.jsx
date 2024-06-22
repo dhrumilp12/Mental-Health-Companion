@@ -8,7 +8,7 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
-
+  
   const addNotification = useCallback((notification) => {
     setNotifications((prev) => [...prev, notification]);
   }, [setNotifications]);
@@ -23,20 +23,25 @@ export const UserProvider = ({ children }) => {
   // Load user from local storage on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
+    console.log('Attempting to load user:', savedUser);
     if (savedUser) {
-      console.log('Loaded user from storage:', savedUser);
+      console.log('User found in storage:', savedUser);
       setUser(JSON.parse(savedUser));
+    } else {
+      console.log("No user found in storage at initialization.");
     }
   }, []);
-
-  // Persist user to local storage on changes
+  
   useEffect(() => {
     if (user) {
+      console.log('Storing user in storage:', user);
       localStorage.setItem('user', JSON.stringify(user));
     } else {
+      console.log('Removing user from storage.');
       localStorage.removeItem('user');
     }
   }, [user]);
+  
   
   const logout = useCallback(async () => {
     try {

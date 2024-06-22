@@ -24,6 +24,8 @@ class CheckIn(BaseModel):
         timedelta(days=30)  # Approximately 1 month
     ])
 
+    
+
     def save(self, db):
         # Convert model to dictionary and save to MongoDB
         document = self.dict()
@@ -65,14 +67,15 @@ class CheckIn(BaseModel):
 
         return True  # No conflicts found
     
-    @field_validator('reminder_times')
-    def validate_reminder_times(cls, value):
-        valid_reminder_times = [
-            timedelta(weeks=1),
-            timedelta(days=1),
-            timedelta(hours=1)
-        ]
-        for reminder_time in value:
-            if reminder_time not in valid_reminder_times:
-                raise ValueError("Invalid reminder time")
-        return value
+     # Validator to ensure reminder times are valid
+    @validator('reminder_times', each_item=True, pre=True)
+    def validate_reminder_times(cls, v):
+        if v.total_seconds() not in [3600, 86400, 604800, 2592000]:  # 1 hour, 1 day, 1 week, ~1 month
+            raise ValueError("Invalid reminder time")
+        return v
+
+    # Serialize timedelta for MongoDB storage
+    def dict(self, **kwargs):
+        d = super().dict(**kwargs)
+        d['reminder_times'] = [int(rt.total_seconds()) for rt in self.reminder_times]  # Serialize as seconds
+        return d

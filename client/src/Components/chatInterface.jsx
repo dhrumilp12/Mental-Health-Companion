@@ -1,29 +1,73 @@
-import React, { useState, useContext,useCallback } from 'react';
+import React, { useState,  useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
-import { Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemText, CircularProgress, Snackbar, Divider } from '@mui/material';
+import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import PersonIcon from '@mui/icons-material/Person';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
-import { Avatar } from '@mui/material';
+
+const TypingIndicator = () => (
+    <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+        <Avatar src={Aria} sx={{ width: 24, height: 24, marginRight: 1 }} alt="Aria" />
+        <div style={{ display: 'flex' }}>
+            <div style={{ animation: 'blink 1.4s infinite', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
+            <div style={{ animation: 'blink 1.4s infinite 0.2s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
+            <div style={{ animation: 'blink 1.4s infinite 0.4s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor' }}></div>
+        </div>
+    </Box>
+);
 
 
 
 const ChatComponent = () => {
-    const { user } = useContext(UserContext);
+    const { user,voiceEnabled } = useContext(UserContext);
     const userId = user?.userId; 
     const [chatId, setChatId] = useState(0);
     const [turnId, setTurnId] = useState(0);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState([]);
-    
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState(null);
+    const audioChunksRef = useRef([]);
     const [isLoading, setIsLoading] = useState(false); 
     const [open, setOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+    const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
+    const speak = (text) => {
+        
+        if (!voiceEnabled || text === currentPlayingMessage) {
+            setCurrentPlayingMessage(null);
+            window.speechSynthesis.cancel(); // Stop the current speech synthesis
+            return;
+          }
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voices = synth.getVoices();
+        console.log(voices.map(voice => `${voice.name} - ${voice.lang} - ${voice.gender}`));
+
+        const femaleVoice = voices.find(voice => voice.name.includes("Microsoft Zira - English (United States)")); // Example: Adjust based on available voices
+
+    if (femaleVoice) {
+        utterance.voice = femaleVoice;
+    } else {
+        console.log("No female voice found");
+    }
+
+    utterance.onend = () => {
+        setCurrentPlayingMessage(null); // Reset after speech has ended
+      };
+
+    setCurrentPlayingMessage(text);
+    synth.speak(utterance);
+};
 
         const handleSnackbarClose = (event, reason) => {
             if (reason === 'clickaway') {
@@ -103,11 +147,80 @@ const ChatComponent = () => {
                 
             }
         }, [input, userId, chatId, turnId]);
+
+    // Function to handle recording start
+    const startRecording = () => {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                audioChunksRef.current = []; // Clear the ref at the start of recording
+                const options = { mimeType: 'audio/webm' };
+                const recorder = new MediaRecorder(stream, options);
+                recorder.ondataavailable = (e) => {
+                    console.log('Data available:', e.data.size); // Log size to check if data is present
+                    audioChunksRef.current.push(e.data);
+                };
+                
+                recorder.start();
+                setMediaRecorder(recorder);
+                setIsRecording(true);
+            }).catch(console.error);
+    };
+
+    // Function to handle recording stop
+    const stopRecording = () => {
+        if (mediaRecorder) {
+            mediaRecorder.onstop = () => {
+                sendAudioToServer(audioChunksRef.current); // Ensure sendAudioToServer is called only after recording has fully stopped
+                setIsRecording(false);
+                setMediaRecorder(null);
+            };
+            mediaRecorder.stop(); // Stop recording, onstop will be triggered after this
+        }
+    };
+
+    const sendAudioToServer = chunks => {
+        console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
+        const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
+        if (audioBlob.size === 0) {
+            console.error('Audio Blob is empty');
+            return;
+        }
+        console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
+        const formData = new FormData();
+        formData.append('audio', audioBlob);
+        setIsLoading(true);
     
-        // Handle input changes
-        const handleInputChange = useCallback((event) => {
-            setInput(event.target.value);
-        }, []);
+        axios.post('/api/ai/mental_health/voice-to-text', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            const { message } = response.data;
+            setInput(message);
+            sendMessage();
+        })
+        .catch(error => {
+            console.error('Error uploading audio:', error);
+            setOpen(true);
+            setSnackbarMessage('Error processing voice input: ' + error.message);
+            setSnackbarSeverity('error');
+        })
+        .finally(() => {
+                    setIsLoading(false);
+                });
+    }; // Remove audioChunks from dependencies to prevent re-creation
+    
+
+    // Handle input changes
+    const handleInputChange = useCallback((event) => {
+        setInput(event.target.value);
+    }, []);
+
+    const messageIcon = (message) => {
+        return message === currentPlayingMessage ? <VolumeOffIcon /> : <VolumeUpIcon />;
+      }
+
 
         return (
             <>
@@ -117,41 +230,50 @@ const ChatComponent = () => {
                         0%, 100% { opacity: 0; }
                         50% { opacity: 1; }
                     }
+                        @media (max-width: 720px) {
+                        .new-chat-button {
+                            
+                            top: 5px;
+                            right: 5px;
+                            padding: 4px 8px; /* Smaller padding */
+                            font-size: 0.8rem; /* Smaller font size */
+                        }
+                    }
                 `}
             </style>
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh',borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%',borderRadius: 2,boxShadow: 3 }}>
-                    <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3 }}>
+                    <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3, position: 'relative'  }}>
+                
+                    <Tooltip title="Start a new chat" placement="top" arrow>
+                        <IconButton
+                            aria-label="new chat"
+                            //variant="outlined"
+                            color="primary"
+                            onClick={finalizeChat}
+                            disabled={isLoading}
+                            sx={{
+                                position: 'absolute', // Positioning the button at the top-right corner
+                                top: 5, // Top margin
+                                right: 5, // Right margin
+                                '&:hover': {
+                                    backgroundColor: 'primary.main',
+                                    color: 'common.white',
+                                }
+                            }}
+                        >
+                            <LibraryAddIcon />
+                            </IconButton>
+                            </Tooltip>
+
                     {messages.length === 0 && (
-                            <Box sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                mt: -3,
-                                mb: 2,
-                                p: 2,
-                                overflow: 'hidden',  // Ensures nothing spills out of the box
-                                maxWidth: '100%',    // Limits the width to prevent overflow
-                                maxHeight: '80%',  // Adjusts the maximum height of the logo area
-                            }}>
-                                <img src={Aria} alt="App Logo" style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '100%',
-                                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-                                    width: 'auto', // Ensures the width automatically adjusts based on height
-                                    height: 'auto', // Auto height for proper scaling without specifying vh
-                                    objectFit: 'contain',  // Ensures the image scales properly within its constraints
-                                    borderRadius: '50%' // Optional: Makes the image circular
-                                }} />
-                            </Box>
-                            
-                        )}
                     <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
                     <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2,  }} alt="Aria" />
                         <Typography variant="h4" component="h1" gutterBottom>
                             Welcome to Mental Health Companion
                         </Typography>
-                        </Box>
+                        </Box>)}
+
                         
                         
                         <List sx={{ maxHeight: '100%', overflow: 'auto' }}>
@@ -163,7 +285,14 @@ const ChatComponent = () => {
                                     //backgroundColor: msg.sender === 'user' ? 'primary.light' : 'grey.100',  // Adjust colors here
                                     borderRadius: 2, // Optional: Adds rounded corners
                                     mb: 0.5, // Margin bottom for spacing between messages
-                                    p: 1 // Padding inside each list item
+                                    p: 1, // Padding inside each list item
+                                    border: 'none', // Added to remove any border or underline
+                                    '&:before': { // Targeting pseudo-elements which might create lines
+                                        display: 'none'
+                                    },
+                                    '&:after': { // Same as above
+                                        display: 'none'
+                                    }
                                 }}>
                                     <Box sx={{
                                     display: 'flex',
@@ -175,11 +304,17 @@ const ChatComponent = () => {
                                 }}>
                                     
                                      {msg.sender === 'agent' && (
-                                        <Avatar src={Aria} sx={{ width: 36, height: 36, mr: 1 }} alt="Aria" />
+                                            <Avatar src={Aria} sx={{ width: 36, height: 36, mr: 1 }} alt="Aria" />  
                                     )}
                                     
                                     
-                                    <ListItemText primary={msg.message} primaryTypographyProps={{
+                                    <ListItemText primary={<Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'nowrap'}}>
+                                    {msg.message}
+                                    {voiceEnabled && msg.sender === 'agent' && (
+                                            <IconButton onClick={() => speak(msg.message)} size="small" sx={{ ml: 1, }}>
+                                                {messageIcon(msg.message)}
+                                            </IconButton>)}
+                                            </Box>} primaryTypographyProps={{
                                         
                                     sx: { 
                                         color: msg.sender === 'user' ? 'common.white' : 'text.primary',
@@ -212,29 +347,35 @@ const ChatComponent = () => {
                             onChange={handleInputChange}
                             disabled={isLoading}
                             sx={{ mr: 1, flexGrow: 1 }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            color="primary.main"
+                                            aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+                                            size="large"
+                                            edge="end"
+                                            disabled={isLoading}
+                                        >
+                                            {isRecording ? <MicOffIcon size="small" /> : <MicIcon size="small" />}
+                                            {isRecording && <CircularProgress size={30} sx={{
+                                                color: 'primary.main',
+                                                position: 'absolute',
+                                                zIndex: 1
+                                            }} />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
                         />
+
                         {isLoading ? <CircularProgress size={24} /> : (
                             <Button variant="contained" color="primary" onClick={sendMessage} disabled={isLoading || !input.trim()} endIcon={<SendIcon />}>
                                 Send
                             </Button>
                         )}
                     </Box>
-                    <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<ExitToAppIcon />}
-                    onClick={finalizeChat}
-                    disabled={isLoading}
-                    sx={{mt: 1,backgroundColor: theme => theme.palette.error.light + '33', // Adds an alpha value for transparency, making it lighter
-                         
-                        '&:hover': {
-                            color: 'common.white',// White text for better contrast
-                            backgroundColor: theme => theme.palette.error.light, // Slightly darker on hover but still lighter than default
-                        } }
-                    }
-                >
-                    {isLoading ? <CircularProgress color="inherit" /> : 'End Chat'}
-                </Button>
                 </Card>
                 <Snackbar open={open} autoHideDuration={6000} onClose={handleSnackbarClose}>
                     <MuiAlert elevation={6} variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
