@@ -44,6 +44,7 @@ function CheckInsList() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
         fetchCheckIns();
@@ -54,9 +55,19 @@ function CheckInsList() {
                 setError('User not logged in');
                 return;
             }
+
+            if (!token) {
+              setError('No token found, please log in again');
+              return;
+          }
+
             setLoading(true);
             try {
-                const response = await axios.get(`/api/checkIn/retrieveAll?user_id=${userId}`);
+                const response = await axios.get(`/api/check-in/all?user_id=${userId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
+            }
+        });
                 console.log("API Response:", response.data);  // Confirm what you receive
                 
                 // Validate if data is an array and has the correct structure
@@ -98,7 +109,11 @@ function CheckInsList() {
       const handleDeleteCheckIn = async () => {
         if (selectedCheckIn) {
             try {
-                await axios.delete(`/api/checkIn/delete/${selectedCheckIn._id}`);
+                await axios.delete(`/api/check-in/${selectedCheckIn._id}`,{
+                  headers: {
+                      'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
+                  }
+              });
                 setSnackbarMessage('Check-in deleted successfully');
                 setSnackbarSeverity('success');
                 fetchCheckIns(); // Refresh the list after deletion

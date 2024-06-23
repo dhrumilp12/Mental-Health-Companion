@@ -11,6 +11,7 @@ This module defines a class used to generate AI agents centered around mental he
 
 # -- Standard libraries --
 from datetime import datetime
+import logging
 import asyncio
 from operator import itemgetter
 
@@ -96,6 +97,7 @@ class MentalHealthAIAgent(AIAgent):
             collection_name="chat_turns"
         )
 
+        logging.info(f"Retrieved chat history for session {history}")
         if history is None:
             return []
         else:

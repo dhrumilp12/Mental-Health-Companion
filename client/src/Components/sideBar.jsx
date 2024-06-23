@@ -6,6 +6,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt'; // Icon for mood logs
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import ScheduleIcon from '@mui/icons-material/Schedule';
+import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import { UserContext } from './userContext';
 import { NavLink, useLocation } from 'react-router-dom';
 
@@ -23,7 +24,8 @@ function Sidebar() {
       { text: "Track Your Vibes", icon: <InsertEmoticonIcon />, path: "/user/mood_logging" },
             { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
             { text: "Schedule Check-In", icon: <ScheduleIcon />, path: "/user/check_in" }, // New item for check-in page
-            { text: "Check-In Reporting", icon: <EventAvailableIcon />, path: `/user/check_ins/${user?.userId}` }  // Dynamically inserting userId
+            { text: "Check-In Reporting", icon: <EventAvailableIcon />, path: `/user/check_ins/${user?.userId}` },  // Dynamically inserting userId
+            { text: "Chat Log Manager", icon: <ManageHistoryIcon />, path: "/user/chat_log_Manager"}
     ] : [])
   ];
 

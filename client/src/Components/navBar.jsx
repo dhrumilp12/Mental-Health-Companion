@@ -16,7 +16,7 @@ function Navbar({ toggleSidebar }) {
   const navigate = useNavigate();
   const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
   const [anchorEl, setAnchorEl] = useState(null);
-  
+  const token = localStorage.getItem('token');
   const userId = user?.userId;
   console.log("User ID:", userId);
 
@@ -35,7 +35,11 @@ function Navbar({ toggleSidebar }) {
       return; // Exit the function if no user ID is available
     }
     try {
-      const response = await axios.get(`/api/checkIn/missed?user_id=${userId}`); // Replace {userId} with actual user ID
+      const response = await axios.get(`/api/check-in/missed?user_id=${userId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
+        }
+    }); // Replace {userId} with actual user ID
       const missedCheckIns = response.data;
       console.log("Missed check-ins:", missedCheckIns);
       if (missedCheckIns.length > 0) {

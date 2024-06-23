@@ -61,7 +61,6 @@ def run_mental_health_agent(user_id, chat_id):
 def set_mental_health_end_state(user_id, chat_id):
     try:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
-
         agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
 
         agent.perform_final_processes(user_id, chat_id)

@@ -7,6 +7,7 @@ import AuthComponent from './Components/authComponent';
 import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
 import Navbar from './Components/navBar';
+import ChatLogManager from './Components/chatLomManager';
 import ChatInterface from './Components/chatInterface';
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
@@ -49,7 +50,7 @@ function App() {
                     <Route path="/user/mood_logs" element={<ProtectedRoute><MoodLogs /></ProtectedRoute>} />
                     <Route path="/user/check_in" element={<ProtectedRoute><CheckInForm userId={user?.userId} checkInId="" update={false} /></ProtectedRoute>} />
                     <Route path="/user/check_in/:checkInId" element={<ProtectedRoute><CheckInForm userId={user?.userId} update={true} /></ProtectedRoute>} />
-
+                    <Route path="/user/chat_log_Manager" element={<ProtectedRoute><ChatLogManager /></ProtectedRoute>} />
                     <Route path="/user/check_ins/:userId" element={<ProtectedRoute><CheckInsList /></ProtectedRoute>} />
                 </Routes>
             </Layout>
@@ -70,7 +71,7 @@ function Layout({ children }) {
     };
     return (
         <Box sx={{ display: 'flex',
-            overflow: 'hidden', // Adjust overflow properties as needed
+             // Adjust overflow properties as needed
             maxHeight: '100vh', // Limit height to viewport to prevent outer scrolling
          }}>
             <CssBaseline />
