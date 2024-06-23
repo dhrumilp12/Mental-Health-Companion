@@ -64,6 +64,9 @@ def set_mental_health_end_state(user_id, chat_id):
         # Your logic here, for example:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
 
+        agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
+
+        agent.perform_final_processes(user_id, chat_id)
         # Potentially update the database or perform other cleanup operations
         # For now, let's assume it's a simple response:
         return jsonify({"message": "Chat session finalized successfully"}), 200

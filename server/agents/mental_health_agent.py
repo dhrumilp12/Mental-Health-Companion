@@ -11,6 +11,7 @@ This module defines a class used to generate AI agents centered around mental he
 
 # -- Standard libraries --
 from datetime import datetime
+import logging
 import asyncio
 from operator import itemgetter
 
@@ -22,11 +23,13 @@ from operator import itemgetter
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain.memory.chat_memory import BaseChatMemory
+from langchain.memory.summary import ConversationSummaryMemory
 from langchain_core.runnables import RunnablePassthrough
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import trim_messages
+from langchain_core.messages.human import HumanMessage
 
 # MongoDB
 # -- Custom modules --
@@ -94,6 +97,7 @@ class MentalHealthAIAgent(AIAgent):
             collection_name="chat_turns"
         )
 
+        logging.info(f"Retrieved chat history for session {history}")
         if history is None:
             return []
         else:
@@ -156,19 +160,7 @@ class MentalHealthAIAgent(AIAgent):
 
         return agent_executor
 
-
-    def exec_update_step(self, user_id, chat_id=None, turn_id=None):
-        # Chat Summary:
-        # Update every 5 chat turns
-        # Therapy Material
-        # Maybe not get it from DB at all? Just perform Bing search?
-        # User Entity:
-        # Can be saved from chat summary step, every 5 chat turns
-        # User Journey:
-        # Can be either updated at the end of the chat, or every 5 chat turns
-        # User Material:
-        # Possibly updated every 5 chat turns, at the end of a chat, or not at all
-
+    def get_user_mood(self, user_id, chat_id):
         history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
         history_log = asyncio.run(history.aget_messages()) # Running async function as synchronous
 
@@ -203,6 +195,23 @@ class MentalHealthAIAgent(AIAgent):
 
         print("The user is feeling: ", user_mood)
 
+        return user_mood
+
+
+    def exec_update_step(self, user_id, chat_id=None, turn_id=None):
+        # Chat Summary:
+        # Update every 5 chat turns
+        # Therapy Material
+        # Maybe not get it from DB at all? Just perform Bing search?
+        # User Entity:
+        # Can be saved from chat summary step, every 5 chat turns
+        # User Journey:
+        # Can be either updated at the end of the chat, or every 5 chat turns
+        # User Material:
+        # Possibly updated every 5 chat turns, at the end of a chat, or not at all
+
+
+
         # agent_with_history = RunnableWithMessageHistory(
         #     chain,
         #     get_session_history=lambda _: memory,
@@ -223,6 +232,22 @@ class MentalHealthAIAgent(AIAgent):
 
         # Get summary text
         pass
+    
+    @staticmethod
+    def get_chat_id(user_id):
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+
+        chat_summary_collection = db["chat_summaries"]
+    
+        most_recent_chat_summary = chat_summary_collection.find_one(
+            {"user_id": user_id}, 
+            sort=[("chat_id", -1)]
+        )
+
+        return most_recent_chat_summary.get("chat_id")
+
 
     def run(self, message: str, with_history:bool =True, user_id: str=None, chat_id:int=None, turn_id:int=None) -> str:
         """
@@ -235,6 +260,9 @@ class MentalHealthAIAgent(AIAgent):
             chat_id (int): A unique identifier for the conversation.
             turn_id (int): A unique identifier for the evaluated turn in the conversation.
         """
+
+
+        chat_id = MentalHealthAIAgent.get_chat_id(user_id)
 
         # if not with_history:
         #     return super().run(message)
@@ -250,10 +278,10 @@ class MentalHealthAIAgent(AIAgent):
             config={"configurable": {"session_id": session_id}})
 
         # This updates certain collections in the database based on recent history
-        if (turn_id + 1) % PROCESSING_STEP == 0:
-            # TODO
-            self.exec_update_step(user_id, chat_id)
-            pass
+        # if (turn_id + 1) % PROCESSING_STEP == 0:
+        #     # TODO
+        #     self.exec_update_step(user_id, chat_id)
+        #     pass
 
         return invocation["output"]
 
@@ -270,9 +298,22 @@ class MentalHealthAIAgent(AIAgent):
         db = db_client[db_name]
 
         user_journey_collection = db["user_journeys"]
+        chat_summary_collection = db["chat_summaries"]
         user_journey = user_journey_collection.find_one({"user_id": user_id})
 
         system_message = self.system_message
+
+
+        now = datetime.now()
+        chat_id = int(now.timestamp())
+
+        chat_summary_collection.insert_one({
+                "user_id": user_id,
+                "chat_id": chat_id,
+                "perceived_mood": "",
+                "summary_text": "",
+                "concerns_progress": []
+        })
 
         # Has user engaged with chatbot before?
         if user_journey is None:
@@ -292,45 +333,54 @@ class MentalHealthAIAgent(AIAgent):
 
             full_system_message = ''.join([system_message.content, addendum])
             system_message.content = full_system_message
-            response = self.run(
-                message="",
-                with_history=False,
-                user_id=user_id,
-                chat_id=0,
-                turn_id=0,
-            )
 
-            return {
-                "message": response,
-                "chat_id": 0
-            }
+        chat_id = MentalHealthAIAgent.get_chat_id(user_id)
 
-        else:
-            # TODO: Must implement either remembering from previous conversation or knowing things from user profile
-            try:
-                # SessionIds in history are expected to start with the user_id and end with the chat_id
-                last_turn = db["chat_turns"].find({"SessionId": {"$regex": user_id}}).sort(
-                    {"timestamp": -1}).limit(1).next()
-            except StopIteration:
-                last_turn = {}
+        response = self.run(
+            message="",
+            with_history=True,
+            user_id=user_id,
+            chat_id=chat_id,
+            turn_id=0,
+        )
 
-            old_chat_id = int(last_turn["SessionId"].split('-')[-1])
-
-            new_chat_id = old_chat_id + 1
-
-            response = self.run(
-                message="",
-                with_history=True,
-                user_id=user_id,
-                chat_id=new_chat_id,
-                turn_id=0,
-            )
-
-            return {
-                "message": response,
-                "chat_id": new_chat_id
-            }
+        return {
+            "message": response,
+            "chat_id": chat_id
+        }
         
+
+    def get_summary_from_chat_history(self, user_id, chat_id):
+        history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
+
+        memory = ConversationSummaryMemory.from_messages(
+            llm=self.llm,
+            chat_memory=history,
+            return_messages=True
+        )
+
+        return memory.buffer
+
+
+    def perform_final_processes(self, user_id, chat_id):
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+
+        chat_summary_collection = db["chat_summaries"]
+
+        mood = self.get_user_mood(user_id, chat_id)
+        summary = self.get_summary_from_chat_history(user_id, chat_id)
+
+        # Update the chat summary
+        result = chat_summary_collection.update_one(
+            {"user_id": user_id, "chat_id": int(chat_id)}, 
+            {"$set": {"perceived_mood": mood, "summary_text": summary}}
+        )
+
+        print(result)
+        pass
+
 
     # def analyze_chat(self, text):
     #     """Analyze the chat text to determine emotional state and detect triggers."""

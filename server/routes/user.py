@@ -1,16 +1,24 @@
 import logging
 from bson import json_util
 import json
+import csv
+import io
+import asyncio
 
 from flask import Blueprint, request, jsonify
+from time import sleep
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from bson import ObjectId
+from bson import ObjectId, json_util
 from datetime import timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models.user import User as UserModel
-from services.db import mood_log
 from services.azure_mongodb import MongoDBClient
+from models.user import User as UserModel
+from models.chat_summary import ChatSummary
+from services.db import mood_log
+from agents.mental_health_agent import MentalHealthAIAgent, HumanMessage
 
 user_routes = Blueprint("user", __name__)
 
@@ -196,3 +204,100 @@ def get_mood_logs():
     except Exception as e:
         logging.error(f"Error retrieving mood logs: {str(e)}")
         return jsonify({"error": "Failed to retrieve mood logs"}), 500
+    
+
+@user_routes.get('/user/download_chat_logs')
+@jwt_required()
+def download_chat_logs():
+    try:
+        current_user = get_jwt_identity()
+        logging.info(f"Downloading chat logs for user {current_user}")
+        
+        chat_ids = ChatSummary.get_latest_chat_id(current_user)
+        if not chat_ids:
+            return jsonify({"message": "No chat sessions found for this user."}), 204
+        
+        csv_file = io.StringIO()
+        csv_writer = csv.writer(csv_file)
+        headers = ["Chat ID", "Content", "Type", "Additional Info"]
+        csv_writer.writerow(headers)
+
+        for chat_id in chat_ids:
+            session_id = f"{current_user}-{chat_id}"
+            logging.info(f"Downloading chat logs for session {session_id}")
+            agent = MentalHealthAIAgent()
+            chat_logs = agent.get_session_history(session_id)
+
+            if not chat_logs or not hasattr(chat_logs, 'aget_messages'):
+                logging.warning(f"No chat logs available for session {session_id}")
+                continue
+
+            chat_log_entries = asyncio.run(chat_logs.aget_messages())
+
+            for log in chat_log_entries:
+                content = getattr(log, 'content', 'No Content Available')
+                message_type = getattr(log, 'type', 'Unknown Type')
+                additional_info = log.additional_kwargs if hasattr(log, 'additional_kwargs') else 'No additional info'
+                row = [chat_id, content, message_type, json.dumps(additional_info)]
+                csv_writer.writerow(row)
+
+        csv_file.seek(0)
+
+        return send_file(
+            io.BytesIO(csv_file.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='chat_logs.csv'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading chat logs: {str(e)}")
+        return jsonify({"error": "Failed to download chat logs"}), 500
+    
+
+@user_routes.delete('/user/delete_chat_logs')
+@jwt_required()
+def delete_user_chat_logs():
+    try:
+        current_user = get_jwt_identity()
+        logging.info(f"Request received to delete chat logs for user {current_user}")
+        
+        # Call the method to delete all chat logs
+        result = ChatSummary.delete_all_user_chats(current_user)
+        
+        if result.deleted_count == 0:
+            return jsonify({"message": "No chat logs found to delete for this user."}), 404
+        
+        return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+
+    except Exception as e:
+        logging.error(f"Error deleting chat logs: {str(e)}")
+        return jsonify({"error": "Failed to delete chat logs"}), 500
+
+@user_routes.delete('/user/delete_chat_logs/range')
+@jwt_required()
+def delete_user_chat_logs_in_range():
+    logging.info("Entered the delete route")
+    try:
+        current_user = get_jwt_identity()
+        logging.info(f"Current user: {current_user}")
+        start_date = request.args.get('start_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+        end_date = request.args.get('end_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+
+        if not start_date or not end_date:
+            logging.info("Start or end date not provided")
+            return jsonify({"message": "You must provide both start and end dates in YYYY-MM-DD format."}), 400
+
+        logging.info(f"Request received to delete chat logs for user {current_user} from {start_date} to {end_date}")
+        
+        result = ChatSummary.delete_user_chats_in_range(current_user, start_date, end_date)
+        
+        if result.deleted_count == 0:
+            logging.info("No chats found to delete")
+            return jsonify({"message": "No chat logs found to delete for this user in the specified range."}), 204
+        
+        logging.info(f"Deleted {result.deleted_count} chats")
+        return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+
+    except Exception as e:
+        logging.error(f"Error deleting chat logs: {str(e)}")
+        return jsonify({"error": "Failed to delete chat logs"}), 500

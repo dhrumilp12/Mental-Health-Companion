@@ -13,9 +13,11 @@ import {
     TextField,
     Box,
     Tooltip,
-    Typography
+    Typography,
+    Snackbar,
+    Alert 
   } from '@mui/material';
-
+  
   import { formatISO, parseISO } from 'date-fns';
   
 function CheckInForm({ userId, update }) {
@@ -24,13 +26,19 @@ function CheckInForm({ userId, update }) {
   const [notify, setNotify] = useState(false);
   const { checkInId } = useParams();
   const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const token = localStorage.getItem('token');
 
 
   useEffect(() => {
     if (update && checkInId) {
       // Fetch existing check-in data
       setLoading(true);
-      axios.get(`/api/checkIn/retrieve/${checkInId}`)
+      axios.get(`/api/check-in/${checkInId}`,{
+        headers: {
+            'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
+        }
+    })
         .then(response => {
           const data = response.data;
           console.log('Fetched check-in data:', data);
@@ -52,23 +60,40 @@ function CheckInForm({ userId, update }) {
     event.preventDefault();
     const selectedTime = new Date(checkInTime);
     const now = new Date();
-    if (selectedTime < now) {
-      alert("Cannot schedule check-in in the past. Please choose a future time.");
+    if (selectedTime <= now) {
+      setSnackbar({ open: true, message: "Cannot schedule check-in in the past. Please choose a future time.", severity: 'error' });
       return;
     }
 
-    const url = update ? `/api/checkIn/update/${checkInId}` : '/api/checkIn/schedule';
+    const url = update ? `/api/check-in/${checkInId}` : '/api/check-in/schedule';
+    // Setup Axios request configuration
+    const config = {
+      headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+      }
+  };
     console.log('URL:', url);
     const method = update ? 'patch' : 'post';
     const data = { user_id: userId, check_in_time: checkInTime, frequency, notify };
     console.log('Submitting:', data);
     try {
-      const response = await axios[method](url, data);
+      const response = await axios[method](url, data, config);
       console.log('Success:', response.data.message);
+      setSnackbar({ open: true, message: response.data.message, severity: 'success' });
       // Optionally reset form or handle next steps
     } catch (error) {
       console.error('Error:', error.response?.data || error);
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred";
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar({ ...snackbar, open: false });
   };
 
   if (loading) return <Typography>Loading...</Typography>;
@@ -114,6 +139,11 @@ return (
       <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2, mb: 2, padding: '10px 0' }}>
         {update ? 'Update Check-In' : 'Schedule Check-In'}
       </Button>
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
