@@ -219,7 +219,7 @@ def download_chat_logs():
         
         csv_file = io.StringIO()
         csv_writer = csv.writer(csv_file)
-        headers = ["Chat ID", "Content", "Type", "Additional Info"]
+        headers = ["Chat ID","Timestamp", "Content", "Source"]
         csv_writer.writerow(headers)
 
         for chat_id in chat_ids:
@@ -237,8 +237,8 @@ def download_chat_logs():
             for log in chat_log_entries:
                 content = getattr(log, 'content', 'No Content Available')
                 message_type = getattr(log, 'type', 'Unknown Type')
-                additional_info = log.additional_kwargs if hasattr(log, 'additional_kwargs') else 'No additional info'
-                row = [chat_id, content, message_type, json.dumps(additional_info)]
+                timestamp = datetime.fromtimestamp(int(chat_id)).strftime('%Y-%m-%d %H:%M:%S')
+                row = [chat_id,timestamp, content, message_type]
                 csv_writer.writerow(row)
 
         csv_file.seek(0)
@@ -287,17 +287,93 @@ def delete_user_chat_logs_in_range():
             logging.info("Start or end date not provided")
             return jsonify({"message": "You must provide both start and end dates in YYYY-MM-DD format."}), 400
 
-        logging.info(f"Request received to delete chat logs for user {current_user} from {start_date} to {end_date}")
-        
-        result = ChatSummary.delete_user_chats_in_range(current_user, start_date, end_date)
-        
-        if result.deleted_count == 0:
-            logging.info("No chats found to delete")
-            return jsonify({"message": "No chat logs found to delete for this user in the specified range."}), 204
-        
-        logging.info(f"Deleted {result.deleted_count} chats")
-        return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+        attempt_count = 0
+        while attempt_count < 5:  # Retry up to 5 times
+            attempt_count += 1
+            try:
+                result = ChatSummary.delete_user_chats_in_range(current_user, start_date, end_date)
+                if result.deleted_count > 0:
+                    logging.info(f"Deleted {result.deleted_count} chats")
+                    return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+                else:
+                    logging.info("No chats found to delete")
+                    return jsonify({"message": "No chat logs found to delete for this user in the specified range."}), 204
+            except Exception as retry_exc:
+                logging.error(f"Attempt {attempt_count}: {str(retry_exc)}")
+                if 'RetryAfterMs' in str(retry_exc):
+                    sleep(4)  # Sleep for 4 milliseconds before retrying
+                else:
+                    break
+
+        return jsonify({"error": "Failed to delete chat logs after several attempts"}), 500
 
     except Exception as e:
         logging.error(f"Error deleting chat logs: {str(e)}")
         return jsonify({"error": "Failed to delete chat logs"}), 500
+    
+
+    
+@user_routes.get('/user/download_chat_logs/range')
+@jwt_required()
+def download_chat_logs_in_range():
+    try:
+        current_user = get_jwt_identity()
+        logging.info(f"Downloading chat logs for user {current_user} within a specific date range")
+
+        start_date = request.args.get('start_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+        end_date = request.args.get('end_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+        
+        if not start_date or not end_date:
+            return jsonify({"message": "You must provide both start and end dates in YYYY-MM-DD format."}), 400
+
+        start_chat_id = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+        end_chat_id = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+        chat_summary_collection = db["chat_summaries"]
+
+        chat_ids = chat_summary_collection.find({
+            "user_id": current_user,
+            "chat_id": {"$gte": start_chat_id, "$lte": end_chat_id}
+        })
+
+        if not chat_ids:
+            return jsonify({"message": "No chat sessions found for this user within the specified range."}), 204
+
+        csv_file = io.StringIO()
+        csv_writer = csv.writer(csv_file)
+        headers = ["Chat ID", "Timestamp", "Content", "Source"]
+        csv_writer.writerow(headers)
+
+        agent = MentalHealthAIAgent()
+        for chat in chat_ids:
+            session_id = f"{current_user}-{chat['chat_id']}"
+            logging.info(f"Downloading chat logs for session {session_id}")
+            chat_logs = agent.get_session_history(session_id)
+
+            if not chat_logs or not hasattr(chat_logs, 'aget_messages'):
+                logging.warning(f"No chat logs available for session {session_id}")
+                continue
+
+            chat_log_entries = asyncio.run(chat_logs.aget_messages())
+
+            for log in chat_log_entries:
+                content = getattr(log, 'content', 'No Content Available')
+                message_type = getattr(log, 'type', 'Unknown Type')
+                timestamp = datetime.fromtimestamp(int(chat['chat_id'])).strftime('%Y-%m-%d %H:%M:%S')
+                row = [chat['chat_id'], timestamp, content, message_type]
+                csv_writer.writerow(row)
+
+        csv_file.seek(0)
+
+        return send_file(
+            io.BytesIO(csv_file.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='chat_logs_range.csv'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading chat logs: {str(e)}")
+        return jsonify({"error": "Failed to download chat logs"}), 500

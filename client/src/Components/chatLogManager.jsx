@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Snackbar, Alert, Tooltip, Paper,Typography, CircularProgress } from '@mui/material';
+import { Button, Snackbar, Alert, Tooltip, Paper,Typography, CircularProgress, TextField } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/CloudDownload';
 import DeleteIcon from '@mui/icons-material/DeleteForever';
 import { styled } from '@mui/material/styles';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: theme.shape.borderRadius,
     boxShadow: 1 ,
-    maxWidth: 650,
+    maxWidth: '100%',
     margin: 'auto',
-    marginTop: theme.spacing(4),
-    backgroundColor: '#fff' // Consider using theme.palette.background.paper for theme consistency
+    marginTop: theme.spacing(2),
+    backgroundColor: '#fff', // Consider using theme.palette.background.paper for theme consistency
+    overflow: 'auto',
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
@@ -26,6 +28,9 @@ function ChatLogManager() {
     const [message, setMessage] = React.useState('');
     const [severity, setSeverity] = React.useState('info');
     const [loading, setLoading] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     const handleSnackbarClose = (event, reason) => {
         if (reason === 'clickaway') {
             return;
@@ -33,10 +38,14 @@ function ChatLogManager() {
         setSnackbarOpen(false);
     };
 
-    const downloadChatLogs = async () => {
+    const downloadChatLogs = async (range = false) => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/user/download_chat_logs', {
+            const endpoint = range ? '/api/user/download_chat_logs/range' : '/api/user/download_chat_logs';
+            const params = range ? { params: { start_date: startDate, end_date: endDate } } : {};
+
+            const response = await axios.get(endpoint, {
+                ...params,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
@@ -46,7 +55,7 @@ function ChatLogManager() {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'chat_logs.csv'); //or any other extension
+            link.setAttribute('download', range ? 'chat_logs_range.csv' : 'chat_logs.csv');
             document.body.appendChild(link);
             link.click();
 
@@ -61,10 +70,14 @@ function ChatLogManager() {
         setSnackbarOpen(true);
     };
 
-    const deleteChatLogs = async () => {
+    const deleteChatLogs = async (range = false) => {
         setLoading(true);
         try {
-            const response = await axios.delete('/api/user/delete_chat_logs', {
+            const endpoint = range ? '/api/user/delete_chat_logs/range' : '/api/user/delete_chat_logs';
+            const params = range ? { params: { start_date: startDate, end_date: endDate } } : {};
+
+            const response = await axios.delete(endpoint, {
+                ...params,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -81,15 +94,49 @@ function ChatLogManager() {
     };
 
     return (
-        <StyledPaper>
-            <Typography variant="h4" gutterBottom>
+        <StyledPaper sx={{height:'91vh'}}>
+            <Typography variant="h4" gutterBottom >
                 Manage Your Chat Logs
+            </Typography>
+            <Typography variant="body1" paragraph>
+            Manage your chat logs efficiently by downloading or deleting entries for specific dates or entire ranges. Please be cautious as deletion is permanent.
             </Typography>
             
             <div style={{ display: 'flex', justifyContent: 'center',flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                    <TextField
+                        label="Start Date"
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                    <TextField
+                        label="End Date"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                </div>
             <Typography variant="body1" paragraph>
-                Here you can download all your chat logs as a CSV file, which includes details like chat IDs, content, type, and additional information for each session. 
+                Here you can download  your chat logs as a CSV file, which includes details like chat IDs, content, type, and additional information for each session. 
             </Typography>
+
+            <Tooltip title="Download chat logs for selected date range">
+                    <ActionButton 
+                        variant="outlined"
+                        startIcon={<DateRangeIcon />}
+                        onClick={() => downloadChatLogs(true)}
+                        disabled={loading || !startDate || !endDate}
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Download Range'}
+                    </ActionButton>
+                </Tooltip>
                 <Tooltip title="Download your chat logs as a CSV file">
                     <ActionButton 
                         variant="contained" 
@@ -102,8 +149,19 @@ function ChatLogManager() {
                     </ActionButton>
                 </Tooltip>
                 <Typography variant="body1" paragraph>
-                If you need to clear your history for privacy or other reasons, you can also permanently delete all your chat logs from the server. 
+                If you need to clear your history for privacy or other reasons, you can also permanently delete  your chat logs from the server. 
             </Typography>
+            <Tooltip title="Delete chat logs for selected date range">
+                    <ActionButton 
+                        variant="outlined" 
+                        color="warning"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => deleteChatLogs(true)}
+                        disabled={loading || !startDate || !endDate}
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Delete Range'}
+                    </ActionButton>
+                </Tooltip>
                 <Tooltip title="Permanently delete all your chat logs">
                     <ActionButton 
                         variant="contained" 

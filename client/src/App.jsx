@@ -7,7 +7,7 @@ import AuthComponent from './Components/authComponent';
 import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
 import Navbar from './Components/navBar';
-import ChatLogManager from './Components/chatLomManager';
+import ChatLogManager from './Components/chatLogManager';
 import ChatInterface from './Components/chatInterface';
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
