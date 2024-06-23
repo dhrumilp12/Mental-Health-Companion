@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, Snackbar, Alert, Tooltip, Paper,Typography, CircularProgress, TextField } from '@mui/material';
+import {
+    Button, Snackbar, Alert, Tooltip, Paper, Typography, CircularProgress, TextField,
+    Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
+  } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/CloudDownload';
 import DeleteIcon from '@mui/icons-material/DeleteForever';
 import { styled } from '@mui/material/styles';
@@ -25,18 +28,29 @@ const ActionButton = styled(Button)(({ theme }) => ({
 
 function ChatLogManager() {
     const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
     const [message, setMessage] = React.useState('');
     const [severity, setSeverity] = React.useState('info');
     const [loading, setLoading] = useState(false);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-
+    const [dialogRange, setDialogRange] = useState(false); 
     const handleSnackbarClose = (event, reason) => {
         if (reason === 'clickaway') {
             return;
         }
         setSnackbarOpen(false);
     };
+
+    const handleDialogClose = () => {
+        setDialogOpen(false);
+      };
+
+      const handleDeleteConfirmation = (range) => {
+        setDialogRange(range);
+        setDialogOpen(true);
+        // Further actions are deferred until user confirms in the dialog
+      };
 
     const downloadChatLogs = async (range = false) => {
         setLoading(true);
@@ -70,11 +84,12 @@ function ChatLogManager() {
         setSnackbarOpen(true);
     };
 
-    const deleteChatLogs = async (range = false) => {
+    const deleteChatLogs = async () => {
+        setDialogOpen(false); // Close dialog first
         setLoading(true);
         try {
-            const endpoint = range ? '/api/user/delete_chat_logs/range' : '/api/user/delete_chat_logs';
-            const params = range ? { params: { start_date: startDate, end_date: endDate } } : {};
+            const endpoint = dialogRange ? '/api/user/delete_chat_logs/range' : '/api/user/delete_chat_logs';
+            const params = dialogRange ? { params: { start_date: startDate, end_date: endDate } } : {};
 
             const response = await axios.delete(endpoint, {
                 ...params,
@@ -142,7 +157,7 @@ function ChatLogManager() {
                         variant="contained" 
                         color="primary" 
                         startIcon={<DownloadIcon />} 
-                        onClick={downloadChatLogs}
+                        onClick={() => downloadChatLogs(false)}
                         disabled={loading}
                     >
                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Download Chat Logs'}
@@ -156,7 +171,7 @@ function ChatLogManager() {
                         variant="outlined" 
                         color="warning"
                         startIcon={<DeleteIcon />}
-                        onClick={() => deleteChatLogs(true)}
+                        onClick={() => handleDeleteConfirmation(true)}
                         disabled={loading || !startDate || !endDate}
                     >
                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Delete Range'}
@@ -167,7 +182,7 @@ function ChatLogManager() {
                         variant="contained" 
                         color="secondary" 
                         startIcon={<DeleteIcon />} 
-                        onClick={deleteChatLogs}
+                        onClick={() => handleDeleteConfirmation(false)}
                         disabled={loading}
                     >
                         {loading ? <CircularProgress size={24} color="inherit" /> : 'Delete Chat Logs'}
@@ -177,6 +192,27 @@ function ChatLogManager() {
                 Please use these options carefully as deleting your chat logs is irreversible.
             </Typography>
             </div>
+            <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete these chat logs? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={() => deleteChatLogs(true)} color="secondary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
                 <Alert onClose={handleSnackbarClose} severity={severity} sx={{ width: '100%' }}>
                     {message}
