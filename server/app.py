@@ -1,6 +1,7 @@
 """
 API entrypoint for backend API.
 """
+from dotenv import load_dotenv
 import os
 
 from flask import Flask
@@ -13,12 +14,31 @@ from services.db.agent_facts import load_agent_facts_to_db
 
 from routes.user import user_routes 
 from routes.ai import ai_routes
+from flask_mail import Mail
+
+load_dotenv()
+
+
 
 def run_app():
     # Set up the app
     app = Flask(__name__)
     app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY")
+    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_USE_SSL'] = True
+    app.config['MAIL_USE_TLS'] = False
+    app.config['SECURITY_PASSWORD_SALT'] = os.getenv("SECURITY_PASSWORD_SALT")
+     # Debugging statements
+    print("SECRET_KEY:", app.config['SECRET_KEY'])
+    print("SECURITY_PASSWORD_SALT:", app.config['SECURITY_PASSWORD_SALT'])
+    print("Loaded SECURITY_PASSWORD_SALT:", os.getenv("SECURITY_PASSWORD_SALT"))
 
+
+    mail = Mail(app)
     jwt = JWTManager(app)
     CORS(app)
 
@@ -35,7 +55,7 @@ def run_app():
         """    
         return {"status": "ready"}
 
-    return app, jwt
+    return app, jwt, mail
 
 
 def setup_sub_db(app):
@@ -46,7 +66,7 @@ def setup_sub_db(app):
     with app.app_context():
         sub_db.create_all()
 
-app, jwt = run_app()
+app,mail, jwt = run_app()
 
 # DB pre-load
 load_agent_facts_to_db()

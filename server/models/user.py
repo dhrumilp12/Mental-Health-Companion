@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from services.azure_mongodb import MongoDBClient
 from bson import ObjectId
 
+
 class User(BaseModel):
     id: str = None
     username: str = Field(..., min_length=3, max_length=20)
@@ -41,6 +42,16 @@ class User(BaseModel):
         db_client = MongoDBClient.get_client()
         db = db_client[MongoDBClient.get_db_name()]
         user_data = db.users.find_one({"_id": ObjectId(user_id)})
+        if user_data:
+            user_data['id'] = str(user_data['_id'])
+            return cls(**user_data)
+        return None
+    
+    @classmethod
+    def find_by_email(cls, email):
+        db_client = MongoDBClient.get_client()
+        db = db_client[MongoDBClient.get_db_name()]
+        user_data = db.users.find_one({"email": email})
         if user_data:
             user_data['id'] = str(user_data['_id'])
             return cls(**user_data)

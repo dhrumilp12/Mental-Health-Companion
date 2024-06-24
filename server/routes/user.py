@@ -5,7 +5,7 @@ import csv
 import io
 import asyncio
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from time import sleep
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -19,6 +19,21 @@ from models.user import User as UserModel
 from models.chat_summary import ChatSummary
 from services.db import mood_log
 from agents.mental_health_agent import MentalHealthAIAgent, HumanMessage
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from flask_mail import Message, Mail
+mail = Mail()
+
+def generate_reset_token(email):
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt=current_app.config['SECURITY_PASSWORD_SALT'])
+
+def verify_reset_token(token):
+    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(token, salt=current_app.config['SECURITY_PASSWORD_SALT'], max_age=3600)
+    except (SignatureExpired, BadSignature):
+        return None
+    return UserModel.find_by_email(email)
 
 user_routes = Blueprint("user", __name__)
 
@@ -26,10 +41,13 @@ user_routes = Blueprint("user", __name__)
 def signup():
     try:
         logging.info("Starting user registration process")
-        user_data = request.get_json()
-        logging.info(f"Received user data: {user_data}")
+        full_user_data = request.get_json()
+        logging.info(f"Received user data: {full_user_data}")
 
-        user = UserModel(**user_data)
+        # Extracting mental health concerns and removing them from the user data
+        mental_health_concerns = full_user_data.pop('mental_health_concerns', [])
+
+        user = UserModel(**full_user_data)
 
         db_client = MongoDBClient.get_client()
         db = db_client[MongoDBClient.get_db_name()]
@@ -42,12 +60,23 @@ def signup():
             return jsonify({"error": "User with this username or email already exists"}), 409
         
         hashed_password = generate_password_hash(user.password)
-        user_data['password'] = hashed_password
-        result = db['users'].insert_one(user_data)
+        full_user_data['password'] = hashed_password
+        result = db['users'].insert_one(full_user_data)
         if result:
             logging.info("User registration successful")
             user_id = result.inserted_id
-            access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=24))
+            access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=48))
+
+             # Create UserJourney entry with the previously extracted concerns
+            user_journey_data = {
+                'user_id': str(user_id),
+                'mental_health_concerns': mental_health_concerns,
+                'patient_goals': [],
+                'therapy_plan': {}  # Adjust as per your actual model
+            }
+            db['user_journeys'].insert_one(user_journey_data)
+
+            
             return jsonify({"message": "User registered successfully", "access_token": access_token, "userId": str(user_id)}), 201
         else:
             logging.error("Failed to save user")
@@ -113,8 +142,19 @@ def get_public_profile(user_id):
     if user_data is None:
         return jsonify({"error": "User could not be found."}), 404
     
-    user = UserModel(**user_data)
-    return jsonify(user.model_dump(exclude={"password"})), 200
+    # Fetch mental health concerns from UserJourney
+    journey_data = db['user_journeys'].find_one({"user_id": user_id})
+    if journey_data:
+        user_data['mental_health_concerns'] = journey_data.get('mental_health_concerns', [])
+        print(user_data['mental_health_concerns'])
+    
+    # Remove sensitive information like passwords
+    user_data.pop('password', None)
+    
+    # Convert _id from ObjectId to string if needed
+    user_data['_id'] = str(user_data['_id'])
+
+    return jsonify(user_data), 200
 
 
 @user_routes.patch('/user/profile/<user_id>')
@@ -123,6 +163,13 @@ def update_profile_fields(user_id):
     
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
+
+    # Update main user fields, excluding mental_health_concerns to avoid direct updates
+    if 'mental_health_concerns' in update_fields:
+        mental_health_concerns = update_fields.pop('mental_health_concerns')
+        # Update mental health concerns in UserJourney
+        db['user_journeys'].update_one({"user_id": user_id}, {"$set": {"mental_health_concerns": mental_health_concerns}})
+
 
     result = db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
@@ -164,6 +211,33 @@ def change_password(user_id):
     except Exception as e:
         logging.error(f"Error changing password: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@user_routes.post('/user/request_reset')
+def request_password_reset():
+    email = request.json.get('email')
+    user = UserModel.find_by_email(email)
+    if not user:
+        return jsonify({"message": "No user found with this email"}), 404
+
+    token = generate_reset_token(user.email)
+    reset_url = f"{request.host_url}user/reset_password/{token}"
+    msg = Message("Password Reset Request", sender='yourapp@example.com', recipients=[user.email])
+    msg.body = f"Please click on the link to reset your password: {reset_url}"
+    mail.send(msg)
+    
+    return jsonify({"message": "Check your email for the reset password link"}), 200
+
+@user_routes.post('/user/reset_password/<token>')
+def reset_password(token):
+    new_password = request.json.get('password')
+    user = verify_reset_token(token)
+    if not user:
+        return jsonify({"error": "Invalid or expired token"}), 403
+
+    new_password_hash = generate_password_hash(new_password)
+    user.update_password(user.username, new_password_hash)
+    
+    return jsonify({"message": "Password has been reset successfully"}), 200
 
 
 @user_routes.post('/user/log_mood')
@@ -219,7 +293,7 @@ def download_chat_logs():
         
         csv_file = io.StringIO()
         csv_writer = csv.writer(csv_file)
-        headers = ["Chat ID", "Content", "Type", "Additional Info"]
+        headers = ["Chat ID","Timestamp", "Content", "Source"]
         csv_writer.writerow(headers)
 
         for chat_id in chat_ids:
@@ -237,8 +311,8 @@ def download_chat_logs():
             for log in chat_log_entries:
                 content = getattr(log, 'content', 'No Content Available')
                 message_type = getattr(log, 'type', 'Unknown Type')
-                additional_info = log.additional_kwargs if hasattr(log, 'additional_kwargs') else 'No additional info'
-                row = [chat_id, content, message_type, json.dumps(additional_info)]
+                timestamp = datetime.fromtimestamp(int(chat_id)).strftime('%Y-%m-%d %H:%M:%S')
+                row = [chat_id,timestamp, content, message_type]
                 csv_writer.writerow(row)
 
         csv_file.seek(0)
@@ -287,17 +361,93 @@ def delete_user_chat_logs_in_range():
             logging.info("Start or end date not provided")
             return jsonify({"message": "You must provide both start and end dates in YYYY-MM-DD format."}), 400
 
-        logging.info(f"Request received to delete chat logs for user {current_user} from {start_date} to {end_date}")
-        
-        result = ChatSummary.delete_user_chats_in_range(current_user, start_date, end_date)
-        
-        if result.deleted_count == 0:
-            logging.info("No chats found to delete")
-            return jsonify({"message": "No chat logs found to delete for this user in the specified range."}), 204
-        
-        logging.info(f"Deleted {result.deleted_count} chats")
-        return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+        attempt_count = 0
+        while attempt_count < 5:  # Retry up to 5 times
+            attempt_count += 1
+            try:
+                result = ChatSummary.delete_user_chats_in_range(current_user, start_date, end_date)
+                if result.deleted_count > 0:
+                    logging.info(f"Deleted {result.deleted_count} chats")
+                    return jsonify({"message": f"Successfully deleted {result.deleted_count} chat logs for the user."}), 200
+                else:
+                    logging.info("No chats found to delete")
+                    return jsonify({"message": "No chat logs found to delete for this user in the specified range."}), 204
+            except Exception as retry_exc:
+                logging.error(f"Attempt {attempt_count}: {str(retry_exc)}")
+                if 'RetryAfterMs' in str(retry_exc):
+                    sleep(4)  # Sleep for 4 milliseconds before retrying
+                else:
+                    break
+
+        return jsonify({"error": "Failed to delete chat logs after several attempts"}), 500
 
     except Exception as e:
         logging.error(f"Error deleting chat logs: {str(e)}")
         return jsonify({"error": "Failed to delete chat logs"}), 500
+    
+
+
+@user_routes.get('/user/download_chat_logs/range')
+@jwt_required()
+def download_chat_logs_in_range():
+    try:
+        current_user = get_jwt_identity()
+        logging.info(f"Downloading chat logs for user {current_user} within a specific date range")
+
+        start_date = request.args.get('start_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+        end_date = request.args.get('end_date', type=lambda s: datetime.strptime(s, '%Y-%m-%d'))
+        
+        if not start_date or not end_date:
+            return jsonify({"message": "You must provide both start and end dates in YYYY-MM-DD format."}), 400
+
+        start_chat_id = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+        end_chat_id = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+        chat_summary_collection = db["chat_summaries"]
+
+        chat_ids = chat_summary_collection.find({
+            "user_id": current_user,
+            "chat_id": {"$gte": start_chat_id, "$lte": end_chat_id}
+        })
+
+        if not chat_ids:
+            return jsonify({"message": "No chat sessions found for this user within the specified range."}), 204
+
+        csv_file = io.StringIO()
+        csv_writer = csv.writer(csv_file)
+        headers = ["Chat ID", "Timestamp", "Content", "Source"]
+        csv_writer.writerow(headers)
+
+        agent = MentalHealthAIAgent()
+        for chat in chat_ids:
+            session_id = f"{current_user}-{chat['chat_id']}"
+            logging.info(f"Downloading chat logs for session {session_id}")
+            chat_logs = agent.get_session_history(session_id)
+
+            if not chat_logs or not hasattr(chat_logs, 'aget_messages'):
+                logging.warning(f"No chat logs available for session {session_id}")
+                continue
+
+            chat_log_entries = asyncio.run(chat_logs.aget_messages())
+
+            for log in chat_log_entries:
+                content = getattr(log, 'content', 'No Content Available')
+                message_type = getattr(log, 'type', 'Unknown Type')
+                timestamp = datetime.fromtimestamp(int(chat['chat_id'])).strftime('%Y-%m-%d %H:%M:%S')
+                row = [chat['chat_id'], timestamp, content, message_type]
+                csv_writer.writerow(row)
+
+        csv_file.seek(0)
+
+        return send_file(
+            io.BytesIO(csv_file.getvalue().encode('utf-8')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='chat_logs_range.csv'
+        )
+    except Exception as e:
+        logging.error(f"Error downloading chat logs: {str(e)}")
+        return jsonify({"error": "Failed to download chat logs"}), 500

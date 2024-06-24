@@ -35,7 +35,7 @@ class ChatSummary(BaseModel):
         db_name = MongoDBClient.get_db_name()
         db = db_client[db_name]
         chat_summary_collection = db["chat_summaries"]
-
+    
         # Find the latest chat ID for the given user, sorted by chat ID in descending order
         chat_ids = chat_summary_collection.find(
             {"user_id": user_id},
@@ -62,15 +62,17 @@ class ChatSummary(BaseModel):
         db = db_client[db_name]
         chat_summary_collection = db["chat_summaries"]
 
-        # Ensure dates include time for start and end to capture the full range
-        start_datetime = datetime.combine(start_date, datetime.min.time())
-        end_datetime = datetime.combine(end_date, datetime.max.time())
-
+         # Convert dates to chat_id ranges based on timestamp (Unix time)
+        start_chat_id = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+        end_chat_id = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+        print("Start chat ID:", start_chat_id)
+        print("End chat ID:", end_chat_id)
         result = chat_summary_collection.delete_many({
             "user_id": user_id,
-            "timestamp": {
-                "$gte": start_datetime,
-                "$lte": end_datetime
+            "chat_id": {
+                "$gte": start_chat_id,  
+                "$lte": end_chat_id
             }
         })
+        print("Deleted count:", result.deleted_count)
         return result  # This will return a DeleteResult object which includes the count of deleted documents

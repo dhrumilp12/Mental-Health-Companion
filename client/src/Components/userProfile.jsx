@@ -15,6 +15,11 @@ import HomeIcon from '@mui/icons-material/Home'; // Icon for place of residence
 import WorkIcon from '@mui/icons-material/Work';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import UpdateIcon from '@mui/icons-material/Update';
+import Checkbox from '@mui/material/Checkbox';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Tooltip from '@mui/material/Tooltip';
+import InfoIcon from '@mui/icons-material/Info';
 
 const CustomTabs = styled(Tabs)({
   background: '#fff', // Set the background color you prefer
@@ -91,7 +96,7 @@ const theme = createTheme({
 
 const StyledForm = styled(Paper)(({ theme }) => ({
   marginTop: theme.spacing(2),
-  padding: theme.spacing(4),
+  padding: theme.spacing(2),
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -108,7 +113,8 @@ function UserProfile() {
     age: '',
     gender: '',
     placeOfResidence: '',
-    fieldOfWork: ''
+    fieldOfWork: '',
+    mental_health_concerns: []
   });
   const [tabValue, setTabValue] = useState(0); // To control the active tab
 
@@ -135,7 +141,9 @@ function UserProfile() {
             age: response.data.age || '',
             gender: response.data.gender || '',
             placeOfResidence: response.data.placeOfResidence || 'Not specified',
-            fieldOfWork: response.data.fieldOfWork || 'Not specified'
+            fieldOfWork: response.data.fieldOfWork || 'Not specified',
+            mental_health_concerns: response.data.mental_health_concerns || []
+
           };
           console.log("Formatted data:", formattedData);
           setUser(formattedData);
@@ -147,6 +155,28 @@ function UserProfile() {
     };
     fetchData();
   }, [userId]);
+
+  const mentalStressors = [
+    { label: "Stress from Job Search", value: "job_search" }, // Assuming this is the backend name if it were in the data
+    { label: "Stress from Classwork", value: "classwork" },
+    { label: "Social Anxiety", value: "social_anxiety" },
+    { label: "Impostor Syndrome", value: "impostor_syndrome" },
+    { label: "Career Drift", value: "career_drift" } // Assuming this is the backend name if it were in the data
+];
+
+  
+  console.log("current mental health concerns: ", user.mental_health_concerns);
+  // Function to handle changes in checkboxes
+  const handleMentalHealthChange = (event) => {
+    const { name, checked } = event.target;
+    setUser(prevState => {
+      const newConcerns = checked 
+        ? [...prevState.mental_health_concerns, name]
+        : prevState.mental_health_concerns.filter(concern => concern !== name);
+      return {...prevState, mental_health_concerns: newConcerns};
+    });
+  };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -171,16 +201,16 @@ function UserProfile() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} >
       <CssBaseline />
-      <Container component="main" maxWidth="md">
+      <Container component="main" maxWidth="md" >
       <CustomTabs value={tabValue} onChange={handleTabChange} centered>
           <CustomTab label="Profile" />
           <CustomTab label="Update Password" />
         </CustomTabs>
 
         {tabValue === 0 && (
-        <StyledForm component="form" onSubmit={handleSubmit}>
+        <StyledForm component="form" onSubmit={handleSubmit} sx={{ maxHeight: '81vh', overflow:'auto'}}>
         <Typography variant="h5" style={{ fontWeight: 700 }}><AccountCircleIcon style={{ marginRight: '10px' }} /> {user.username}</Typography>
           <TextField
             fullWidth
@@ -264,6 +294,32 @@ function UserProfile() {
                 ),
               }}
             />
+            <FormGroup>
+            {mentalStressors.map((stressor, index) => {
+            console.log(`Is "${stressor.label}" checked?`, user.mental_health_concerns.includes(stressor.value));
+            return (
+                <FormControlLabel
+                    key={index}
+                    control={
+                        <Checkbox
+                            checked={user.mental_health_concerns.includes(stressor.value)}
+                            onChange={handleMentalHealthChange}
+                            name={stressor.value}
+                        />
+                    }
+                    label={
+                      <Box display="flex" alignItems="center">
+                          {stressor.label}
+                          <Tooltip title={<Typography variant="body2">{getStressorDescription(stressor.value)}</Typography>} arrow placement="right">
+                              <InfoIcon color="action" style={{ marginLeft: 4, fontSize: 20 }} />
+                          </Tooltip>
+                      </Box>
+                  }
+              />
+            );
+        })}
+
+          </FormGroup>
           <Button type="submit" color="primary" variant="contained">
           <UpdateIcon style={{ marginRight: '10px' }} />Update Profile
           </Button>
@@ -279,6 +335,25 @@ function UserProfile() {
       </Container>
     </ThemeProvider>
   );
+}
+
+
+// Define a function to return descriptions based on stressor id
+function getStressorDescription(stressorId) {
+  switch(stressorId) {
+      case 'job_search':
+          return 'Feelings of stress stemming from the job search process.';
+      case 'classwork':
+          return 'Stress related to managing coursework and academic responsibilities.';
+      case 'social_anxiety':
+          return 'Anxiety experienced during social interactions or in anticipation of social interactions.';
+      case 'impostor_syndrome':
+          return "Persistent doubt concerning one's abilities or accomplishments coupled with a fear of being exposed as a fraud.";
+      case 'career_drift':
+          return "Stress from uncertainty or dissatisfaction with one's career path or progress.";
+      default:
+          return 'No description available.';
+  }
 }
 
 export default UserProfile;
