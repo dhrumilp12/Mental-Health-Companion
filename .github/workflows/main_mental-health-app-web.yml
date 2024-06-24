@@ -33,8 +33,8 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                 name: node-app
-                path: dist
-                
+                path: ./dist/
+
     # - name: Set up Node.js version
     #   uses: actions/setup-node@v4
 
