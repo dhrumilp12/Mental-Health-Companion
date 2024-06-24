@@ -16,8 +16,8 @@ import { UserContext } from './Components/userContext';
 import ProtectedRoute from './protectedRoute';
 
 import Home from "./Components/Pages/Home";
-import About from "./Components/About";
-import AppDashboard from "./Components/Pages/Dashboard";
+import About from "./Components/Pages/About";
+import Dashboard from "./Components/Pages/Dashboard";
 import NotFound from './Components/Pages/NotFound';
 import NavBar from "./Components/Nav/NavTemp";
 
@@ -37,7 +37,11 @@ function AppLayout() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login onLogin={setUser} />} />
-        <Route path="/dashboard" element={<AppDashboard user={user} />} />
+        <Route path="/dashboard" element={<Dashboard user={user} />} />
+        <Route path="/chat" element={<Chat user={user} />} />
+        <Route path="/check-ins" element={<CheckIn user={user} />} />
+        <Route path="/resources" element={<Resources user={user} />} />
+        <Route path="/profile" element={<Profile user={user} />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

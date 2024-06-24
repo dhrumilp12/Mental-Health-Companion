@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 
-function AppDashboard({ user }) {
+function Dashboard({ user }) {
     if(!user) {
         return (
             <Navigate to="/login" replace />
@@ -15,4 +15,4 @@ function AppDashboard({ user }) {
     )
 }
 
-export default AppDashboard;
+export default Dashboard;
