@@ -12,7 +12,7 @@ jobs:
         runs-on: ubuntu-latest
         defaults:
             run:
-              working-directory: ./client
+              working-directory: ./client/
         
         steps:
             - name: Checkout Git repository
@@ -33,7 +33,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                 name: node-app
-                path: ./dist/
+                path: ./client/dist/
 
     # - name: Set up Node.js version
     #   uses: actions/setup-node@v4
