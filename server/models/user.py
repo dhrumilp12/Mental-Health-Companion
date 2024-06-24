@@ -46,3 +46,13 @@ class User(BaseModel):
             user_data['id'] = str(user_data['_id'])
             return cls(**user_data)
         return None
+    
+    @classmethod
+    def find_by_email(cls, email):
+        db_client = MongoDBClient.get_client()
+        db = db_client[MongoDBClient.get_db_name()]
+        user_data = db.users.find_one({"email": email})
+        if user_data:
+            user_data['id'] = str(user_data['_id'])
+            return cls(**user_data)
+        return None
