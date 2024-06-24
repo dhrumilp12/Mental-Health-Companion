@@ -28,6 +28,8 @@ jobs:
                 npm install
                 npm run build --if-present
                 npm run test --if-present
+              env: 
+                VITE_AXIOS_BASE_URL: ${{ env.VITE_AXIOS_BASE_URL }}
             
             - name: Upload artifact for deploment job
               uses: actions/upload-artifact@v4
