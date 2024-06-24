@@ -147,7 +147,7 @@ function CheckInsList() {
     if (error) return <Typography variant="h6">Error: {error}</Typography>;
 
     return (
-        <Box sx={{ margin: 3, maxWidth: 600, mx: 'auto' }}>
+        <Box sx={{ margin: 3, maxWidth: 600, mx: 'auto', maxHeight:'91vh', overflow:'auto' }}>
           <Typography variant="h4" gutterBottom>Track Your Commitments</Typography>
           <Divider sx={{ mb: 2 }} />
           {checkIns.length > 0 ? (

@@ -4,7 +4,8 @@ import json
 import csv
 import io
 import asyncio
-
+import os
+from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, current_app
 from time import sleep
 from flask import Blueprint, request, jsonify, send_file
@@ -21,6 +22,7 @@ from services.db import mood_log
 from agents.mental_health_agent import MentalHealthAIAgent, HumanMessage
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Message, Mail
+load_dotenv()
 mail = Mail()
 
 def generate_reset_token(email):
@@ -220,8 +222,9 @@ def request_password_reset():
         return jsonify({"message": "No user found with this email"}), 404
 
     token = generate_reset_token(user.email)
-    reset_url = f"{request.host_url}user/reset_password/{token}"
-    msg = Message("Password Reset Request", sender='yourapp@example.com', recipients=[user.email])
+    base_url = os.getenv('RESET_PASSWORD_BASE_URL', 'http://localhost:3000/reset_password/')  # Default if not set
+    reset_url = f"{base_url}{token}"
+    msg = Message("Password Reset Request", sender=os.getenv('MAIL_USERNAME'), recipients=[user.email])
     msg.body = f"Please click on the link to reset your password: {reset_url}"
     mail.send(msg)
     
