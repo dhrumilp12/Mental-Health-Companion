@@ -26,10 +26,13 @@ user_routes = Blueprint("user", __name__)
 def signup():
     try:
         logging.info("Starting user registration process")
-        user_data = request.get_json()
-        logging.info(f"Received user data: {user_data}")
+        full_user_data = request.get_json()
+        logging.info(f"Received user data: {full_user_data}")
 
-        user = UserModel(**user_data)
+        # Extracting mental health concerns and removing them from the user data
+        mental_health_concerns = full_user_data.pop('mental_health_concerns', [])
+
+        user = UserModel(**full_user_data)
 
         db_client = MongoDBClient.get_client()
         db = db_client[MongoDBClient.get_db_name()]
@@ -42,12 +45,23 @@ def signup():
             return jsonify({"error": "User with this username or email already exists"}), 409
         
         hashed_password = generate_password_hash(user.password)
-        user_data['password'] = hashed_password
-        result = db['users'].insert_one(user_data)
+        full_user_data['password'] = hashed_password
+        result = db['users'].insert_one(full_user_data)
         if result:
             logging.info("User registration successful")
             user_id = result.inserted_id
-            access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=24))
+            access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=48))
+
+             # Create UserJourney entry with the previously extracted concerns
+            user_journey_data = {
+                'user_id': str(user_id),
+                'mental_health_concerns': mental_health_concerns,
+                'patient_goals': [],
+                'therapy_plan': {}  # Adjust as per your actual model
+            }
+            db['user_journeys'].insert_one(user_journey_data)
+
+            
             return jsonify({"message": "User registered successfully", "access_token": access_token, "userId": str(user_id)}), 201
         else:
             logging.error("Failed to save user")
@@ -312,7 +326,7 @@ def delete_user_chat_logs_in_range():
         return jsonify({"error": "Failed to delete chat logs"}), 500
     
 
-    
+
 @user_routes.get('/user/download_chat_logs/range')
 @jwt_required()
 def download_chat_logs_in_range():

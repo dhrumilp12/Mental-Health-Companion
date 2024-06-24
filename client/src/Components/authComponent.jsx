@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { UserContext } from './userContext';
 
 import {TextField, Button, Paper, CssBaseline, Snackbar, Alert,
-    Tab, Tabs, Box, CircularProgress,Select, InputLabel,FormControl,MenuItem, IconButton} from '@mui/material';
+    Tab, Tabs, Box, CircularProgress,Select, InputLabel,FormControl,MenuItem, IconButton, Typography, Tooltip} from '@mui/material';
 import { createTheme,  ThemeProvider, styled } from '@mui/material/styles';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Checkbox, FormGroup, FormControlLabel } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 
 const theme = createTheme({
   palette: {
@@ -79,6 +81,23 @@ function AuthComponent() {
     const [open, setOpen] = useState(false); // State to control Snackbar visibility
     const [message, setMessage] = useState(''); // State to hold the message
     const [severity, setSeverity] = useState('info'); // State to control the type of alert
+    const mentalStressors = [
+      { id: 'job_search', name: 'Stress from job search' },
+      { id: 'classwork', name: 'Stress from classwork' },
+      { id: 'social_anxiety', name: 'Social anxiety' },
+      { id: 'impostor_syndrome', name: 'Impostor Syndrome' },
+      { id: 'career_drift', name: 'Career Drift' },
+  ];
+  
+  const [selectedStressors, setSelectedStressors] = useState([]);
+
+  const handleStressorChange = (event) => {
+    const value = event.target.value;
+    const newSelection = selectedStressors.includes(value)
+        ? selectedStressors.filter(item => item !== value)
+        : [...selectedStressors, value];
+    setSelectedStressors(newSelection);
+};
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -119,7 +138,8 @@ function AuthComponent() {
                 age,
                 gender,
                 placeOfResidence,
-                fieldOfWork
+                fieldOfWork,
+                mental_health_concerns: selectedStressors
             });
             if (response && response.data) {
               const userId = response.data.userId;
@@ -239,6 +259,24 @@ function AuthComponent() {
                             
                             <TextField label="Place of Residence" variant="outlined" margin="normal" fullWidth value={placeOfResidence} onChange={e => setPlaceOfResidence(e.target.value)} />
                             <TextField label="Field of Work" variant="outlined" margin="normal" fullWidth value={fieldOfWork} onChange={e => setFieldOfWork(e.target.value)} />
+                            <FormGroup sx={{marginTop:'10px'}}>
+                            <Typography variant="body1" gutterBottom>
+                                Select any mental stressors you are currently experiencing to help us better tailor your therapy sessions.
+                            </Typography>
+                              {mentalStressors.map(stressor => (
+                                  <FormControlLabel
+                                      key={stressor.id}
+                                      control={<Checkbox checked={selectedStressors.includes(stressor.id)} onChange={handleStressorChange} value={stressor.id} />}
+                                      label={
+                                        <Box display="flex" alignItems="center">
+                                            {stressor.name}
+                                            <Tooltip title={<Typography variant="body2">{getStressorDescription(stressor.id)}</Typography>} arrow placement="right">
+                                                <InfoIcon color="action" style={{ marginLeft: 4, fontSize: 20 }} />
+                                            </Tooltip>
+                                        </Box>}
+                                  />
+                              ))}
+                          </FormGroup>
                             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>{loading ? <CircularProgress size={24} /> : 'Sign Up'}
                             </Button>
              </form>
@@ -259,6 +297,24 @@ function AuthComponent() {
       </Box>
     </ThemeProvider>
   );
+}
+
+// Define a function to return descriptions based on stressor id
+function getStressorDescription(stressorId) {
+  switch(stressorId) {
+      case 'job_search':
+          return 'Feelings of stress stemming from the job search process.';
+      case 'classwork':
+          return 'Stress related to managing coursework and academic responsibilities.';
+      case 'social_anxiety':
+          return 'Anxiety experienced during social interactions or in anticipation of social interactions.';
+      case 'impostor_syndrome':
+          return "Persistent doubt concerning one's abilities or accomplishments coupled with a fear of being exposed as a fraud.";
+      case 'career_drift':
+          return "Stress from uncertainty or dissatisfaction with one's career path or progress.";
+      default:
+          return 'No description available.';
+  }
 }
 
 export default AuthComponent
