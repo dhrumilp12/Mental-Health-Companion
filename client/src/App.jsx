@@ -15,11 +15,11 @@ import { CssBaseline, Box } from '@mui/material';
 import { UserContext } from './Components/userContext';
 import ProtectedRoute from './protectedRoute';
 
-import Home from "./Components/Home";
+import Home from "./Components/Pages/Home";
 import About from "./Components/About";
-import AppDashboard from "./Components/Dashboard";
-import NotFound from './Components/NotFound';
-import NavBar from "./Components/NavTemp";
+import AppDashboard from "./Components/Pages/Dashboard";
+import NotFound from './Components/Pages/NotFound';
+import NavBar from "./Components/Nav/NavTemp";
 
 function AppLayout() {
   const [user, setUser] = useState();
