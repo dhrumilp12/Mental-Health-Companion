@@ -1,0 +1,8 @@
+__pycache__/
+.pytest_cache
+.ruff_cache
+venv/
+.venv/
+.env*
+mental_health_bot_env/
+sandbox/

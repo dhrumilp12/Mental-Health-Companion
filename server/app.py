@@ -1,52 +1,75 @@
 """
 API entrypoint for backend API.
 """
-import logging
+from dotenv import load_dotenv
+import os
 
-from flask import Flask, request
+from flask import Flask
 from flask_cors import CORS
-from werkzeug.exceptions import InternalServerError
+from flask_jwt_extended import JWTManager
 
-from models.ai_request import AIRequest
-from classes.cosmic_works_ai_agent import CosmicWorksAIAgent
+from models.subscription import db as sub_db
+from routes.check_in import check_in_routes
+from services.db.agent_facts import load_agent_facts_to_db
 
-app = Flask(__name__)
-CORS(app)
+from routes.user import user_routes 
+from routes.ai import ai_routes
+from flask_mail import Mail
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-agent_pool = {}
-@app.get("/")
-def root():
-    """
-    Health probe endpoint.
-    """    
-    return {"status": "ready"}
+load_dotenv()
 
 
-@app.post("/ai/cosmic_works")
-def run_cosmic_works_ai_agent():
-    """
-    Run the Cosmic Works AI agent.
-    """
-    request_data:AIRequest = request.get_json()
-    session_id = request_data.get("session_id")
-    prompt = request_data.get("prompt")
 
-    if session_id not in agent_pool:
-        agent_pool[session_id] = CosmicWorksAIAgent(session_id)
-    return { "message": agent_pool[session_id].run(prompt)}
+def run_app():
+    # Set up the app
+    app = Flask(__name__)
+    app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY")
+    app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_USE_SSL'] = True
+    app.config['MAIL_USE_TLS'] = False
+    app.config['SECURITY_PASSWORD_SALT'] = os.getenv("SECURITY_PASSWORD_SALT")
+     # Debugging statements
+    print("SECRET_KEY:", app.config['SECRET_KEY'])
+    print("SECURITY_PASSWORD_SALT:", app.config['SECURITY_PASSWORD_SALT'])
+    print("Loaded SECURITY_PASSWORD_SALT:", os.getenv("SECURITY_PASSWORD_SALT"))
 
 
-@app.get("/query_openai/")
-async def openai_query(prompt: str):
-    try:
-        response = AIRequest.query_ai(prompt)
-        if response is None:
-            raise InternalServerError(description="OpenAI query returned no response")
-        return {"response": response}
-    except Exception as e:
-        logger.error(f"OpenAI query failed: {str(e)}")
-        raise InternalServerError(description=f"OpenAI query failed: {str(e)}")
+    mail = Mail(app)
+    jwt = JWTManager(app)
+    CORS(app)
+
+    # Register routes
+    app.register_blueprint(user_routes)
+    app.register_blueprint(ai_routes)
+    app.register_blueprint(check_in_routes)
+
+    # Base endpoint
+    @app.get("/")
+    def root():
+        """
+        Health probe endpoint.
+        """    
+        return {"status": "ready"}
+
+    return app, jwt, mail
+
+
+def setup_sub_db(app):
+    # Subscription db
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
+    sub_db.init_app(app)
+    ## Create the tables
+    with app.app_context():
+        sub_db.create_all()
+
+app,mail, jwt = run_app()
+
+# DB pre-load
+load_agent_facts_to_db()
+
+setup_sub_db(app)
+

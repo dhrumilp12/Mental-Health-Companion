@@ -11,3 +11,9 @@ db.sqlite3
 *.swp
 *.bak
 *.tmp
+
+mental_health_bot_env/
+sandbox/
+tests/
+.gitignore
+.env
