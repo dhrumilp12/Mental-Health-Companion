@@ -127,8 +127,19 @@ def get_public_profile(user_id):
     if user_data is None:
         return jsonify({"error": "User could not be found."}), 404
     
-    user = UserModel(**user_data)
-    return jsonify(user.model_dump(exclude={"password"})), 200
+    # Fetch mental health concerns from UserJourney
+    journey_data = db['user_journeys'].find_one({"user_id": user_id})
+    if journey_data:
+        user_data['mental_health_concerns'] = journey_data.get('mental_health_concerns', [])
+        print(user_data['mental_health_concerns'])
+    
+    # Remove sensitive information like passwords
+    user_data.pop('password', None)
+    
+    # Convert _id from ObjectId to string if needed
+    user_data['_id'] = str(user_data['_id'])
+
+    return jsonify(user_data), 200
 
 
 @user_routes.patch('/user/profile/<user_id>')
@@ -137,6 +148,13 @@ def update_profile_fields(user_id):
     
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
+
+    # Update main user fields, excluding mental_health_concerns to avoid direct updates
+    if 'mental_health_concerns' in update_fields:
+        mental_health_concerns = update_fields.pop('mental_health_concerns')
+        # Update mental health concerns in UserJourney
+        db['user_journeys'].update_one({"user_id": user_id}, {"$set": {"mental_health_concerns": mental_health_concerns}})
+
 
     result = db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 

@@ -38,7 +38,7 @@ const PasswordUpdateTab = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="xs">
+      <Container component="main" maxWidth="xs" sx={{background: '#fff',borderRadius: '8px', boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',}}>
         <Box
           sx={{
             marginTop: 8,
