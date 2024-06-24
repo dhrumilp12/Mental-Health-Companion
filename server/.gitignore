@@ -3,6 +3,6 @@ __pycache__/
 .ruff_cache
 venv/
 .venv/
-.env 
+.env*
 mental_health_bot_env/
 sandbox/
