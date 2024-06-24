@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     List, ListItemText, Typography, Card, Avatar,
@@ -63,7 +64,7 @@ function CheckInsList() {
 
             setLoading(true);
             try {
-                const response = await axios.get(`/api/check-in/all?user_id=${userId}`, {
+                const response = await apiServerAxios.get(`/api/check-in/all?user_id=${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
             }
@@ -109,7 +110,7 @@ function CheckInsList() {
       const handleDeleteCheckIn = async () => {
         if (selectedCheckIn) {
             try {
-                await axios.delete(`/api/check-in/${selectedCheckIn._id}`,{
+                await apiServerAxios.delete(`/api/check-in/${selectedCheckIn._id}`,{
                   headers: {
                       'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
                   }
