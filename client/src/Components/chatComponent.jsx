@@ -44,6 +44,7 @@ const ChatComponent = () => {
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
 
+    
     const speak = (text) => {
 
         if (!voiceEnabled || text === currentPlayingMessage) {
@@ -267,7 +268,17 @@ const ChatComponent = () => {
 
     // Handle input changes
     const handleInputChange = useCallback((event) => {
-        setInput(event.target.value);
+        const inputText = event.target.value;
+        const words = inputText.split(/\s+/);
+        if (words.length > 200) {
+            // If the word count exceeds 200, prevent further input by not updating the state
+            setInput(input => input.split(/\s+/).slice(0, 200).join(" "));
+            setSnackbarMessage('Word limit reached. Only 200 words allowed.');
+            setSnackbarSeverity('warning');
+            setOpen(true);
+        } else {
+            setInput(inputText);
+        }
     }, []);
 
     const messageIcon = (message) => {
