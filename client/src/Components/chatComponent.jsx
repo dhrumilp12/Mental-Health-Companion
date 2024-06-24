@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { InputAdornment, IconButton, Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
+import { InputAdornment,Switch, IconButton, Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
@@ -11,7 +11,6 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
-
 
 const TypingIndicator = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
@@ -26,7 +25,8 @@ const TypingIndicator = () => (
 
 
 const ChatComponent = () => {
-    const { user, voiceEnabled } = useContext(UserContext);
+    const { user, voiceEnabled , setVoiceEnabled} = useContext(UserContext);
+    
     const userId = user?.userId;
     const [chatId, setChatId] = useState(null);
     const [turnId, setTurnId] = useState(0);
@@ -44,6 +44,10 @@ const ChatComponent = () => {
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
 
+    const handleToggleVoice = (event) => {
+        event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
+        setVoiceEnabled(!voiceEnabled);
+      };
     
     const speak = (text) => {
 
@@ -307,6 +311,39 @@ const ChatComponent = () => {
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh', borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 2, boxShadow: 3 }}>
                     <CardContent sx={{ flexGrow: 1, overflow: 'auto', padding: 3, position: 'relative' }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center', // This ensures all items in the box are aligned to the center vertically
+                        justifyContent: 'space-between', // This spreads out the items to use the available space
+                        position: 'relative', // Relative positioning for positioning children absolutely within the box if needed
+                        marginBottom:'5px',
+                    }}>
+                    <Tooltip title="Toggle voice responses">
+                        <IconButton color="inherit" onClick={handleToggleVoice} sx={{ padding: 0 }}>
+                            <Switch
+                            checked={voiceEnabled}
+                            onChange={(e) => setVoiceEnabled(e.target.checked)}
+                            icon={<VolumeOffIcon />}
+                            checkedIcon={<VolumeUpIcon />}
+                            inputProps={{ 'aria-label': 'Voice response toggle' }}
+                            color="default"
+                            sx={{
+                                height: 42, // Adjust height to align with icons
+                                '& .MuiSwitch-switchBase': {
+                                padding: '9px', // Reduce padding to make the switch smaller
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: 'white',
+                                transform: 'translateX(16px)',
+                                '& + .MuiSwitch-track': {
+                                    
+                                    backgroundColor: 'primary.main',
+                                },
+                                },
+                            }}
+                            />
+                        </IconButton>
+                        </Tooltip>
 
                         <Tooltip title="Start a new chat" placement="top" arrow>
                             <IconButton
@@ -316,9 +353,6 @@ const ChatComponent = () => {
                                 onClick={finalizeChat}
                                 disabled={isLoading}
                                 sx={{
-                                    position: 'absolute', // Positioning the button at the top-right corner
-                                    top: 5, // Top margin
-                                    right: 5, // Right margin
                                     '&:hover': {
                                         backgroundColor: 'primary.main',
                                         color: 'common.white',
@@ -328,7 +362,8 @@ const ChatComponent = () => {
                                 <LibraryAddIcon />
                             </IconButton>
                         </Tooltip>
-
+                        </Box>
+                        <Divider sx={{marginBottom:'10px'}} />
                         {welcomeMessage.length === 0 && (
                             <Box sx={{ display: 'flex', marginBottom: 2, marginTop: 3 }}>
                                 <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2, }} alt="Aria" />
