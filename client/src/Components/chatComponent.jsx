@@ -45,7 +45,7 @@ const ChatComponent = () => {
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
 
-    
+
     const speak = (text) => {
 
         if (!voiceEnabled || text === currentPlayingMessage) {
@@ -75,7 +75,7 @@ const ChatComponent = () => {
             synth.speak(utterance);
         };
 
-        if (synth.getVoices().length === 0){
+        if (synth.getVoices().length === 0) {
             synth.onvoiceschanged = setVoiceAndSpeak;
         } else {
             setVoiceAndSpeak();
@@ -88,7 +88,11 @@ const ChatComponent = () => {
         setIsLoading(true);
         setIsFetchingMessage(true);
         try {
-            const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`);
+            const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
             if (response && response.data) {
                 const data = response.data
                 setWelcomeMessage(data.message);
@@ -162,6 +166,9 @@ const ChatComponent = () => {
                 turn_id: turnId
             };
             const response = await apiServerAxios.post(`/api/ai/mental_health/${userId}/${chatId}`, {
+                headers: {
+                    "Content-Type": "application/json"
+                },
                 ...body
             });
 
