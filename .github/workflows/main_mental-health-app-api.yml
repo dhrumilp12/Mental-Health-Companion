@@ -6,11 +6,34 @@ on:
       - main
 
 jobs:
-  build_and_deploy:
+  build:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+    defaults:
+      run:
+        working-directory: ./server
 
+    steps:
+    - name: Checkout the Git Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11.9
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Configure Poetry
+      run: |
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        poetry config virtualenvs.create false
+
+    - name: Install dependencies with Poetry
+      run: |
+        poetry install
+        
 #     - name: Log in to Azure CLI
 #       uses: azure/login@v2
 #       with:
