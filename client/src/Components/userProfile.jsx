@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import PasswordUpdateTab from './passwordUpdateTab';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 
 import {
   TextField, Button, Container, Typography, Paper, CssBaseline, Snackbar, Alert, FormControl, InputLabel, Select, MenuItem,IconButton,Tabs,Tab,Box
@@ -132,7 +133,7 @@ function UserProfile() {
       }
     const fetchData = async () => {
       try {
-        const response = await axios.get(`/api/user/profile/${userId}`);
+        const response = await apiServerAxios.get(`/api/user/profile/${userId}`);
         console.log("Fetched data:", response.data);
         const formattedData = {
             username: response.data.username || '',
@@ -186,7 +187,7 @@ function UserProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.patch(`/api/user/profile/${userId}`, user);
+      await apiServerAxios.patch(`/api/user/profile/${userId}`, user);
       setMessage('Profile updated successfully!');
       setSeverity('success');
     } catch (error) {

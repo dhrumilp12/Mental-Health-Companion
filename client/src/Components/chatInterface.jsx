@@ -1,5 +1,6 @@
 import React, { useState,  useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
@@ -190,7 +191,7 @@ const ChatComponent = () => {
         formData.append('audio', audioBlob);
         setIsLoading(true);
     
-        axios.post('/api/ai/mental_health/voice-to-text', formData, {
+        apiServerAxios.post('/api/ai/mental_health/voice-to-text', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

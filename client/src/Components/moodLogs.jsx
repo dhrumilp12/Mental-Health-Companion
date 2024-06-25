@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import '../Assets/Styles/MoodLogs.css';
 import ListAltIcon from '@mui/icons-material/ListAlt'; // Icon for mood logs
 
@@ -16,7 +17,7 @@ function MoodLogs() {
             }
 
             try {
-                const response = await axios.get('/api/user/get_mood_logs', {
+                const response = await apiServerAxios.get('/api/user/get_mood_logs', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

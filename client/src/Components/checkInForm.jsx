@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import PropTypes from 'prop-types';
 import { useParams } from 'react-router-dom';
 import {
@@ -34,7 +35,7 @@ function CheckInForm({ userId, update }) {
     if (update && checkInId) {
       // Fetch existing check-in data
       setLoading(true);
-      axios.get(`/api/check-in/${checkInId}`,{
+      apiServerAxios.get(`/api/check-in/${checkInId}`,{
         headers: {
             'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
         }
@@ -78,7 +79,7 @@ function CheckInForm({ userId, update }) {
     const data = { user_id: userId, check_in_time: checkInTime, frequency, notify };
     console.log('Submitting:', data);
     try {
-      const response = await axios[method](url, data, config);
+      const response = await apiServerAxios[method](url, data, config);
       console.log('Success:', response.data.message);
       setSnackbar({ open: true, message: response.data.message, severity: 'success' });
       // Optionally reset form or handle next steps

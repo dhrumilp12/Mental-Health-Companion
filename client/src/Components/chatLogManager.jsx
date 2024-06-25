@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import {
     Button, Snackbar, Alert, Tooltip, Paper, Typography, CircularProgress, TextField,
     Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
@@ -58,7 +59,7 @@ function ChatLogManager() {
             const endpoint = range ? '/api/user/download_chat_logs/range' : '/api/user/download_chat_logs';
             const params = range ? { params: { start_date: startDate, end_date: endDate } } : {};
 
-            const response = await axios.get(endpoint, {
+            const response = await apiServerAxios.get(endpoint, {
                 ...params,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -91,7 +92,7 @@ function ChatLogManager() {
             const endpoint = dialogRange ? '/api/user/delete_chat_logs/range' : '/api/user/delete_chat_logs';
             const params = dialogRange ? { params: { start_date: startDate, end_date: endDate } } : {};
 
-            const response = await axios.delete(endpoint, {
+            const response = await apiServerAxios.delete(endpoint, {
                 ...params,
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`

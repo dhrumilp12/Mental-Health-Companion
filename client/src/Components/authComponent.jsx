@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './userContext';
 
@@ -103,7 +104,7 @@ function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     try {
-        const response = await axios.post('/api/user/login', { username, password });
+        const response = await apiServerAxios.post('/api/user/login', { username, password });
         if (response && response.data) {
           const userId = response.data.userId;
           localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
@@ -130,7 +131,7 @@ function AuthComponent() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post('/api/user/signup', {
+            const response = await apiServerAxios.post('/api/user/signup', {
                 username,
                 email,
                 password,
@@ -168,7 +169,7 @@ function AuthComponent() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post('/api/user/anonymous_signin');
+            const response = await apiServerAxios.post('/api/user/anonymous_signin');
             if (response && response.data) {
               const userId = null;
               localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
