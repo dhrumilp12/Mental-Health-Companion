@@ -211,7 +211,7 @@ const ChatComponent = () => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 audioChunksRef.current = []; // Clear the ref at the start of recording
-                const options = { mimeType: 'audio/webm' };
+                const options = { mimeType: 'audio/webm; codecs=opus' };
                 const recorder = new MediaRecorder(stream, options);
                 recorder.ondataavailable = (e) => {
                     console.log('Data available:', e.data.size); // Log size to check if data is present
@@ -238,7 +238,7 @@ const ChatComponent = () => {
 
     const sendAudioToServer = chunks => {
         console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
-        const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
+        const audioBlob = new Blob(chunks, { 'type': 'audio/webm; codecs=opus' });
         if (audioBlob.size === 0) {
             console.error('Audio Blob is empty');
             return;
