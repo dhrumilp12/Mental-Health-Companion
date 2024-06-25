@@ -230,7 +230,7 @@ const ChatComponent = () => {
                     audioChunksRef.current.push(e.data);
                 };
 
-                recorder.startRecording();
+                recorder.start();
                 setMediaRecorder(recorder);
                 setIsRecording(true);
             }).catch(error => {
