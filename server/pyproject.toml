@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "earlent-server"
-version = "1.0.0"
+version = "1.1.1"
 description = "An application meant to help students and professionals with stress and anxiety."
 authors = ["Dhrumil Patel <you@example.com>", "Anthony Santana <anthony@jasantana.com>"]
 readme = "README.md"
