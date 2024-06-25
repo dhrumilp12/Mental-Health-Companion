@@ -261,14 +261,15 @@ const ChatComponent = () => {
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
-            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
-            mediaRecorder[stopFunction]();
+            
+            
             mediaRecorder.onstop = () => {
                 sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType }); // Ensure sendAudioToServer is called only after recording has fully stopped
                 setIsRecording(false);
                 setMediaRecorder(null);
             };
-            mediaRecorder.stop(); // Stop recording, onstop will be triggered after this
+            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
+            mediaRecorder[stopFunction](); // Stop recording, onstop will be triggered after this
         }
     };
 
