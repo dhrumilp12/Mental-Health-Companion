@@ -142,8 +142,8 @@ function CheckInsList() {
     setDeleteConfirmOpen(true);
     };
 
-    if (!userId) return <Typography variant="h6">Please log in to see your check-ins.</Typography>;
-    if (loading) return <Typography variant="h6">Loading...</Typography>;
+    if (!userId) return <Typography variant="h6" mt="2">Please log in to see your check-ins.</Typography>;
+    if (loading) return <Typography variant="h6" mt="2">Loading...</Typography>;
     
 
     return (
