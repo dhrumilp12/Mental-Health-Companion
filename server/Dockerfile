@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Update linux pacakges
 RUN apt-get update && \
-apt-get install --no-install-suggests --no-install-recommends -y pipx
+apt-get install --no-install-suggests --no-install-recommends -y pipx ffmpeg
 ENV PATH="/root/.local/bin:${PATH}"
 
 ENV FLASK_RUN_HOST=0.0.0.0 \
