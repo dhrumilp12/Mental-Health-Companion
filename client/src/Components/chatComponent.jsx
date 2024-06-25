@@ -225,17 +225,29 @@ const ChatComponent = () => {
             .then(stream => {
                 audioChunksRef.current = []; // Clear the ref at the start of recording
                 const isWebMSupported = supportsWebM();
+                let recorder;
                 const options = {  type: 'audio',
-                    mimeType: isWebMSupported ? 'audio/webm; codecs=opus' : 'audio/wav',
-                    recorderType: isWebMSupported ? MediaRecorder : RecordRTC.StereoAudioRecorder, // Use MediaRecorder if WebM is supported, otherwise use RecordRTC for wav
-                    numberOfAudioChannels: 1, };
-                    const recorder = isWebMSupported ? new MediaRecorder(stream, options) : new RecordRTC(stream, options);
+                    mimeType: isWebMSupported ? 'audio/webm; codecs=opus' : 'audio/wav' };
+                    if (isWebMSupported) {
+                        recorder = new MediaRecorder(stream, options);
+                    } else {
+                        // RecordRTC options need to be adjusted if RecordRTC is used
+                        recorder = new RecordRTC(stream, {
+                            type: 'audio',
+                            mimeType: 'audio/wav',
+                            recorderType: RecordRTC.StereoAudioRecorder,
+                            numberOfAudioChannels: 1
+                        });
+                        recorder.startRecording();
+                    }
                 recorder.ondataavailable = (e) => {
                     console.log('Data available:', e.data.size); // Log size to check if data is present
                     audioChunksRef.current.push(e.data);
                 };
 
-                recorder.start();
+                if (recorder instanceof MediaRecorder) {
+                    recorder.start();
+                }
                 setMediaRecorder(recorder);
                 setIsRecording(true);
             }).catch(error => {
@@ -249,6 +261,8 @@ const ChatComponent = () => {
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
+            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
+            mediaRecorder[stopFunction]();
             mediaRecorder.onstop = () => {
                 sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType }); // Ensure sendAudioToServer is called only after recording has fully stopped
                 setIsRecording(false);
@@ -258,9 +272,10 @@ const ChatComponent = () => {
         }
     };
 
-    const sendAudioToServer = chunks => {
-        console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
-        const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
+    const sendAudioToServer = () => {
+        const mimeType = mediaRecorder.mimeType; // Ensure this is defined in your recorder setup
+        console.log('Audio chunks size:', audioChunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0));
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         if (audioBlob.size === 0) {
             console.error('Audio Blob is empty');
             setSnackbarMessage('Recording is empty. Please try again.');
