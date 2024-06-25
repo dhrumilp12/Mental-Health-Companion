@@ -7,12 +7,11 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  VITE_AXIOS_BASE_URL: https://mental-health-app-ctr.niceflower-5aa73ddb.eastus.azurecontainerapps.io/
-
 jobs:
     build:
         runs-on: ubuntu-latest
+        environment:
+          name: 'production'
         defaults:
             run:
               working-directory: ./client/
@@ -31,6 +30,8 @@ jobs:
         
             - name: Build distribution files
               run: npm run build
+              env:
+                VITE_AXIOS_BASE_URL: ${{ vars.VITE_AXIOS_BASE_URL }}
             
             - name: Upload artifact for deploment job
               uses: actions/upload-artifact@v4
@@ -43,7 +44,7 @@ jobs:
       needs: build
       environment:
         name: 'production'
-        url: ${{ env.WEB_APP_URL }}
+        url: ${{ vars.WEB_APP_URL }}
       
       steps:
         - name: Download artifact from build job
