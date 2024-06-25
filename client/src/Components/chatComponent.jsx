@@ -216,7 +216,12 @@ const ChatComponent = () => {
 
     // Function to handle recording start
     const startRecording = () => {
-        navigator.mediaDevices.getUserMedia({ audio: true })
+        navigator.mediaDevices.getUserMedia({ audio: {
+            sampleRate: 44100, // iOS supports 44.1 kHz sample rate
+            channelCount: 1, // Mono audio
+            volume: 1.0,
+            echoCancellation: true
+        }})
             .then(stream => {
                 audioChunksRef.current = []; // Clear the ref at the start of recording
                 const isWebMSupported = supportsWebM();
@@ -235,6 +240,9 @@ const ChatComponent = () => {
                 setIsRecording(true);
             }).catch(error => {
                 console.error('Error accessing microphone:', error);
+                setOpen(true);
+                setSnackbarMessage('Unable to access microphone: ' + error.message);
+                setSnackbarSeverity('error');
             });
     };
 
@@ -255,6 +263,9 @@ const ChatComponent = () => {
         const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
         if (audioBlob.size === 0) {
             console.error('Audio Blob is empty');
+            setSnackbarMessage('Recording is empty. Please try again.');
+            setSnackbarSeverity('error');
+            setOpen(true);
             return;
         }
         console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
