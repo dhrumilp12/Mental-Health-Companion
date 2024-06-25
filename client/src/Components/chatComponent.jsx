@@ -89,9 +89,8 @@ const ChatComponent = () => {
         setIsFetchingMessage(true);
         try {
             const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`);
-            const data = await response.json();
-            console.log(data);
-            if (response.ok) {
+            if (response && response.data) {
+                data = response.data
                 setWelcomeMessage(data.message);
                 if (voiceEnabled && data.message) { // Ensure voice is enabled and the message is not empty
                     speak(data.message);
@@ -126,13 +125,11 @@ const ChatComponent = () => {
         if (chatId === null) return;
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
+            const response = await apiServerAxios.post(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-
-            const data = await response.json();
-            if (response.ok) {
+            if (response) {
                 setSnackbarMessage('Chat finalized successfully');
                 setSnackbarSeverity('success');
                 // Reset chat state to start a new chat
@@ -165,15 +162,12 @@ const ChatComponent = () => {
                 prompt: input,
                 turn_id: turnId
             });
-            const response = await fetch(`/api/ai/mental_health/${userId}/${chatId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
+            const response = await apiServerAxios.post(`/api/ai/mental_health/${userId}/${chatId}`, {
+                ...body
             });
 
-            const data = await response.json();
-            console.log(data);
-            if (response.ok) {
+            const data = response.data;
+            if (response && data) {
                 setMessages(prev => [...prev, { message: input, sender: 'user' }, { message: data, sender: 'agent' }]);
                 // Speak the agent's message immediately after it's received and processed
                 if (voiceEnabled && data) { // Ensure voice is enabled and the message is not empty
