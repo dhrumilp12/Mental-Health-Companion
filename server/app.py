@@ -42,7 +42,7 @@ def run_app():
     jwt = JWTManager(app)
     cors_config = {
         r"/api/*": {
-            "origins": ["https://lemon-forest-0b12e820f.5.azurestaticapps.net"],
+            "origins": ["https://green-sand-04b157b0f.5.azurestaticapps.net"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",
