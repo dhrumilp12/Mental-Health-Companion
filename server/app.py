@@ -42,7 +42,7 @@ def run_app():
     jwt = JWTManager(app)
     cors_config = {
         r"*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
+            "origins": ["https://mental-health-app-web.azurewebsites.net", "127.0.0.1"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",
