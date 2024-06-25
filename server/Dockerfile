@@ -23,4 +23,4 @@ COPY . ./
 RUN mv .env.production .env
 
 # # Execute Flask
-CMD poetry run gunicorn -b ${FLASK_RUN_HOST}:${FLASK_RUN_PORT} app:app
+CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "app:app"]
