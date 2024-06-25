@@ -90,7 +90,7 @@ const ChatComponent = () => {
         try {
             const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`);
             if (response && response.data) {
-                data = response.data
+                const data = response.data
                 setWelcomeMessage(data.message);
                 if (voiceEnabled && data.message) { // Ensure voice is enabled and the message is not empty
                     speak(data.message);
@@ -125,8 +125,7 @@ const ChatComponent = () => {
         if (chatId === null) return;
         setIsLoading(true);
         try {
-            const response = await apiServerAxios.post(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
-                method: 'POST',
+            const response = await apiServerAxios.patch(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
                 headers: { 'Content-Type': 'application/json' }
             });
             if (response) {
@@ -158,10 +157,10 @@ const ChatComponent = () => {
 
 
         try {
-            const body = JSON.stringify({
+            const body = {
                 prompt: input,
                 turn_id: turnId
-            });
+            };
             const response = await apiServerAxios.post(`/api/ai/mental_health/${userId}/${chatId}`, {
                 ...body
             });
