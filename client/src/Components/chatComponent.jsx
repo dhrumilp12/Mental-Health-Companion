@@ -261,17 +261,25 @@ const ChatComponent = () => {
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
-            
-            
+            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
             mediaRecorder.onstop = () => {
-                sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType }); // Ensure sendAudioToServer is called only after recording has fully stopped
+                // Stop all tracks to ensure microphone is released
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType });
                 setIsRecording(false);
                 setMediaRecorder(null);
             };
-            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
-            mediaRecorder[stopFunction](); // Stop recording, onstop will be triggered after this
+            console.log('Stopping recording:', stopFunction);
+            if (stopFunction === 'stopRecording') {
+                mediaRecorder[stopFunction](() => {
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                });
+            } else {
+                mediaRecorder[stopFunction]();
+            }
         }
     };
+    
 
     const sendAudioToServer = () => {
         const mimeType = mediaRecorder.mimeType; // Ensure this is defined in your recorder setup
