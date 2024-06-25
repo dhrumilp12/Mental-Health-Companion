@@ -88,12 +88,7 @@ const ChatComponent = () => {
         setIsLoading(true);
         setIsFetchingMessage(true);
         try {
-            const response = await fetch(`/api/ai/mental_health/welcome/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`);
             const data = await response.json();
             console.log(data);
             if (response.ok) {
