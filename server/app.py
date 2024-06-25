@@ -41,48 +41,8 @@ def run_app():
     mail = Mail(app)
     jwt = JWTManager(app)
     cors_config = {
-        r"/ai/*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": [
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "X-CSRF-Token"
-            ]
-        },
-        r"/user/*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": [
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "X-CSRF-Token"
-            ]
-        },
-        r"/check-in/*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": [
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "X-CSRF-Token"
-            ]
-        },
-        r"/subscribe/*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": [
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "X-CSRF-Token"
-            ]
-        },
-        r"/send_push/*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net"],
+        r"/api/*": {
+            "origins": ["https://lemon-forest-0b12e820f.5.azurestaticapps.net"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",

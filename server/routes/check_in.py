@@ -26,7 +26,7 @@ db = db_client[MongoDBClient.get_db_name()]
 check_in_routes = Blueprint("check-in", __name__)
 
 
-@check_in_routes.post('/check-in/schedule')
+@check_in_routes.post('/api/check-in/schedule')
 @jwt_required()
 def schedule_check_in():
     try:     # Parse and validate the request data using Pydantic model
@@ -66,7 +66,7 @@ def schedule_check_in():
         return jsonify({'error': str(e)}), 500
 
 
-@check_in_routes.patch('/check-in/<check_in_id>')
+@check_in_routes.patch('/api/check-in/<check_in_id>')
 @jwt_required()
 def update_check_in(check_in_id):
     data = request.get_json()
@@ -106,7 +106,7 @@ def update_check_in(check_in_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@check_in_routes.get('/check-in/<check_in_id>')
+@check_in_routes.get('/api/check-in/<check_in_id>')
 @jwt_required()
 def retrieve_check_in(check_in_id):
     logging.debug(f"Attempting to retrieve check-in with ID: {check_in_id}")
@@ -127,7 +127,7 @@ def retrieve_check_in(check_in_id):
         logging.error(f"An unexpected error occurred: {str(e)}")
         return jsonify({'error': f"An unexpected error occurred: {str(e)}"}), 500
 
-@check_in_routes.delete('/check-in/<check_in_id>')
+@check_in_routes.delete('/api/check-in/<check_in_id>')
 @jwt_required()
 def delete_check_in(check_in_id):
     try:
@@ -141,7 +141,7 @@ def delete_check_in(check_in_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@check_in_routes.get('/check-in/all')
+@check_in_routes.get('/api/check-in/all')
 @jwt_required()
 def retrieve_all_check_ins():
     user_id = request.args.get('user_id')
@@ -160,7 +160,7 @@ def retrieve_all_check_ins():
         return jsonify({'error': str(e)}), 500
 
 
-@check_in_routes.get('/check-in/missed')
+@check_in_routes.get('/api/check-in/missed')
 @jwt_required()
 def check_missed_check_ins():
     user_id = request.args.get('user_id')
@@ -183,7 +183,7 @@ def check_missed_check_ins():
         return jsonify({'message': 'No missed check-ins'}), 200
 
 
-@check_in_routes.route('/subscribe', methods=['POST'])
+@check_in_routes.route('/api/subscribe', methods=['POST'])
 @jwt_required()
 def subscribe():
     data = request.json
@@ -217,7 +217,7 @@ def subscribe():
 
     return jsonify({'message': 'Subscription saved successfully'}), 200
 
-@check_in_routes.route('/send_push', methods=['POST'])
+@check_in_routes.route('/api/send_push', methods=['POST'])
 @jwt_required()
 def send_push():
     data = request.json

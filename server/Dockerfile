@@ -8,7 +8,7 @@ apt-get install --no-install-suggests --no-install-recommends -y pipx
 ENV PATH="/root/.local/bin:${PATH}"
 
 ENV FLASK_RUN_HOST=0.0.0.0 \
-FLASK_RUN_PORT=80 \
+FLASK_RUN_PORT=8000 \
 FLASK_ENV=production
 
 RUN pipx install poetry
