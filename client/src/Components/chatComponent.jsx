@@ -11,7 +11,7 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
-
+import RecordRTC from 'recordrtc';
 const TypingIndicator = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
         <Avatar src={Aria} sx={{ width: 24, height: 24, marginRight: 1 }} alt="Aria" />
@@ -206,13 +206,25 @@ const ChatComponent = () => {
         }
     }, [input, userId, chatId, turnId]);
 
+
+    const supportsWebM = () => {
+        // This is a simple test; for more robust detection, consider specific codec checks
+        const mediaRecorderType = MediaRecorder.isTypeSupported ? MediaRecorder.isTypeSupported('audio/webm; codecs=opus') : false;
+        return mediaRecorderType;
+    };
+    
+
     // Function to handle recording start
     const startRecording = () => {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 audioChunksRef.current = []; // Clear the ref at the start of recording
-                const options = { mimeType: 'audio/webm' };
-                const recorder = new MediaRecorder(stream, options);
+                const isWebMSupported = supportsWebM();
+                const options = {  type: 'audio',
+                    mimeType: isWebMSupported ? 'audio/webm; codecs=opus' : 'audio/wav',
+                    recorderType: isWebMSupported ? MediaRecorder : RecordRTC.StereoAudioRecorder, // Use MediaRecorder if WebM is supported, otherwise use RecordRTC for wav
+                    numberOfAudioChannels: 1, };
+                    const recorder = isWebMSupported ? new MediaRecorder(stream, options) : new RecordRTC(stream, options);
                 recorder.ondataavailable = (e) => {
                     console.log('Data available:', e.data.size); // Log size to check if data is present
                     audioChunksRef.current.push(e.data);
@@ -221,14 +233,16 @@ const ChatComponent = () => {
                 recorder.start();
                 setMediaRecorder(recorder);
                 setIsRecording(true);
-            }).catch(console.error);
+            }).catch(error => {
+                console.error('Error accessing microphone:', error);
+            });
     };
 
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
             mediaRecorder.onstop = () => {
-                sendAudioToServer(audioChunksRef.current); // Ensure sendAudioToServer is called only after recording has fully stopped
+                sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType }); // Ensure sendAudioToServer is called only after recording has fully stopped
                 setIsRecording(false);
                 setMediaRecorder(null);
             };

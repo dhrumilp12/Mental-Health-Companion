@@ -6,12 +6,13 @@
     min-height: 100vh;
     font-family: 'Arial', sans-serif;
     
+    
 }
 
 .mood-logging {
     width: 90%;
     max-width: 500px;
-    
+    background-color: white;
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
