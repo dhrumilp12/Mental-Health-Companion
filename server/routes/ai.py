@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 ai_routes = Blueprint("ai", __name__)
 
-@ai_routes.post("/api/ai/mental_health/welcome/<user_id>")
+@ai_routes.post("/ai/mental_health/welcome/<user_id>")
 def get_mental_health_agent_welcome(user_id):
     agent = MentalHealthAIAgent(tool_names=["web_search_tavily"])
 
@@ -27,7 +27,7 @@ def get_mental_health_agent_welcome(user_id):
     return jsonify(response), 200
 
 
-@ai_routes.post("/api/ai/mental_health/<user_id>/<chat_id>")
+@ai_routes.post("/ai/mental_health/<user_id>/<chat_id>")
 def run_mental_health_agent(user_id, chat_id):
     body = request.get_json()
     if not body:
@@ -57,7 +57,7 @@ def run_mental_health_agent(user_id, chat_id):
         return jsonify({"error": str(e)}), 500
 
 
-@ai_routes.patch("/api/ai/mental_health/finalize/<user_id>/<chat_id>")
+@ai_routes.patch("/ai/mental_health/finalize/<user_id>/<chat_id>")
 def set_mental_health_end_state(user_id, chat_id):
     try:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
@@ -74,7 +74,7 @@ def set_mental_health_end_state(user_id, chat_id):
         return jsonify({"error": "Failed to finalize chat"}), 500
     
 
-@ai_routes.post("/api/ai/mental_health/voice-to-text")
+@ai_routes.post("/ai/mental_health/voice-to-text")
 def handle_voice_input():
         # Check if the part 'audio' is present in files
         if 'audio' not in request.files:

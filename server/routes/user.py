@@ -6,11 +6,9 @@ import io
 import asyncio
 import os
 from dotenv import load_dotenv
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app,send_file
 from time import sleep
-from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from bson import ObjectId
 from bson import ObjectId, json_util
 from datetime import timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -22,6 +20,7 @@ from services.db import mood_log
 from agents.mental_health_agent import MentalHealthAIAgent, HumanMessage
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Message, Mail
+
 load_dotenv()
 mail = Mail()
 
@@ -39,7 +38,7 @@ def verify_reset_token(token):
 
 user_routes = Blueprint("user", __name__)
 
-@user_routes.post('/api/user/signup')
+@user_routes.post('/user/signup')
 def signup():
     try:
         logging.info("Starting user registration process")
@@ -88,7 +87,7 @@ def signup():
         return jsonify({"error": str(e)}), 400
 
 
-@user_routes.post('/api/user/anonymous_signin')
+@user_routes.post('/user/anonymous_signin')
 def anonymous_signin():
     try:
         # Set a reasonable expiration time for tokens, e.g., 24 hours
@@ -105,7 +104,7 @@ def anonymous_signin():
         return jsonify({"msg": "Failed to create access token"}), 500
     
 
-@user_routes.post('/api/user/login')
+@user_routes.post('/user/login')
 def login():
     try:
         username = request.json.get('username', None)
@@ -126,7 +125,7 @@ def login():
             return jsonify({"error": str(e)}), 500
 
     
-@user_routes.post('/api/user/logout')
+@user_routes.post('/user/logout')
 @jwt_required()
 def logout():
     # JWT Revocation or Blacklisting could be implemented here if needed
@@ -135,7 +134,7 @@ def logout():
     return jsonify({"msg": "Logout successful"}), 200
 
 
-@user_routes.get('/api/user/profile/<user_id>')
+@user_routes.get('/user/profile/<user_id>')
 def get_public_profile(user_id):
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
@@ -159,7 +158,7 @@ def get_public_profile(user_id):
     return jsonify(user_data), 200
 
 
-@user_routes.patch('/api/user/profile/<user_id>')
+@user_routes.patch('/user/profile/<user_id>')
 def update_profile_fields(user_id):
     update_fields = request.get_json()
     
@@ -181,7 +180,7 @@ def update_profile_fields(user_id):
     return jsonify({"message": "User has been updated successfully."}), 200
 
 
-@user_routes.patch('/api/user/change_password/<user_id>')
+@user_routes.patch('/user/change_password/<user_id>')
 def change_password(user_id):
     try:
         # Authenticate user
@@ -214,7 +213,7 @@ def change_password(user_id):
         logging.error(f"Error changing password: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@user_routes.post('/api/user/request_reset')
+@user_routes.post('/user/request_reset')
 def request_password_reset():
     email = request.json.get('email')
     user = UserModel.find_by_email(email)
@@ -230,7 +229,7 @@ def request_password_reset():
     
     return jsonify({"message": "Check your email for the reset password link"}), 200
 
-@user_routes.post('/api/user/reset_password/<token>')
+@user_routes.post('/user/reset_password/<token>')
 def reset_password(token):
     new_password = request.json.get('password')
     user = verify_reset_token(token)
@@ -243,7 +242,7 @@ def reset_password(token):
     return jsonify({"message": "Password has been reset successfully"}), 200
 
 
-@user_routes.post('/api/user/log_mood')
+@user_routes.post('/user/log_mood')
 @jwt_required()
 def log_mood():
     try:
@@ -269,7 +268,7 @@ def log_mood():
         return jsonify({"error": "Failed to log mood"}), 500
 
 
-@user_routes.get('/api/user/get_mood_logs')
+@user_routes.get('/user/get_mood_logs')
 @jwt_required()
 def get_mood_logs():
     try:
@@ -283,7 +282,7 @@ def get_mood_logs():
         return jsonify({"error": "Failed to retrieve mood logs"}), 500
     
 
-@user_routes.get('/api/user/download_chat_logs')
+@user_routes.get('/user/download_chat_logs')
 @jwt_required()
 def download_chat_logs():
     try:
@@ -331,7 +330,7 @@ def download_chat_logs():
         return jsonify({"error": "Failed to download chat logs"}), 500
     
 
-@user_routes.delete('/api/user/delete_chat_logs')
+@user_routes.delete('/user/delete_chat_logs')
 @jwt_required()
 def delete_user_chat_logs():
     try:
@@ -350,7 +349,7 @@ def delete_user_chat_logs():
         logging.error(f"Error deleting chat logs: {str(e)}")
         return jsonify({"error": "Failed to delete chat logs"}), 500
 
-@user_routes.delete('/api/user/delete_chat_logs/range')
+@user_routes.delete('/user/delete_chat_logs/range')
 @jwt_required()
 def delete_user_chat_logs_in_range():
     logging.info("Entered the delete route")
@@ -390,7 +389,7 @@ def delete_user_chat_logs_in_range():
     
 
 
-@user_routes.get('/api/user/download_chat_logs/range')
+@user_routes.get('/user/download_chat_logs/range')
 @jwt_required()
 def download_chat_logs_in_range():
     try:
