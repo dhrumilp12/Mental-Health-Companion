@@ -130,7 +130,7 @@ function Navbar({ toggleSidebar }) {
             </MenuItem>
           ))}
         </Menu>
-        {user?.userId && (
+        {!user?.isAnon && (
         <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
         </IconButton>)}
