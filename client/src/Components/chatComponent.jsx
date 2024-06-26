@@ -261,21 +261,22 @@ const ChatComponent = () => {
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
-            const stopFunction = mediaRecorder instanceof MediaRecorder ? 'stop' : 'stopRecording';
+            if (mediaRecorder.stream && mediaRecorder.stream.active) {
+                mediaRecorder.stream.getTracks().forEach(track => {
+                    track.stop(); // Stop each track immediately
+                });
+            }
+    
             mediaRecorder.onstop = () => {
-                // Stop all tracks to ensure microphone is released
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType });
                 setIsRecording(false);
                 setMediaRecorder(null);
             };
-            console.log('Stopping recording:', stopFunction);
-            if (stopFunction === 'stopRecording') {
-                mediaRecorder[stopFunction](() => {
-                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                });
-            } else {
-                mediaRecorder[stopFunction]();
+    
+            if (mediaRecorder instanceof MediaRecorder) {
+                mediaRecorder.stop();
+            } else if (typeof mediaRecorder.stopRecording === 'function') {
+                mediaRecorder.stopRecording();
             }
         }
     };
