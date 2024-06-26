@@ -1,6 +1,6 @@
 import React, { useState,  useEffect, useContext,useCallback, useRef } from 'react';
 import axios from 'axios';
-import { InputAdornment,IconButton,Box, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
+import { InputAdornment,IconButton,Box,Switch, Card, CardContent, Typography, TextField, Button, List, ListItem,ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
@@ -12,21 +12,12 @@ import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
 
-const TypingIndicator = () => (
-    <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-        <Avatar src={Aria} sx={{ width: 24, height: 24, marginRight: 1 }} alt="Aria" />
-        <div style={{ display: 'flex' }}>
-            <div style={{ animation: 'blink 1.4s infinite', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
-            <div style={{ animation: 'blink 1.4s infinite 0.2s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor', marginRight: 2 }}></div>
-            <div style={{ animation: 'blink 1.4s infinite 0.4s', width: 6, height: 6, borderRadius: '50%', backgroundColor: 'currentColor' }}></div>
-        </div>
-    </Box>
-);
+
 
 
 
 const ChatComponent = () => {
-    const { user,voiceEnabled } = useContext(UserContext);
+    const { user,voiceEnabled , setVoiceEnabled} = useContext(UserContext);
     const userId = user?.userId; 
     const [chatId, setChatId] = useState(0);
     const [turnId, setTurnId] = useState(0);
@@ -41,33 +32,46 @@ const ChatComponent = () => {
     const [snackbarSeverity, setSnackbarSeverity] = useState('info');
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
-    const speak = (text) => {
-        
+    const handleToggleVoice = (event) => {
+        event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
+        setVoiceEnabled(!voiceEnabled);
+      };
+
+      const speak = (text) => {
+
         if (!voiceEnabled || text === currentPlayingMessage) {
             setCurrentPlayingMessage(null);
             window.speechSynthesis.cancel(); // Stop the current speech synthesis
             return;
-          }
+        }
         const synth = window.speechSynthesis;
         const utterance = new SpeechSynthesisUtterance(text);
-        const voices = synth.getVoices();
-        console.log(voices.map(voice => `${voice.name} - ${voice.lang} - ${voice.gender}`));
+        const setVoiceAndSpeak = () => {
+            const voices = synth.getVoices();
+            console.log(voices.map(voice => `${voice.name} - ${voice.lang} - ${voice.gender}`));
 
-        const femaleVoice = voices.find(voice => voice.name.includes("Microsoft Zira - English (United States)")); // Example: Adjust based on available voices
+            const femaleVoice = voices.find(voice => voice.name.includes("Microsoft Zira - English (United States)")); // Example: Adjust based on available voices
 
-    if (femaleVoice) {
-        utterance.voice = femaleVoice;
-    } else {
-        console.log("No female voice found");
-    }
+            if (femaleVoice) {
+                utterance.voice = femaleVoice;
+            } else {
+                console.log("No female voice found");
+            }
 
-    utterance.onend = () => {
-        setCurrentPlayingMessage(null); // Reset after speech has ended
-      };
+            utterance.onend = () => {
+                setCurrentPlayingMessage(null); // Reset after speech has ended
+            };
 
-    setCurrentPlayingMessage(text);
-    synth.speak(utterance);
-};
+            setCurrentPlayingMessage(text);
+            synth.speak(utterance);
+        };
+
+        if (synth.getVoices().length === 0){
+            synth.onvoiceschanged = setVoiceAndSpeak;
+        } else {
+            setVoiceAndSpeak();
+        }
+    };
 
         const handleSnackbarClose = (event, reason) => {
             if (reason === 'clickaway') {
@@ -148,73 +152,112 @@ const ChatComponent = () => {
             }
         }, [input, userId, chatId, turnId]);
 
+
+
+
+// Function to check supported MIME types for recording
+const getSupportedMimeType = () => {
+    if (MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
+        return 'audio/webm; codecs=opus';
+    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        // Fallback for Safari on iOS
+        return 'audio/mp4';
+    } else {
+        // Default to WAV if no other formats are supported
+        return 'audio/wav';
+    }
+};
+
     // Function to handle recording start
-    const startRecording = () => {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                audioChunksRef.current = []; // Clear the ref at the start of recording
-                const options = { mimeType: 'audio/webm' };
-                const recorder = new MediaRecorder(stream, options);
-                recorder.ondataavailable = (e) => {
-                    console.log('Data available:', e.data.size); // Log size to check if data is present
-                    audioChunksRef.current.push(e.data);
-                };
-                
-                recorder.start();
-                setMediaRecorder(recorder);
-                setIsRecording(true);
-            }).catch(console.error);
-    };
-
-    // Function to handle recording stop
-    const stopRecording = () => {
-        if (mediaRecorder) {
-            mediaRecorder.onstop = () => {
-                sendAudioToServer(audioChunksRef.current); // Ensure sendAudioToServer is called only after recording has fully stopped
-                setIsRecording(false);
-                setMediaRecorder(null);
-            };
-            mediaRecorder.stop(); // Stop recording, onstop will be triggered after this
+const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({
+        audio: {
+            sampleRate: 44100,
+            channelCount: 1,
+            volume: 1.0,
+            echoCancellation: true
         }
-    };
+    })
+    .then(stream => {
+        audioChunksRef.current = [];
+        const mimeType = getSupportedMimeType();
+        let recorder = new MediaRecorder(stream, { mimeType });
 
-    const sendAudioToServer = chunks => {
-        console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
-        const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
-        if (audioBlob.size === 0) {
-            console.error('Audio Blob is empty');
-            return;
+        recorder.ondataavailable = e => {
+            audioChunksRef.current.push(e.data);
+        };
+
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+    })
+    .catch(error => {
+        console.error('Error accessing microphone:', error);
+        // Handle error - show message to user
+    });
+};
+
+    // Function to stop recording
+const stopRecording = () => {
+    if (mediaRecorder) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+
+        mediaRecorder.onstop = () => {
+            const mimeType = mediaRecorder.mimeType;
+            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+            sendAudioToServer(audioBlob);
+            setIsRecording(false);
+            setMediaRecorder(null);
+        };
+
+        mediaRecorder.stop();
+    }
+};
+
+    // Function to send audio to server
+const sendAudioToServer = (audioBlob) => {
+    if (audioBlob.size === 0) {
+        console.error('Audio Blob is empty');
+        // Handle error - show message to user
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    setIsLoading(true);
+
+    axios.post('/api/ai/mental_health/voice-to-text', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
         }
-        console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-        setIsLoading(true);
-    
-        axios.post('/api/ai/mental_health/voice-to-text', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-        .then(response => {
-            const { message } = response.data;
-            setInput(message);
-            sendMessage();
-        })
-        .catch(error => {
-            console.error('Error uploading audio:', error);
-            setOpen(true);
-            setSnackbarMessage('Error processing voice input: ' + error.message);
-            setSnackbarSeverity('error');
-        })
-        .finally(() => {
-                    setIsLoading(false);
-                });
-    }; // Remove audioChunks from dependencies to prevent re-creation
-    
+    })
+    .then(response => {
+        const { message } = response.data;
+        setInput(message);
+        sendMessage();
+    })
+    .catch(error => {
+        console.error('Error uploading audio:', error);
+        // Handle error - show message to user
+    })
+    .finally(() => {
+        setIsLoading(false);
+    });
+};// Remove audioChunks from dependencies to prevent re-creation
 
     // Handle input changes
     const handleInputChange = useCallback((event) => {
-        setInput(event.target.value);
+        const inputText = event.target.value;
+        const words = inputText.split(/\s+/);
+        if (words.length > 200) {
+            // If the word count exceeds 200, prevent further input by not updating the state
+            setInput(input => input.split(/\s+/).slice(0, 200).join(" "));
+            setSnackbarMessage('Word limit reached. Only 200 words allowed.');
+            setSnackbarSeverity('warning');
+            setOpen(true);
+        } else {
+            setInput(inputText);
+        }
     }, []);
 
     const messageIcon = (message) => {
@@ -245,26 +288,59 @@ const ChatComponent = () => {
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%',borderRadius: 2,boxShadow: 3 }}>
                     <CardContent sx={{ flexGrow: 1, overflow: 'auto',padding: 3, position: 'relative'  }}>
                 
-                    <Tooltip title="Start a new chat" placement="top" arrow>
-                        <IconButton
-                            aria-label="new chat"
-                            //variant="outlined"
-                            color="primary"
-                            onClick={finalizeChat}
-                            disabled={isLoading}
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center', // This ensures all items in the box are aligned to the center vertically
+                        justifyContent: 'space-between', // This spreads out the items to use the available space
+                        position: 'relative', // Relative positioning for positioning children absolutely within the box if needed
+                        marginBottom:'5px',
+                    }}>
+                    <Tooltip title="Toggle voice responses">
+                        <IconButton color="inherit" onClick={handleToggleVoice} sx={{ padding: 0 }}>
+                            <Switch
+                            checked={voiceEnabled}
+                            onChange={(e) => setVoiceEnabled(e.target.checked)}
+                            icon={<VolumeOffIcon />}
+                            checkedIcon={<VolumeUpIcon />}
+                            inputProps={{ 'aria-label': 'Voice response toggle' }}
+                            color="default"
                             sx={{
-                                position: 'absolute', // Positioning the button at the top-right corner
-                                top: 5, // Top margin
-                                right: 5, // Right margin
-                                '&:hover': {
+                                height: 42, // Adjust height to align with icons
+                                '& .MuiSwitch-switchBase': {
+                                padding: '9px', // Reduce padding to make the switch smaller
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: 'white',
+                                transform: 'translateX(16px)',
+                                '& + .MuiSwitch-track': {
+                                    
                                     backgroundColor: 'primary.main',
-                                    color: 'common.white',
-                                }
+                                },
+                                },
                             }}
-                        >
-                            <LibraryAddIcon />
+                            />
+                        </IconButton>
+                        </Tooltip>
+
+                        <Tooltip title="Start a new chat" placement="top" arrow>
+                            <IconButton
+                                aria-label="new chat"
+                                //variant="outlined"
+                                color="primary"
+                                onClick={finalizeChat}
+                                disabled={isLoading}
+                                sx={{
+                                    '&:hover': {
+                                        backgroundColor: 'primary.main',
+                                        color: 'common.white',
+                                    }
+                                }}
+                            >
+                                <LibraryAddIcon />
                             </IconButton>
-                            </Tooltip>
+                        </Tooltip>
+                        </Box>
+                        <Divider sx={{marginBottom:'10px'}} />
 
                     {messages.length === 0 && (
                     <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
