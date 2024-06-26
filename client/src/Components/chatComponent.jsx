@@ -261,11 +261,10 @@ const ChatComponent = () => {
     // Function to handle recording stop
     const stopRecording = () => {
         if (mediaRecorder) {
-            if (mediaRecorder.stream && mediaRecorder.stream.active) {
-                mediaRecorder.stream.getTracks().forEach(track => {
-                    track.stop(); // Stop each track immediately
-                });
-            }
+            // First ensure all tracks are stopped
+        if (mediaRecorder.stream && mediaRecorder.stream.active) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
     
             mediaRecorder.onstop = () => {
                 sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType });
@@ -273,13 +272,14 @@ const ChatComponent = () => {
                 setMediaRecorder(null);
             };
     
-            if (mediaRecorder instanceof MediaRecorder) {
-                mediaRecorder.stop();
-            } else if (typeof mediaRecorder.stopRecording === 'function') {
-                mediaRecorder.stopRecording();
-            }
+             // Now call stop on the recorder if it exists
+        if (mediaRecorder instanceof MediaRecorder) {
+            mediaRecorder.stop();
+        } else if (typeof mediaRecorder.stopRecording === 'function') {
+            mediaRecorder.stopRecording();
         }
-    };
+    }
+};
     
 
     const sendAudioToServer = () => {
