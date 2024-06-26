@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import axios from 'axios';
-import { InputAdornment,Switch, IconButton, Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
+import apiServerAxios from '../api/axios';
+import { InputAdornment, IconButton, Box, Card, CardContent, Typography, TextField, Button, List, ListItem, ListItemAvatar, ListItemText, CircularProgress, Snackbar, Divider, Avatar, Tooltip } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import SendIcon from '@mui/icons-material/Send';
 import MicIcon from '@mui/icons-material/Mic';
@@ -48,7 +49,7 @@ const ChatComponent = () => {
         event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
         setVoiceEnabled(!voiceEnabled);
       };
-    
+
     const speak = (text) => {
 
         if (!voiceEnabled || text === currentPlayingMessage) {
@@ -78,7 +79,7 @@ const ChatComponent = () => {
             synth.speak(utterance);
         };
 
-        if (synth.getVoices().length === 0){
+        if (synth.getVoices().length === 0) {
             synth.onvoiceschanged = setVoiceAndSpeak;
         } else {
             setVoiceAndSpeak();
@@ -91,15 +92,13 @@ const ChatComponent = () => {
         setIsLoading(true);
         setIsFetchingMessage(true);
         try {
-            const response = await fetch(`/api/ai/mental_health/welcome/${userId}`, {
-                method: 'POST',
+            const response = await apiServerAxios.post(`/api/ai/mental_health/welcome/${userId}`, {
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 }
             });
-            const data = await response.json();
-            console.log(data);
-            if (response.ok) {
+            if (response && response.data) {
+                const data = response.data
                 setWelcomeMessage(data.message);
                 if (voiceEnabled && data.message) { // Ensure voice is enabled and the message is not empty
                     speak(data.message);
@@ -134,13 +133,10 @@ const ChatComponent = () => {
         if (chatId === null) return;
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
-                method: 'POST',
+            const response = await apiServerAxios.patch(`/api/ai/mental_health/finalize/${userId}/${chatId}`, {
                 headers: { 'Content-Type': 'application/json' }
             });
-
-            const data = await response.json();
-            if (response.ok) {
+            if (response) {
                 setSnackbarMessage('Chat finalized successfully');
                 setSnackbarSeverity('success');
                 // Reset chat state to start a new chat
@@ -169,19 +165,19 @@ const ChatComponent = () => {
 
 
         try {
-            const body = JSON.stringify({
+            const body = {
                 prompt: input,
                 turn_id: turnId
-            });
-            const response = await fetch(`/api/ai/mental_health/${userId}/${chatId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
+            };
+            const response = await apiServerAxios.post(`/api/ai/mental_health/${userId}/${chatId}`, {
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                ...body
             });
 
-            const data = await response.json();
-            console.log(data);
-            if (response.ok) {
+            const data = response.data;
+            if (response && data) {
                 setMessages(prev => [...prev, { message: input, sender: 'user' }, { message: data, sender: 'agent' }]);
                 // Speak the agent's message immediately after it's received and processed
                 if (voiceEnabled && data) { // Ensure voice is enabled and the message is not empty
@@ -281,11 +277,11 @@ const sendAudioToServer = (audioBlob) => {
     formData.append('audio', audioBlob);
     setIsLoading(true);
 
-    axios.post('/api/ai/mental_health/voice-to-text', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    })
+      apiServerAxios.post('/api/ai/mental_health/voice-to-text', formData, {
+          headers: {
+              'Content-Type': 'multipart/form-data'
+          }
+      })
     .then(response => {
         const { message } = response.data;
         setInput(message);

@@ -41,9 +41,10 @@ def run_app():
     mail = Mail(app)
     jwt = JWTManager(app)
     cors_config = {
-        r"/api/*": {
-            "origins": ["https://green-sand-04b157b0f.5.azurestaticapps.net"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+
+        r"*": {
+            "origins": ["https://mental-health-app-web.azurewebsites.net", "127.0.0.1"],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",
                 "Content-Type",

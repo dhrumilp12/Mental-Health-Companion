@@ -1,5 +1,6 @@
 import React, {useContext, useState, useEffect} from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, IconButton, Typography, Badge, Menu, MenuItem, Card, CardContent } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -34,7 +35,7 @@ function Navbar({ toggleSidebar }) {
       return; // Exit the function if no user ID is available
     }
     try {
-      const response = await axios.get(`/api/check-in/missed?user_id=${userId}`, {
+      const response = await apiServerAxios.get(`/api/check-in/missed?user_id=${userId}`, {
         headers: {
             'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
         }

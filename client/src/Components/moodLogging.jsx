@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { Button } from '@mui/material';
 import MoodIcon from '@mui/icons-material/Mood';
 import SendIcon from '@mui/icons-material/Send';
@@ -21,7 +22,7 @@ function MoodLogging() {
         }
 
         try {
-            const response = await axios.post('/api/user/log_mood', { mood, activities }, {
+            const response = await apiServerAxios.post('/api/user/log_mood', { mood, activities }, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

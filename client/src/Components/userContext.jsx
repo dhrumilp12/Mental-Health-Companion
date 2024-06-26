@@ -1,5 +1,6 @@
 import React, { createContext, useState, useCallback,useEffect } from 'react';
 import axios from 'axios';
+import apiServerAxios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 export const UserContext = createContext({ user: null });
 
@@ -51,7 +52,7 @@ export const UserProvider = ({ children }) => {
         console.error('No token available for logout');
         return; // Exit the function if no token is available
       }
-      const response = await axios.post('/api/user/logout', {}, {
+      const response = await apiServerAxios.post('/api/user/logout', {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -71,7 +72,7 @@ export const UserProvider = ({ children }) => {
   const changePassword = async (userId, currentPassword, newPassword) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.patch(`/api/user/change_password/${userId}`, {
+      const response = await apiServerAxios.patch(`/api/user/change_password/${userId}`, {
         current_password: currentPassword,
         new_password: newPassword
       }, {
