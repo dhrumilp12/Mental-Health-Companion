@@ -14,7 +14,7 @@ ai_routes = Blueprint("ai", __name__)
 
 @ai_routes.post("/ai/mental_health/welcome/<user_id>")
 def get_mental_health_agent_welcome(user_id):
-    agent = MentalHealthAIAgent(tool_names=["web_search_tavily"])
+    agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
 
     response = agent.get_initial_greeting(
                                     user_id=user_id
@@ -36,7 +36,7 @@ def run_mental_health_agent(user_id, chat_id):
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
-    agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
+    agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
 
     try:
             
@@ -61,7 +61,7 @@ def run_mental_health_agent(user_id, chat_id):
 def set_mental_health_end_state(user_id, chat_id):
     try:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
-        agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
+        agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
 
         agent.perform_final_processes(user_id, chat_id)
 
