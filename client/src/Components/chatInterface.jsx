@@ -346,7 +346,7 @@ const sendAudioToServer = (audioBlob) => {
                     <Box sx={{ display: 'flex', marginBottom: 2, marginTop:3}}>
                     <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2,  }} alt="Aria" />
                         <Typography variant="h4" component="h1" gutterBottom>
-                            Welcome to Mental Health Companion
+                            Welcome to Your Mental Health Companion
                         </Typography>
                         </Box>)}
 
