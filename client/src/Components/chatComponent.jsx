@@ -207,120 +207,98 @@ const ChatComponent = () => {
     }, [input, userId, chatId, turnId]);
 
 
-    const supportsWebM = () => {
-        // This is a simple test; for more robust detection, consider specific codec checks
-        const mediaRecorderType = MediaRecorder.isTypeSupported ? MediaRecorder.isTypeSupported('audio/webm; codecs=opus') : false;
-        return mediaRecorderType;
-    };
     
 
     // Function to handle recording start
-    const startRecording = () => {
-        navigator.mediaDevices.getUserMedia({ audio: {
-            sampleRate: 44100, // iOS supports 44.1 kHz sample rate
-            channelCount: 1, // Mono audio
-            volume: 1.0,
-            echoCancellation: true
-        }})
-            .then(stream => {
-                audioChunksRef.current = []; // Clear the ref at the start of recording
-                const isWebMSupported = supportsWebM();
-                let recorder;
-                const options = {  type: 'audio',
-                    mimeType: isWebMSupported ? 'audio/webm; codecs=opus' : 'audio/wav' };
-                    if (isWebMSupported) {
-                        recorder = new MediaRecorder(stream, options);
-                    } else {
-                        // RecordRTC options need to be adjusted if RecordRTC is used
-                        recorder = new RecordRTC(stream, {
-                            type: 'audio',
-                            mimeType: 'audio/wav',
-                            recorderType: RecordRTC.StereoAudioRecorder,
-                            numberOfAudioChannels: 1
-                        });
-                        recorder.startRecording();
-                    }
-                recorder.ondataavailable = (e) => {
-                    console.log('Data available:', e.data.size); // Log size to check if data is present
-                    audioChunksRef.current.push(e.data);
-                };
-
-                if (recorder instanceof MediaRecorder) {
-                    recorder.start();
-                }
-                setMediaRecorder(recorder);
-                setIsRecording(true);
-            }).catch(error => {
-                console.error('Error accessing microphone:', error);
-                setOpen(true);
-                setSnackbarMessage('Unable to access microphone: ' + error.message);
-                setSnackbarSeverity('error');
-            });
-    };
-
-    // Function to handle recording stop
-    const stopRecording = () => {
-        if (mediaRecorder) {
-            // First ensure all tracks are stopped
-        if (mediaRecorder.stream && mediaRecorder.stream.active) {
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }
-    
-            mediaRecorder.onstop = () => {
-                sendAudioToServer(audioChunksRef.current, { type: mediaRecorder.mimeType });
-                setIsRecording(false);
-                setMediaRecorder(null);
-            };
-    
-             // Now call stop on the recorder if it exists
-        if (mediaRecorder instanceof MediaRecorder) {
-            mediaRecorder.stop();
-        } else if (typeof mediaRecorder.stopRecording === 'function') {
-            mediaRecorder.stopRecording(function() {
-                 mediaRecorder.getBlob();
-                // Do something with the blob
-              });
-        }
+    // Function to check supported MIME types for recording
+const getSupportedMimeType = () => {
+    if (MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
+        return 'audio/webm; codecs=opus';
+    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        // Fallback for Safari on iOS
+        return 'audio/mp4';
+    } else {
+        // Default to WAV if no other formats are supported
+        return 'audio/wav';
     }
 };
-    
 
-    const sendAudioToServer = () => {
-        const mimeType = mediaRecorder.mimeType; // Ensure this is defined in your recorder setup
-        console.log('Audio chunks size:', audioChunksRef.current.reduce((sum, chunk) => sum + chunk.size, 0));
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        if (audioBlob.size === 0) {
-            console.error('Audio Blob is empty');
-            setSnackbarMessage('Recording is empty. Please try again.');
-            setSnackbarSeverity('error');
-            setOpen(true);
-            return;
+// Function to start recording
+const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({
+        audio: {
+            sampleRate: 44100,
+            channelCount: 1,
+            volume: 1.0,
+            echoCancellation: true
         }
-        console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-        setIsLoading(true);
+    })
+    .then(stream => {
+        audioChunksRef.current = [];
+        const mimeType = getSupportedMimeType();
+        let recorder = new MediaRecorder(stream, { mimeType });
 
-        axios.post('/api/ai/mental_health/voice-to-text', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-            .then(response => {
-                const { message } = response.data;
-                setInput(message);
-                sendMessage();
-            })
-            .catch(error => {
-                console.error('Error uploading audio:', error);
-                setOpen(true);
-                setSnackbarMessage('Error processing voice input: ' + error.message);
-                setSnackbarSeverity('error');
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }; // Remove audioChunks from dependencies to prevent re-creation
+        recorder.ondataavailable = e => {
+            audioChunksRef.current.push(e.data);
+        };
+
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+    })
+    .catch(error => {
+        console.error('Error accessing microphone:', error);
+        // Handle error - show message to user
+    });
+};
+
+// Function to stop recording
+const stopRecording = () => {
+    if (mediaRecorder) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+
+        mediaRecorder.onstop = () => {
+            const mimeType = mediaRecorder.mimeType;
+            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+            sendAudioToServer(audioBlob);
+            setIsRecording(false);
+            setMediaRecorder(null);
+        };
+
+        mediaRecorder.stop();
+    }
+};
+
+// Function to send audio to server
+const sendAudioToServer = (audioBlob) => {
+    if (audioBlob.size === 0) {
+        console.error('Audio Blob is empty');
+        // Handle error - show message to user
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    setIsLoading(true);
+
+    axios.post('/api/ai/mental_health/voice-to-text', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    .then(response => {
+        const { message } = response.data;
+        setInput(message);
+        sendMessage();
+    })
+    .catch(error => {
+        console.error('Error uploading audio:', error);
+        // Handle error - show message to user
+    })
+    .finally(() => {
+        setIsLoading(false);
+    });
+};// Remove audioChunks from dependencies to prevent re-creation
 
 
     // Handle input changes
