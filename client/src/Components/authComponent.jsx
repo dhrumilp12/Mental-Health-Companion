@@ -3,7 +3,7 @@ import axios from 'axios';
 import apiServerAxios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './userContext';
-
+import { Link } from 'react-router-dom';
 import {TextField, Button, Paper, CssBaseline, Snackbar, Alert,
     Tab, Tabs, Box, CircularProgress,Select, InputLabel,FormControl,MenuItem, IconButton, Typography, Tooltip} from '@mui/material';
 import { createTheme,  ThemeProvider, styled } from '@mui/material/styles';
@@ -13,6 +13,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { Checkbox, FormGroup, FormControlLabel } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
+
 
 const theme = createTheme({
   palette: {
@@ -71,6 +72,7 @@ function AuthComponent() {
   const [activeTab, setActiveTab] = useState(0);
   const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
@@ -122,6 +124,7 @@ function AuthComponent() {
       console.error('Login failed:', error);
       setMessage('Login failed: ' + (error.response?.data?.msg || 'Unknown error'));
       setSeverity('error');
+      setShowForgotPassword(true);
     }
     setOpen(true);
     setLoading(false);
@@ -229,8 +232,13 @@ function AuthComponent() {
                       </IconButton>
                     ),
                   }} />
-              <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} disabled={loading}>
+              <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2, maxWidth:'325px' }} disabled={loading}>
               {loading ? <CircularProgress size={24} /> : 'Login'} </Button>
+              {showForgotPassword && (
+                        <Typography variant="body2" textAlign="center" sx={{ mt: 2 }}>
+                            Forgot your password? <Link to="/request_reset" style={{ textDecoration: 'none', color: theme.palette.secondary.main }}>Reset it here</Link>
+                        </Typography>
+                    )}
               </form>
           )}
           {activeTab === 1 && (

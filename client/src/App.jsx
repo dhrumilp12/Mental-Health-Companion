@@ -16,6 +16,8 @@ import CheckInsList from './Components/checkInsList';
 import { CssBaseline, Box } from '@mui/material';
 import { UserContext } from './Components/userContext';
 import ProtectedRoute from './protectedRoute';
+import RequestPasswordReset from './Components/requestPasswordReset';
+import ResetPassword from './Components/passwordReset';
 
 function App() {
     const { user } = useContext(UserContext);
@@ -36,6 +38,8 @@ function App() {
                     <ChatInterface />
                   </ProtectedRoute>
                 } />
+                    <Route path="/reset_password/:token" element={<ResetPassword />} />
+                    <Route path="/request_reset" element={<RequestPasswordReset />} />
                     <Route path="/auth" element={<AuthComponent />} />
                     <Route path="/user/profile/:userId" element={
                   <ProtectedRoute>
@@ -61,9 +65,11 @@ function App() {
 function Layout({ children }) {
     const { user } = useContext(UserContext);
     const location = useLocation();
-    const noNavRoutes = ['/auth'];  // List of routes that shouldn't show the navbar or sidebar
-    const showNav = !noNavRoutes.includes(location.pathname);
-    const mainPadding = noNavRoutes.includes(location.pathname) ? 0 : 6;
+    const noNavRoutes = ['/auth','/request_reset',new RegExp('^/reset_password/[^/]+$')];  // List of routes that shouldn't show the navbar or sidebar
+    const showNav = !noNavRoutes.some(route => 
+      typeof route === 'string' ? route === location.pathname : route.test(location.pathname));
+
+  const mainPadding = !showNav ? 0 : 6;
     const [sidebarOpen, setSidebarOpen] = useState(true);  // State to control the sidebar
 
     const toggleSidebar = () => {

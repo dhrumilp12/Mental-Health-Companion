@@ -12,8 +12,7 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import { UserContext } from './userContext';
 import Aria from '../Assets/Images/Aria.jpg'; // Adjust the path to where your logo is stored
-
-
+import RecordRTC from 'recordrtc';
 const TypingIndicator = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
         <Avatar src={Aria} sx={{ width: 24, height: 24, marginRight: 1 }} alt="Aria" />
@@ -27,7 +26,8 @@ const TypingIndicator = () => (
 
 
 const ChatComponent = () => {
-    const { user, voiceEnabled } = useContext(UserContext);
+    const { user, voiceEnabled , setVoiceEnabled} = useContext(UserContext);
+    
     const userId = user?.userId;
     const [chatId, setChatId] = useState(null);
     const [turnId, setTurnId] = useState(0);
@@ -45,6 +45,10 @@ const ChatComponent = () => {
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
 
 
+    const handleToggleVoice = (event) => {
+        event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
+        setVoiceEnabled(!voiceEnabled);
+      };
 
     const speak = (text) => {
 
@@ -198,68 +202,99 @@ const ChatComponent = () => {
         }
     }, [input, userId, chatId, turnId]);
 
+
+    
+
     // Function to handle recording start
-    const startRecording = () => {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                audioChunksRef.current = []; // Clear the ref at the start of recording
-                const options = { mimeType: 'audio/webm' };
-                const recorder = new MediaRecorder(stream, options);
-                recorder.ondataavailable = (e) => {
-                    console.log('Data available:', e.data.size); // Log size to check if data is present
-                    audioChunksRef.current.push(e.data);
-                };
+    // Function to check supported MIME types for recording
+const getSupportedMimeType = () => {
+    if (MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
+        return 'audio/webm; codecs=opus';
+    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        // Fallback for Safari on iOS
+        return 'audio/mp4';
+    } else {
+        // Default to WAV if no other formats are supported
+        return 'audio/wav';
+    }
+};
 
-                recorder.start();
-                setMediaRecorder(recorder);
-                setIsRecording(true);
-            }).catch(console.error);
-    };
-
-    // Function to handle recording stop
-    const stopRecording = () => {
-        if (mediaRecorder) {
-            mediaRecorder.onstop = () => {
-                sendAudioToServer(audioChunksRef.current); // Ensure sendAudioToServer is called only after recording has fully stopped
-                setIsRecording(false);
-                setMediaRecorder(null);
-            };
-            mediaRecorder.stop(); // Stop recording, onstop will be triggered after this
+// Function to start recording
+const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({
+        audio: {
+            sampleRate: 44100,
+            channelCount: 1,
+            volume: 1.0,
+            echoCancellation: true
         }
-    };
+    })
+    .then(stream => {
+        audioChunksRef.current = [];
+        const mimeType = getSupportedMimeType();
+        let recorder = new MediaRecorder(stream, { mimeType });
 
-    const sendAudioToServer = chunks => {
-        console.log('Audio chunks size:', chunks.reduce((sum, chunk) => sum + chunk.size, 0)); // Log total size of chunks
-        const audioBlob = new Blob(chunks, { 'type': 'audio/webm' });
-        if (audioBlob.size === 0) {
-            console.error('Audio Blob is empty');
-            return;
-        }
-        console.log(`Sending audio blob of size: ${audioBlob.size} bytes`);
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-        setIsLoading(true);
+        recorder.ondataavailable = e => {
+            audioChunksRef.current.push(e.data);
+        };
 
-        apiServerAxios.post('/api/ai/mental_health/voice-to-text', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-            .then(response => {
-                const { message } = response.data;
-                setInput(message);
-                sendMessage();
-            })
-            .catch(error => {
-                console.error('Error uploading audio:', error);
-                setOpen(true);
-                setSnackbarMessage('Error processing voice input: ' + error.message);
-                setSnackbarSeverity('error');
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
-    }; // Remove audioChunks from dependencies to prevent re-creation
+        recorder.start();
+        setMediaRecorder(recorder);
+        setIsRecording(true);
+    })
+    .catch(error => {
+        console.error('Error accessing microphone:', error);
+        // Handle error - show message to user
+    });
+};
+
+// Function to stop recording
+const stopRecording = () => {
+    if (mediaRecorder) {
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+
+        mediaRecorder.onstop = () => {
+            const mimeType = mediaRecorder.mimeType;
+            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+            sendAudioToServer(audioBlob);
+            setIsRecording(false);
+            setMediaRecorder(null);
+        };
+
+        mediaRecorder.stop();
+    }
+};
+
+// Function to send audio to server
+const sendAudioToServer = (audioBlob) => {
+    if (audioBlob.size === 0) {
+        console.error('Audio Blob is empty');
+        // Handle error - show message to user
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    setIsLoading(true);
+
+      apiServerAxios.post('/api/ai/mental_health/voice-to-text', formData, {
+          headers: {
+              'Content-Type': 'multipart/form-data'
+          }
+      })
+    .then(response => {
+        const { message } = response.data;
+        setInput(message);
+        sendMessage();
+    })
+    .catch(error => {
+        console.error('Error uploading audio:', error);
+        // Handle error - show message to user
+    })
+    .finally(() => {
+        setIsLoading(false);
+    });
+};// Remove audioChunks from dependencies to prevent re-creation
 
 
     // Handle input changes
@@ -303,6 +338,39 @@ const ChatComponent = () => {
             <Box sx={{ maxWidth: '100%', mx: 'auto', my: 2, display: 'flex', flexDirection: 'column', height: '91vh', borderRadius: 2, boxShadow: 1 }}>
                 <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 2, boxShadow: 3 }}>
                     <CardContent sx={{ flexGrow: 1, overflow: 'auto', padding: 3, position: 'relative' }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center', // This ensures all items in the box are aligned to the center vertically
+                        justifyContent: 'space-between', // This spreads out the items to use the available space
+                        position: 'relative', // Relative positioning for positioning children absolutely within the box if needed
+                        marginBottom:'5px',
+                    }}>
+                    <Tooltip title="Toggle voice responses">
+                        <IconButton color="inherit" onClick={handleToggleVoice} sx={{ padding: 0 }}>
+                            <Switch
+                            checked={voiceEnabled}
+                            onChange={(e) => setVoiceEnabled(e.target.checked)}
+                            icon={<VolumeOffIcon />}
+                            checkedIcon={<VolumeUpIcon />}
+                            inputProps={{ 'aria-label': 'Voice response toggle' }}
+                            color="default"
+                            sx={{
+                                height: 42, // Adjust height to align with icons
+                                '& .MuiSwitch-switchBase': {
+                                padding: '9px', // Reduce padding to make the switch smaller
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: 'white',
+                                transform: 'translateX(16px)',
+                                '& + .MuiSwitch-track': {
+                                    
+                                    backgroundColor: 'primary.main',
+                                },
+                                },
+                            }}
+                            />
+                        </IconButton>
+                        </Tooltip>
 
                         <Tooltip title="Start a new chat" placement="top" arrow>
                             <IconButton
@@ -312,9 +380,6 @@ const ChatComponent = () => {
                                 onClick={finalizeChat}
                                 disabled={isLoading}
                                 sx={{
-                                    position: 'absolute', // Positioning the button at the top-right corner
-                                    top: 5, // Top margin
-                                    right: 5, // Right margin
                                     '&:hover': {
                                         backgroundColor: 'primary.main',
                                         color: 'common.white',
@@ -324,12 +389,13 @@ const ChatComponent = () => {
                                 <LibraryAddIcon />
                             </IconButton>
                         </Tooltip>
-
+                        </Box>
+                        <Divider sx={{marginBottom:'10px'}} />
                         {welcomeMessage.length === 0 && (
                             <Box sx={{ display: 'flex', marginBottom: 2, marginTop: 3 }}>
                                 <Avatar src={Aria} sx={{ width: 44, height: 44, marginRight: 2, }} alt="Aria" />
                                 <Typography variant="h4" component="h1" gutterBottom>
-                                    Welcome to Mental Health Companion
+                                    Welcome to Your Mental Health Companion
                                 </Typography>
                             </Box>)}
 

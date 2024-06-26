@@ -8,7 +8,7 @@ apt-get install --no-install-suggests --no-install-recommends -y pipx ffmpeg
 ENV PATH="/root/.local/bin:${PATH}"
 
 ENV FLASK_RUN_HOST=0.0.0.0 \
-FLASK_RUN_PORT=80 \
+FLASK_RUN_PORT=8000 \
 FLASK_ENV=production
 
 RUN pipx install poetry
@@ -23,4 +23,4 @@ COPY . ./
 RUN mv .env.production .env
 
 # # Execute Flask
-CMD poetry run gunicorn -b ${FLASK_RUN_HOST}:${FLASK_RUN_PORT} app:app
+CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "app:app"]

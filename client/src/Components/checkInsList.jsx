@@ -143,12 +143,12 @@ function CheckInsList() {
     setDeleteConfirmOpen(true);
     };
 
-    if (!userId) return <Typography variant="h6">Please log in to see your check-ins.</Typography>;
-    if (loading) return <Typography variant="h6">Loading...</Typography>;
-    if (error) return <Typography variant="h6">Error: {error}</Typography>;
+    if (!userId) return <Typography variant="h6" mt="2">Please log in to see your check-ins.</Typography>;
+    if (loading) return <Typography variant="h6" mt="2">Loading...</Typography>;
+    
 
     return (
-        <Box sx={{ margin: 3, maxWidth: 600, mx: 'auto' }}>
+        <Box sx={{ margin: 3, maxWidth: 600, mx: 'auto', maxHeight:'91vh', overflow:'auto' }}>
           <Typography variant="h4" gutterBottom>Track Your Commitments</Typography>
           <Divider sx={{ mb: 2 }} />
           {checkIns.length > 0 ? (
@@ -173,7 +173,23 @@ function CheckInsList() {
               ))}
             </List>
           ) : (
-            <Typography variant="subtitle1">No check-ins found.</Typography>
+            <Typography
+    variant="h6"
+    sx={{
+        mb: 2, // Bottom margin adds space below the text
+        mt: 2, // Maintains a margin-top of 2 spacing units for separation
+        color: 'error.main', // Uses the theme's error color for emphasis
+        fontWeight: 'medium', // Slightly bolder font weight for better visibility
+        textAlign: 'center', // Centers the text within its container
+        padding: 2, // Adds padding around the text for better spacing
+        borderRadius: 1, // Optional: adds a slight rounding to the corners if preferred
+        backgroundColor: 'background.paper', // Gives a contrasting background
+        boxShadow: 2, // Applies a subtle shadow for a lifted effect
+    }}
+>
+    No check-ins found.
+</Typography>
+
           )}
 
           {/* Dialog for Check-In Details */}

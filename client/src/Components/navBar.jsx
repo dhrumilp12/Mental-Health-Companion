@@ -2,20 +2,19 @@ import React, {useContext, useState, useEffect} from 'react';
 import axios from 'axios';
 import apiServerAxios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, IconButton, Typography, Badge,Switch, Tooltip, Menu, MenuItem, Card, CardContent } from '@mui/material';
+import { AppBar, Toolbar, IconButton, Typography, Badge, Menu, MenuItem, Card, CardContent } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import { UserContext } from './userContext';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+
 import CancelIcon from '@mui/icons-material/Cancel';
 
 
 function Navbar({ toggleSidebar }) {
   const { incrementNotificationCount, notifications, addNotification, removeNotification } = useContext(UserContext);
   const navigate = useNavigate();
-  const { voiceEnabled, setVoiceEnabled,user } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const [anchorEl, setAnchorEl] = useState(null);
   const token = localStorage.getItem('token');
   const userId = user?.userId;
@@ -73,10 +72,7 @@ function Navbar({ toggleSidebar }) {
     }
   };
 
-  const handleToggleVoice = (event) => {
-    event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
-    setVoiceEnabled(!voiceEnabled);
-  };
+  
 
   useEffect(() => {
     const handleServiceWorkerMessage = (event) => {
@@ -108,32 +104,7 @@ function Navbar({ toggleSidebar }) {
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Dashboard
         </Typography>
-        <Tooltip title="Toggle voice responses">
-          <IconButton color="inherit" onClick={handleToggleVoice} sx={{ padding: 0 }}>
-            <Switch
-              checked={voiceEnabled}
-              onChange={(e) => setVoiceEnabled(e.target.checked)}
-              icon={<VolumeOffIcon />}
-              checkedIcon={<VolumeUpIcon />}
-              inputProps={{ 'aria-label': 'Voice response toggle' }}
-              color="default"
-              sx={{
-                height: 42, // Adjust height to align with icons
-                '& .MuiSwitch-switchBase': {
-                  padding: '9px', // Reduce padding to make the switch smaller
-                },
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: 'white',
-                  transform: 'translateX(16px)',
-                  '& + .MuiSwitch-track': {
-                    
-                    backgroundColor: 'white',
-                  },
-                },
-              }}
-            />
-          </IconButton>
-        </Tooltip>
+        
         {user?.userId &&(
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={notifications.length} color="secondary">

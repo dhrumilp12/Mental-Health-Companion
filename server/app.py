@@ -41,6 +41,7 @@ def run_app():
     mail = Mail(app)
     jwt = JWTManager(app)
     cors_config = {
+
         r"*": {
             "origins": ["https://mental-health-app-web.azurewebsites.net", "127.0.0.1"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -53,7 +54,7 @@ def run_app():
         }
     }
     CORS(app, resources=cors_config)
-    
+
 
     # Register routes
     app.register_blueprint(user_routes)
