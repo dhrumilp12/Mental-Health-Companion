@@ -32,7 +32,7 @@ def save_user(db, user_data):
 def get_user_profile_by_user_id(user_id: str) -> str:
     """
     Retrieves a user's profile information by the user's ID to be used when brought up in conversation.
-    Includes age, name and location.
+    Includes age, name and location. Exclude if user ID is `0`, as this indicates it is an anonymous user.
     """
     try:
         user_objectid = ObjectId(user_id)

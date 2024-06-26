@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "earlent-server"
-version = "1.1.2"
+version = "1.1.3"
 description = "An application meant to help students and professionals with stress and anxiety."
 authors = ["Dhrumil Patel <you@example.com>", "Anthony Santana <anthony@jasantana.com>"]
 readme = "README.md"
@@ -21,6 +21,10 @@ langchain-mongodb = "^0.1.6"
 langchain-openai = "^0.1.8"
 gunicorn = "^22.0.0"
 flask-mail = "^0.10.0"
+motor = "^3.5.0"
+azure-mgmt-maps = "^2.1.0"
+azure-identity = "^1.17.1"
+googlemaps = "^4.10.0"
 
 
 [tool.poetry.group.dev.dependencies]

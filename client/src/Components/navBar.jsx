@@ -104,8 +104,7 @@ function Navbar({ toggleSidebar }) {
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
           Dashboard
         </Typography>
-        
-        {user?.userId &&(
+        {!user?.isAnon &&(
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={notifications.length} color="secondary">
             <NotificationsIcon />
@@ -131,7 +130,7 @@ function Navbar({ toggleSidebar }) {
             </MenuItem>
           ))}
         </Menu>
-        {user?.userId && (
+        {!user?.isAnon && (
         <IconButton color="inherit" onClick={handleProfileClick}>
           <AccountCircle />
         </IconButton>)}
