@@ -101,7 +101,7 @@ function Navbar({ toggleSidebar }) {
           <MenuIcon />
         </IconButton>
         <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          Dashboard
+        Earlent
         </Typography>
         
         {user?.userId &&(
