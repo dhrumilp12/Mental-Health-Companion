@@ -276,7 +276,10 @@ const ChatComponent = () => {
         if (mediaRecorder instanceof MediaRecorder) {
             mediaRecorder.stop();
         } else if (typeof mediaRecorder.stopRecording === 'function') {
-            mediaRecorder.stopRecording();
+            mediaRecorder.stopRecording(function() {
+                 mediaRecorder.getBlob();
+                // Do something with the blob
+              });
         }
     }
 };
