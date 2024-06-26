@@ -171,13 +171,14 @@ function AuthComponent() {
         try {
             const response = await apiServerAxios.post('/api/user/anonymous_signin');
             if (response && response.data) {
-              const userId = null;
+              const userId = "0";
+              const isAnon = true;
               localStorage.setItem('token', response.data.access_token);  // Ensure this is correctly saving the token
               console.log('Token stored:', localStorage.getItem('token')); // Confirm the token is stored
               setMessage('Anonymous sign-in successful!');
               setSeverity('success');
               setIsAuthenticated(true);
-              setUser({ userId });
+              setUser({ userId, isAnon });
               navigate('/');
             } else {
               throw new Error('Invalid response from server');

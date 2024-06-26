@@ -20,7 +20,7 @@ function Sidebar() {
 
   const items = [
     { text: "Mind Chat", icon: <DeckIcon />, path: "/" },
-    ...(user?.userId ? [
+    ...(!user?.isAnon ? [
       { text: "Track Your Vibes", icon: <InsertEmoticonIcon />, path: "/user/mood_logging" },
             { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
             { text: "Schedule Check-In", icon: <ScheduleIcon />, path: "/user/check_in" }, // New item for check-in page
