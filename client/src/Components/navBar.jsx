@@ -104,7 +104,7 @@ function Navbar({ toggleSidebar }) {
         Earlent
         </Typography>
         
-        {user?.userId &&(
+        {!user?.isAnon &&(
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={notifications.length} color="secondary">
             <NotificationsIcon />

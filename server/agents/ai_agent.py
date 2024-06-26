@@ -162,10 +162,10 @@ class AIAgent:
                     StructuredTool.from_function(func)
                 )
                 continue
-
-            if tool_dict.get("retriever", False):
+            
+            elif tool_dict.get("retriever", False):
                 retriever = self._get_cosmosdb_vector_store_retriever(
-                    f"{db_name}.{tool_name}"
+                    tool_name
                 )
 
                 retriever_chain = retriever | format_docs
@@ -180,7 +180,7 @@ class AIAgent:
             else: 
                 custom_tools.append(
                     Tool(
-                        name=f"vector_search_{tool_name}",
+                        name=f"{tool_name}",
                         func=func,
                         description=description
                     )

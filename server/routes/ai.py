@@ -36,7 +36,7 @@ def run_mental_health_agent(user_id, chat_id):
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
-    agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
+    agent = MentalHealthAIAgent(tool_names=["location_search","web_search_tavily", "user_profile_retrieval", "agent_facts"])
 
     try:
             
@@ -61,7 +61,7 @@ def run_mental_health_agent(user_id, chat_id):
 def set_mental_health_end_state(user_id, chat_id):
     try:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
-        agent = MentalHealthAIAgent(tool_names=["web_search_tavily", "user_profile_retrieval"])
+        agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
 
         agent.perform_final_processes(user_id, chat_id)
 
