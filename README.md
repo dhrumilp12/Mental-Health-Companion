@@ -15,7 +15,7 @@ You may access the latest production site through https://mental-health-app-web.
 ## Export the Application
 1. Clone the repo
 ```
-https://github.com/janthonysantana/Mental-Health-Companion.git
+https://github.com/dhrumilp12/Mental-Health-Companion.git
 ```
 3. Build the server with Docker
 ```
