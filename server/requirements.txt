@@ -24,6 +24,7 @@ Flask-Cors==4.0.1
 Flask-JWT-Extended==4.6.0
 frozenlist==1.4.1
 greenlet==3.0.3
+googlemaps==4.10.0
 gunicorn==22.0.0
 h11==0.14.0
 httpcore==1.0.5
