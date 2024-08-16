@@ -10,8 +10,7 @@
 - **Agentic Framework:** [LangChain](https://www.langchain.com) was integrated to enhance the AI's functionality, enabling the AI to keep track of conversation history and use tools for web search, vector search and map services.
 - **Services & Libraries:** [pywebpush](https://pypi.org/project/pywebpush/) allowed for real-time communication with users through web push notifications, facilitated by user subscriptions managed through the Subscription model.  [Flask-Mail](https://pypi.org/project/Flask-Mail/) was used to manage email communications within the app.
 - **CI/CD** [Docker](https://www.docker.com) was used to containerize the application, ensuring consistency across different computing environments. [Github Actions](https://docs.github.com/en/actions) was used to optimize the deployment process by wiring it directly to Azure's web services.
-## View the Application
-You may access the latest production site through https://mental-health-app-web.azurewebsites.net and the latest development mirror through https://green-sand-04b157b0f.5.azurestaticapps.net/. 
+
 ## Export the Application
 1. Clone the repo
 ```
