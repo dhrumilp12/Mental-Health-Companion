@@ -16,11 +16,18 @@
 ```
 https://github.com/dhrumilp12/Mental-Health-Companion.git
 ```
-3. Build the server with Docker
+2. Build the server with Docker
 ```
 cd ./server
 docker build --pull --rm -t mental-health-app:latest .
 ```
+
+3.Configure environment variables:
+   - Copy the `.env.example` file to a new file named `.env`.
+   - Update the `.env` file with your specific configurations.
+   ```
+   cp .env.example .env
+   ```
 3. Setup the frontend environment with NPM
 ```
 cd ./client
