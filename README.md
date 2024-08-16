@@ -22,18 +22,18 @@ cd ./server
 docker build --pull --rm -t mental-health-app:latest .
 ```
 
-3.Configure environment variables:
+3. Configure environment variables:
    - Copy the `.env.example` file to a new file named `.env`.
    - Update the `.env` file with your specific configurations.
    ```
    cp .env.example .env
    ```
-3. Setup the frontend environment with NPM
+4. Setup the frontend environment with NPM
 ```
 cd ./client
 npm install
 ```
-4. Run the backend:
+5. Run the backend:
 ```
 python app.py
 ```
@@ -41,7 +41,7 @@ python app.py
 ```
 npm run build
 ```
-6. Execute the frontend:
+7. Execute the frontend:
 ```
 npm run preview
 ```
