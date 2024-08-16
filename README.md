@@ -28,7 +28,7 @@ npm install
 ```
 4. Run the backend:
 ```
-docker run -d -p 4242:80 mental-health-app:latest
+python app.py
 ```
 6. Build the frontend:
 ```
