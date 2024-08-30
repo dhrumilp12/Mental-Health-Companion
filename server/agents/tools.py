@@ -3,7 +3,7 @@ import os
 # from azure.identity import DefaultAzureCredential
 # from azure.mgmt.maps import AzureMapsManagementClient
 
-from langchain_community.tools import GooglePlacesTool
+from langchain_google_community import GooglePlacesTool, GooglePlacesAPIWrapper
 
 from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.bing_search import BingSearchResults

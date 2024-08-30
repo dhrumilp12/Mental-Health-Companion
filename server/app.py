@@ -83,7 +83,11 @@ def setup_sub_db(app):
 app,mail, jwt = run_app()
 
 # DB pre-load
-load_agent_facts_to_db()
-
-setup_sub_db(app)
+if __name__ == '__main__':
+    HOST = os.getenv("FLASK_RUN_HOST") or "0.0.0.0"
+    PORT = os.getenv("FLASK_RUN_PORT") or 8000
+    app, jwt, mail = run_app()
+    load_agent_facts_to_db()
+    setup_sub_db(app)
+    app.run(debug=True, host= HOST, port= PORT)
 
