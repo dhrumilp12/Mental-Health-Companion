@@ -1,43 +1,43 @@
-.mood-logs {
+/* .mood-logs {
     max-width: 600px;
     margin: 50px auto;
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border-radius: 8px;
     background-color: white;
-}
+} */
 
 h2 {
-    display: flex;
-    align-items: center; /* This aligns the icon with the text vertically */
-    font-size: 24px; /* Adjust text size as needed */
+  display: flex;
+  align-items: center; /* This aligns the icon with the text vertically */
+  font-size: 24px; /* Adjust text size as needed */
 }
 
 .icon-large {
-    font-size: 40px; /* or any other size */
-    margin-right: 7px; /* Adds space between the icon and the text */
+  font-size: 40px; /* or any other size */
+  margin-right: 7px; /* Adds space between the icon and the text */
 }
 
 .mood-logs h2 {
-    text-align: center;
-    color: #333;
+  text-align: center;
+  color: #333;
 }
 
 ul {
-    list-style-type: none;
-    padding: 0;
+  list-style-type: none;
+  padding: 0;
 }
 
 li {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
 }
 
 li:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .error {
-    color: red;
-    text-align: center;
+  color: red;
+  text-align: center;
 }
