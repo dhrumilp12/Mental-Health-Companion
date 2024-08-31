@@ -43,7 +43,7 @@ def run_app():
     cors_config = {
 
         r"*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net", "127.0.0.1"],
+            "origins": ["https://mental-health-app-web.azurewebsites.net", "http://localhost:3000"],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",

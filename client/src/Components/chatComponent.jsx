@@ -148,7 +148,7 @@ const ChatComponent = () => {
     setIsFetchingMessage(true);
     try {
       const response = await apiServerAxios.post(
-        `/api/ai/mental_health/welcome/${userId}`,
+        `/ai/mental_health/welcome/${userId}`,
         {
           headers: {
             "Content-Type": "application/json",

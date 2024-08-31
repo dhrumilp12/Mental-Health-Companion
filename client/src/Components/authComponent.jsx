@@ -150,7 +150,7 @@ function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await apiServerAxios.post("/api/user/login", {
+      const response = await apiServerAxios.post("/user/login", {
         username,
         password,
       });
@@ -183,7 +183,7 @@ function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await apiServerAxios.post("/api/user/signup", {
+      const response = await apiServerAxios.post("/user/signup", {
         username,
         email,
         password,
@@ -220,7 +220,7 @@ function AuthComponent() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await apiServerAxios.post("/api/user/anonymous_signin");
+      const response = await apiServerAxios.post("/user/anonymous_signin");
       if (response && response.data) {
         const userId = "0";
         const isAnon = true;
