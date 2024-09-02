@@ -14,7 +14,7 @@ function RequestPasswordReset() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post('/api/user/request_reset', { email });
+      const response = await axios.post('/user/request_reset', { email });
       setMessage(response.data.message);
       setIsError(false);
     } catch (error) {

@@ -192,7 +192,7 @@ const ChatComponent = () => {
     setIsLoading(true);
     try {
       const response = await apiServerAxios.patch(
-        `/api/ai/mental_health/finalize/${userId}/${chatId}`,
+        `/ai/mental_health/finalize/${userId}/${chatId}`,
         {
           headers: { "Content-Type": "application/json" },
         }
@@ -230,7 +230,7 @@ const ChatComponent = () => {
         turn_id: turnId,
       };
       const response = await apiServerAxios.post(
-        `/api/ai/mental_health/${userId}/${chatId}`,
+        `/ai/mental_health/${userId}/${chatId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -348,7 +348,7 @@ const ChatComponent = () => {
     setIsLoading(true);
 
     apiServerAxios
-      .post("/api/ai/mental_health/voice-to-text", formData, {
+      .post("/ai/mental_health/voice-to-text", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

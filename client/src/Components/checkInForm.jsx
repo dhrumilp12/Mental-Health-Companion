@@ -35,7 +35,7 @@ function CheckInForm({ userId, update }) {
     if (update && checkInId) {
       // Fetch existing check-in data
       setLoading(true);
-      apiServerAxios.get(`/api/check-in/${checkInId}`,{
+      apiServerAxios.get(`/check-in/${checkInId}`,{
         headers: {
             'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
         }
@@ -66,7 +66,7 @@ function CheckInForm({ userId, update }) {
       return;
     }
 
-    const url = update ? `/api/check-in/${checkInId}` : '/api/check-in/schedule';
+    const url = update ? `/check-in/${checkInId}` : '/api/check-in/schedule';
     // Setup Axios request configuration
     const config = {
       headers: {

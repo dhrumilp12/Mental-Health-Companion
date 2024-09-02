@@ -35,7 +35,7 @@ function Navbar({ toggleSidebar }) {
       return; // Exit the function if no user ID is available
     }
     try {
-      const response = await apiServerAxios.get(`/api/check-in/missed?user_id=${userId}`, {
+      const response = await apiServerAxios.get(`/check-in/missed?user_id=${userId}`, {
         headers: {
             'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
         }

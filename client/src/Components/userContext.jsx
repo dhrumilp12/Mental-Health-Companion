@@ -52,7 +52,7 @@ export const UserProvider = ({ children }) => {
         console.error('No token available for logout');
         return; // Exit the function if no token is available
       }
-      const response = await apiServerAxios.post('/api/user/logout', {}, {
+      const response = await apiServerAxios.post('/user/logout', {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -72,7 +72,7 @@ export const UserProvider = ({ children }) => {
   const changePassword = async (userId, currentPassword, newPassword) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await apiServerAxios.patch(`/api/user/change_password/${userId}`, {
+      const response = await apiServerAxios.patch(`/user/change_password/${userId}`, {
         current_password: currentPassword,
         new_password: newPassword
       }, {
