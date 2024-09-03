@@ -31,9 +31,8 @@ def run_app():
     mail = Mail(app)
     jwt = JWTManager(app)
     cors_config = {
-
         r"*": {
-            "origins": ["https://mental-health-app-web.azurewebsites.net", "http://localhost:3000"],
+            "origins": [os.getenv("BASE_URL")],
             "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             "allow_headers": [
                 "Authorization",
