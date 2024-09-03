@@ -20,7 +20,7 @@ RUN poetry install $(test {FLASK_ENV} == production && echo "--only=main") --no-
 COPY . ./
 
 # Rename .env.production
-RUN mv .env.production .env
+#RUN mv .env.production .env
 
 # # Execute Flask
 CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "app:app"]
