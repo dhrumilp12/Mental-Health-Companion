@@ -66,7 +66,7 @@ function CheckInForm({ userId, update }) {
       return;
     }
 
-    const url = update ? `/check-in/${checkInId}` : '/api/check-in/schedule';
+    const url = update ? `/check-in/${checkInId}` : '/check-in/schedule';
     // Setup Axios request configuration
     const config = {
       headers: {
