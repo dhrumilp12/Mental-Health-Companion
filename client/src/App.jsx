@@ -162,7 +162,11 @@ function Layout({ children }) {
             <Box
                 component="main"
                 style={{ width: "100%" }}
-                sx={{ flexGrow: 1, p: mainPadding, ml: 30 }}
+                sx={{
+                    flexGrow: 1,
+                    p: mainPadding,
+                    ml: showNav && sidebarOpen ? 30 : 0,
+                }}
             >
                 {children}
             </Box>
