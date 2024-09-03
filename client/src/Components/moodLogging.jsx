@@ -22,7 +22,7 @@ function MoodLogging() {
         }
 
         try {
-            const response = await apiServerAxios.post('/api/user/log_mood', { mood, activities }, {
+            const response = await apiServerAxios.post('/user/log_mood', { mood, activities }, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

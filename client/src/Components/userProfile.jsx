@@ -133,7 +133,7 @@ function UserProfile() {
       }
     const fetchData = async () => {
       try {
-        const response = await apiServerAxios.get(`/api/user/profile/${userId}`);
+        const response = await apiServerAxios.get(`/user/profile/${userId}`);
         console.log("Fetched data:", response.data);
         const formattedData = {
             username: response.data.username || '',
@@ -187,7 +187,7 @@ function UserProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiServerAxios.patch(`/api/user/profile/${userId}`, user);
+      await apiServerAxios.patch(`/user/profile/${userId}`, user);
       setMessage('Profile updated successfully!');
       setSeverity('success');
     } catch (error) {

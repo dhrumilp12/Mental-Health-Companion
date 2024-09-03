@@ -1,34 +1,32 @@
 .mood-logging-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    font-family: 'Arial', sans-serif;
-    
-    
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: "Arial", sans-serif;
 }
 
 .mood-logging {
-    width: 90%;
-    max-width: 500px;
-    background-color: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    transition: box-shadow 0.3s ease-in-out;
+  width: 90%;
+  max-width: 500px;
+  background-color: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease-in-out;
 }
 
 .mood-logging:hover {
-    box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
 }
 
 .input-group {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
-input[type="text"] {
+/* input[type="text"] {
     padding: 12px 20px;
     margin: 10px 0;
     border: 2px solid #ccc;
@@ -41,35 +39,34 @@ input[type="text"] {
 input[type="text"]:focus {
     border-color: #007BFF;
     outline: none;
-}
+} */
 
 .submit-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    background-color: #007BFF;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 18px;
-    margin-top: 20px;
-    transition: background-color 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  margin-top: 20px;
+  transition: background-color 0.3s ease-in-out;
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
-
 .message {
-    text-align: center;
-    margin-top: 15px;
-    padding: 10px;
-    font-size: 16px;
-    color: #2c3e50;
-    border-radius: 5px;
-    background-color: #e0e0e0;
+  text-align: center;
+  margin-top: 15px;
+  padding: 10px;
+  font-size: 16px;
+  color: #2c3e50;
+  border-radius: 5px;
+  background-color: #e0e0e0;
 }

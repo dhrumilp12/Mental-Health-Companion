@@ -56,7 +56,7 @@ function ChatLogManager() {
     const downloadChatLogs = async (range = false) => {
         setLoading(true);
         try {
-            const endpoint = range ? '/api/user/download_chat_logs/range' : '/api/user/download_chat_logs';
+            const endpoint = range ? '/user/download_chat_logs/range' : '/api/user/download_chat_logs';
             const params = range ? { params: { start_date: startDate, end_date: endDate } } : {};
 
             const response = await apiServerAxios.get(endpoint, {
@@ -89,7 +89,7 @@ function ChatLogManager() {
         setDialogOpen(false); // Close dialog first
         setLoading(true);
         try {
-            const endpoint = dialogRange ? '/api/user/delete_chat_logs/range' : '/api/user/delete_chat_logs';
+            const endpoint = dialogRange ? '/user/delete_chat_logs/range' : '/user/delete_chat_logs';
             const params = dialogRange ? { params: { start_date: startDate, end_date: endDate } } : {};
 
             const response = await apiServerAxios.delete(endpoint, {

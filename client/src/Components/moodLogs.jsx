@@ -17,7 +17,7 @@ function MoodLogs() {
             }
 
             try {
-                const response = await apiServerAxios.get('/api/user/get_mood_logs', {
+                const response = await apiServerAxios.get('/user/get_mood_logs', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

@@ -64,7 +64,7 @@ function CheckInsList() {
 
             setLoading(true);
             try {
-                const response = await apiServerAxios.get(`/api/check-in/all?user_id=${userId}`, {
+                const response = await apiServerAxios.get(`/check-in/all?user_id=${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
             }
@@ -110,7 +110,7 @@ function CheckInsList() {
       const handleDeleteCheckIn = async () => {
         if (selectedCheckIn) {
             try {
-                await apiServerAxios.delete(`/api/check-in/${selectedCheckIn._id}`,{
+                await apiServerAxios.delete(`/check-in/${selectedCheckIn._id}`,{
                   headers: {
                       'Authorization': `Bearer ${token}` // Ensure the Authorization header is set
                   }
