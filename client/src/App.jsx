@@ -8,7 +8,7 @@ import UserProfile from './Components/userProfile';
 import Sidebar from './Components/sideBar';
 import Navbar from './Components/navBar';
 import ChatLogManager from './Components/chatLogManager';
-import ChatInterface from './Components/chatInterface';
+
 import MoodLogging from './Components/moodLogging';
 import MoodLogs from './Components/moodLogs';
 import CheckInForm from './Components/checkInForm';
@@ -31,13 +31,8 @@ function App() {
         
             <Layout>
                 <Routes>
-                    <Route path="/" element={<ProtectedRoute>{user?.userId ? <ChatComponent /> : <ChatInterface />}
-                  </ProtectedRoute>} />
-                  <Route path="/chat" element={
-                  <ProtectedRoute>
-                    <ChatInterface />
-                  </ProtectedRoute>
-                } />
+                    <Route path="/" element={<ProtectedRoute> <ChatComponent /> </ProtectedRoute>} />
+                  
                     <Route path="/reset_password/:token" element={<ResetPassword />} />
                     <Route path="/request_reset" element={<RequestPasswordReset />} />
                     <Route path="/auth" element={<AuthComponent />} />
