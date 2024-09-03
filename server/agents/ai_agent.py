@@ -187,5 +187,6 @@ class AIAgent:
                 )
 
         result_tools = community_tools + custom_tools
+        print("Tools:", result_tools)
 
         return result_tools
