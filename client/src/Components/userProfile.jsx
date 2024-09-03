@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PasswordUpdateTab from "./passwordUpdateTab";
-import axios from "axios";
+// import axios from "axios";
 import apiServerAxios from "../api/axios";
 
 import {
-    TextField,
     Button,
     Container,
     Typography,
-    Paper,
+    // Paper,
     CssBaseline,
     Snackbar,
     Alert,
@@ -29,14 +28,7 @@ import {
     styled,
     alpha,
 } from "@mui/material/styles";
-import EmailIcon from "@mui/icons-material/Email";
-import PersonIcon from "@mui/icons-material/Person";
-import CakeIcon from "@mui/icons-material/Cake";
 import WcIcon from "@mui/icons-material/Wc"; // Icon for gender
-import HomeIcon from "@mui/icons-material/Home"; // Icon for place of residence
-import WorkIcon from "@mui/icons-material/Work";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import UpdateIcon from "@mui/icons-material/Update";
 import Checkbox from "@mui/material/Checkbox";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -168,15 +160,15 @@ const BootstrapInput = styled(InputBase)(({ theme }) => ({
     },
 }));
 
-const StyledForm = styled(Paper)(({ theme }) => ({
-    marginTop: theme.spacing(2),
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: theme.spacing(2),
-    boxShadow: theme.shadows[3], // Subtle shadow for depth
-}));
+// const StyledForm = styled(Paper)(({ theme }) => ({
+//     marginTop: theme.spacing(2),
+//     padding: theme.spacing(2),
+//     display: "flex",
+//     flexDirection: "column",
+//     alignItems: "center",
+//     gap: theme.spacing(2),
+//     boxShadow: theme.shadows[3], // Subtle shadow for depth
+// }));
 
 function UserProfile() {
     const { userId } = useParams();
