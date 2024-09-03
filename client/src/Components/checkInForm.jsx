@@ -140,45 +140,29 @@ function CheckInForm({ userId, update }) {
             return;
         }
 
-        const url = update
-            ? `/check-in/${checkInId}`
-            : "/api/check-in/schedule";
-        // Setup Axios request configuration
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        };
-        console.log("URL:", url);
-        const method = update ? "patch" : "post";
-        const data = {
-            user_id: userId,
-            check_in_time: checkInTime,
-            frequency,
-            notify,
-        };
-        console.log("Submitting:", data);
-        try {
-            const response = await apiServerAxios[method](url, data, config);
-            console.log("Success:", response.data.message);
-            setSnackbar({
-                open: true,
-                message: response.data.message,
-                severity: "success",
-            });
-            // Optionally reset form or handle next steps
-        } catch (error) {
-            console.error("Error:", error.response?.data || error);
-            const errorMessage =
-                error.response?.data?.error || "An unexpected error occurred";
-            setSnackbar({
-                open: true,
-                message: errorMessage,
-                severity: "error",
-            });
-        }
-    };
+    const url = update ? `/check-in/${checkInId}` : '/check-in/schedule';
+    // Setup Axios request configuration
+    const config = {
+      headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+      }
+  };
+    console.log('URL:', url);
+    const method = update ? 'patch' : 'post';
+    const data = { user_id: userId, check_in_time: checkInTime, frequency, notify };
+    console.log('Submitting:', data);
+    try {
+      const response = await apiServerAxios[method](url, data, config);
+      console.log('Success:', response.data.message);
+      setSnackbar({ open: true, message: response.data.message, severity: 'success' });
+      // Optionally reset form or handle next steps
+    } catch (error) {
+      console.error('Error:', error.response?.data || error);
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred";
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    }
+  };
 
     const handleSnackbarClose = (event, reason) => {
         if (reason === "clickaway") {

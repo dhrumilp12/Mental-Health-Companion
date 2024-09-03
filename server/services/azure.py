@@ -8,7 +8,7 @@ def get_azure_openai_variables():
     load_dotenv()
     AOAI_ENDPOINT = os.environ.get("AOAI_ENDPOINT")
     AOAI_KEY = os.environ.get("AOAI_KEY")
-    AOAI_API_VERSION = "2023-09-01-preview"
+    AOAI_API_VERSION = "2024-05-01-preview"
     AOAI_EMBEDDINGS = os.getenv("EMBEDDINGS_DEPLOYMENT_NAME")
     AOAI_COMPLETIONS = os.getenv("COMPLETIONS_DEPLOYMENT_NAME")
 

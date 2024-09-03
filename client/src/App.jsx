@@ -32,99 +32,37 @@ function App() {
     }, []);
 
     return (
-        <Layout>
-            <Routes>
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            {user?.userId ? (
-                                <ChatComponent />
-                            ) : (
-                                <ChatInterface />
-                            )}
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/chat"
-                    element={
-                        <ProtectedRoute>
-                            <ChatInterface />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/reset_password/:token"
-                    element={<ResetPassword />}
-                />
-                <Route
-                    path="/request_reset"
-                    element={<RequestPasswordReset />}
-                />
-                <Route path="/auth" element={<AuthComponent />} />
-                <Route
-                    path="/user/profile/:userId"
-                    element={
-                        <ProtectedRoute>
-                            <UserProfile />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/mood_logging"
-                    element={
-                        <ProtectedRoute>
-                            <MoodLogging />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/mood_logs"
-                    element={
-                        <ProtectedRoute>
-                            <MoodLogs />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/check_in"
-                    element={
-                        <ProtectedRoute>
-                            <CheckInForm
-                                userId={user?.userId}
-                                checkInId=""
-                                update={false}
-                            />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/check_in/:checkInId"
-                    element={
-                        <ProtectedRoute>
-                            <CheckInForm userId={user?.userId} update={true} />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/chat_log_Manager"
-                    element={
-                        <ProtectedRoute>
-                            <ChatLogManager />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/user/check_ins/:userId"
-                    element={
-                        <ProtectedRoute>
-                            <CheckInsList />
-                        </ProtectedRoute>
-                    }
-                />
-            </Routes>
-        </Layout>
+        
+            <Layout>
+                <Routes>
+                    <Route path="/" element={<ProtectedRoute>{user?.userId ? <ChatComponent /> : <ChatInterface />}
+                  </ProtectedRoute>} />
+                  <Route path="/chat" element={
+                  <ProtectedRoute>
+                    <ChatInterface />
+                  </ProtectedRoute>
+                } />
+                    <Route path="/reset_password/:token" element={<ResetPassword />} />
+                    <Route path="/request_reset" element={<RequestPasswordReset />} />
+                    <Route path="/auth" element={<AuthComponent />} />
+                    <Route path="/user/profile/:userId" element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } />
+                    <Route path="/user/mood_logging" element={
+                  <ProtectedRoute>
+                    <MoodLogging />
+                  </ProtectedRoute>
+                } />
+                    <Route path="/user/mood_logs" element={<ProtectedRoute><MoodLogs /></ProtectedRoute>} />
+                    <Route path="/user/check_in" element={<ProtectedRoute><CheckInForm userId={user?.userId} checkInId="" update={false} /></ProtectedRoute>} />
+                    <Route path="/user/check_in/:checkInId" element={<ProtectedRoute><CheckInForm userId={user?.userId} update={true} /></ProtectedRoute>} />
+                    <Route path="/user/chat_log_Manager" element={<ProtectedRoute><ChatLogManager /></ProtectedRoute>} />
+                    <Route path="/user/check_ins/:userId" element={<ProtectedRoute><CheckInsList /></ProtectedRoute>} />
+                </Routes>
+            </Layout>
+        
     );
 }
 

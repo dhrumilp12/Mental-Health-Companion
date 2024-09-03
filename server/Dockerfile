@@ -9,18 +9,18 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 ENV FLASK_RUN_HOST=0.0.0.0 \
 FLASK_RUN_PORT=8000 \
-FLASK_ENV=production
+FLASK_ENV=development
 
 RUN pipx install poetry
 
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install $(test {FLASK_ENV} == production && echo "--only=main") --no-interaction --no-ansi
+RUN poetry install $(test {FLASK_ENV} == development && echo "--only=main") --no-interaction --no-ansi
 
 COPY . ./
 
 # Rename .env.production
-RUN mv .env.production .env
+#RUN mv .env.production .env
 
 # # Execute Flask
 CMD ["poetry", "run", "gunicorn", "-b", "0.0.0.0:8000", "app:app"]
