@@ -9,7 +9,7 @@ import LockIcon from '@mui/icons-material/Lock';
 const theme = createTheme({
     palette: {
       primary: {
-        main: '#3F51B5',
+        main: '#656782',
       },
       secondary: {
         main: '#F6AE2D',
@@ -38,16 +38,17 @@ const PasswordUpdateTab = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="xs" sx={{background: '#fff',borderRadius: '8px', boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',}}>
+      <Container component="main" maxWidth="sm" sx={{background: '#fff',borderRadius: '20px', boxShadow: '0px 2px 4px rgba(0,0,0,0.2)',}}>
         <Box
           sx={{
             marginTop: 8,
+            p:1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
           }}
         >
-          <Typography component="h1" variant="h5">
+          <Typography component="h1" variant="h4">
             Update Password
           </Typography>
           <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: theme.spacing(1) }}>
@@ -92,7 +93,7 @@ const PasswordUpdateTab = () => {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3, mb: 2, borderRadius: 20, padding: "10px 15px" }}
             >
               Update Password
             </Button>
