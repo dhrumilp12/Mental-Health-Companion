@@ -14,19 +14,22 @@ def send_push_notification(user_id, message):
     
     print(f"Attempting to send notification to {user_id} with subscription: {subscription.subscription_info}")
     try:
-            print("Subscription info:", subscription.subscription_info)
-
-            webpush(
-                subscription_info=json.loads(subscription.subscription_info),
-                data=json.dumps({
-                    "title": "Notification Title",
-                    "body": message
-                    }),
-                vapid_private_key=os.environ.get("VAPID_PRIVATE_KEY"),
-                vapid_claims={"sub": "mailto:dpatel24@radar.gsw.edu"}
-            )
-            print("Notification sent successfully")
-            return True
+        subscription_info = json.loads(subscription.subscription_info)
+        print("Subscription info:", subscription_info)
+        vapid_private_key = os.environ.get("VAPID_PRIVATE_KEY")
+        print("vapid_private_key:", vapid_private_key)
+        
+        webpush(
+            subscription_info=subscription_info,
+            data=json.dumps({
+                "title": "Notification Title",
+                "body": message
+            }),
+            vapid_private_key=vapid_private_key,
+            vapid_claims={"sub": "mailto:dpatel24@radar.gsw.edu"}
+        )
+        print("Notification sent successfully")
+        return True
     except WebPushException as e:
             print(f"Failed to send notification: {e}")
             if e.response:
