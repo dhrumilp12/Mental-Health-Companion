@@ -37,6 +37,7 @@ if ('serviceWorker' in navigator) {
           return registration.pushManager.getSubscription();
         }).then(function (subscription) {
           if (!subscription) {
+            console.log(urlBase64ToUint8Array(VAPID_PUBLIC_KEY));
             return registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)

@@ -160,6 +160,7 @@ const BootstrapInput = styled(InputBase)(({ theme }) => ({
 
 function UserProfile() {
     const { userId } = useParams();
+    const token = localStorage.getItem('token');
     const [user, setUser] = useState({
         username: "",
         name: "",
@@ -274,7 +275,11 @@ function UserProfile() {
                 setErrorMessage("Incorrect username");
                 return;
             }
-            await apiServerAxios.delete(`/user/delete/${userId}`)
+            await apiServerAxios.delete(`/user/delete/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
             closeDeleteModal(); 
             navigate("/auth");
             setMessage("Profile successfully deleted");
