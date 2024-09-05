@@ -3,11 +3,11 @@ API entrypoint for backend API.
 """
 from dotenv import load_dotenv
 import os
-
-from flask import Flask
+from threading import Thread
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-
+from services.scheduler_main import NotificationScheduler
 from models.subscription import db as sub_db
 from services.db.agent_facts import load_agent_facts_to_db
 from config.config import Config
@@ -55,7 +55,23 @@ def run_app():
         Health probe endpoint.
         """    
         return {"status": "ready"}
+    
 
+    # Create and start the notification scheduler
+    scheduler = NotificationScheduler(app)
+    notification_thread = Thread(target=scheduler.run_scheduler)
+    notification_thread.start()
+
+    @app.route("/test-notification")
+    def test_notification():
+        # Use actual values or test values for user_id and check_in_id
+        user_id = "66d8fc2a98e78c386d1871b4"
+        check_in_id = "66d8fe5b5071de85b2d70ebf"
+        message = "This is a test notification."
+        scheduler.send_notification(user_id, check_in_id, message)
+        return jsonify({"message": "Test notification sent"})
+    
+    
     return app, jwt, mail
 
 
@@ -76,5 +92,6 @@ if __name__ == '__main__':
     app, jwt, mail = run_app()
     load_agent_facts_to_db()
     setup_sub_db(app)
-    app.run(debug=False, host= HOST, port= PORT)
+    app.run(debug=True, host= HOST, port= PORT)
 
+    
