@@ -104,7 +104,7 @@ const ChatComponent = () => {
     setIsFetchingMessage(true);
     try {
       const response = await apiServerAxios.post(
-        `/api/ai/mental_health/welcome/${userId}`,
+        `/ai/mental_health/welcome/${userId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -148,7 +148,7 @@ const ChatComponent = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/ai/mental_health/finalize/${userId}/${chatId}`,
+        `/ai/mental_health/finalize/${userId}/${chatId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -187,14 +187,11 @@ const ChatComponent = () => {
         prompt: input,
         turn_id: turnId,
       });
-      const response = await fetch(
-        `/api/ai/mental_health/${userId}/${chatId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: body,
-        }
-      );
+      const response = await fetch(`/ai/mental_health/${userId}/${chatId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: body,
+      });
 
       const data = await response.json();
       console.log(data);
@@ -297,7 +294,7 @@ const ChatComponent = () => {
     setIsLoading(true);
 
     apiServerAxios
-      .post("/api/ai/mental_health/voice-to-text", formData, {
+      .post("/ai/mental_health/voice-to-text", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

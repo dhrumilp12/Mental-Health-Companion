@@ -192,7 +192,7 @@ const ChatComponent = () => {
     setIsLoading(true);
     try {
       const response = await apiServerAxios.patch(
-        `/api/ai/mental_health/finalize/${userId}/${chatId}`,
+        `/ai/mental_health/finalize/${userId}/${chatId}`,
         {
           headers: { "Content-Type": "application/json" },
         }
@@ -230,7 +230,7 @@ const ChatComponent = () => {
         turn_id: turnId,
       };
       const response = await apiServerAxios.post(
-        `/api/ai/mental_health/${userId}/${chatId}`,
+        `/ai/mental_health/${userId}/${chatId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -348,7 +348,7 @@ const ChatComponent = () => {
     setIsLoading(true);
 
     apiServerAxios
-      .post("/api/ai/mental_health/voice-to-text", formData, {
+      .post("/ai/mental_health/voice-to-text", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -403,7 +403,7 @@ const ChatComponent = () => {
                             
                             top: 5px;
                             right: 5px;
-                            padding: 4px 8px; /* Smaller padding */
+                            padding: 4px 16px; /* Smaller padding */
                             font-size: 0.8rem; /* Smaller font size */
                         }
                     }
@@ -413,10 +413,10 @@ const ChatComponent = () => {
         sx={{
           maxWidth: "100%",
           mx: "auto",
-          my: 2,
+          my: 4,
           display: "flex",
           flexDirection: "column",
-          height: "91vh",
+          height: "88vh",
           borderRadius: 2,
           boxShadow: 1,
         }}
@@ -447,12 +447,8 @@ const ChatComponent = () => {
                 marginBottom: "5px",
               }}
             >
-              <Tooltip title="Toggle voice responses">
-                <IconButton
-                  color="inherit"
-                  onClick={handleToggleVoice}
-                  sx={{ padding: 0 }}
-                >
+              {/* <Tooltip title="Toggle voice responses">
+                <IconButton color="inherit" onClick={handleToggleVoice}>
                   <Switch
                     checked={voiceEnabled}
                     onChange={(e) => setVoiceEnabled(e.target.checked)}
@@ -463,7 +459,7 @@ const ChatComponent = () => {
                     sx={{
                       height: 42, // Adjust height to align with icons
                       "& .MuiSwitch-switchBase": {
-                        padding: "9px", // Reduce padding to make the switch smaller
+                        padding: "8px", // Reduce padding to make the switch smaller
                       },
                       "& .MuiSwitch-switchBase.Mui-checked": {
                         color: "white",
@@ -475,12 +471,66 @@ const ChatComponent = () => {
                     }}
                   />
                 </IconButton>
+              </Tooltip> */}
+              <Tooltip title="Toggle voice responses" arrow placement="bottom">
+                <IconButton
+                  color="inherit"
+                  onClick={handleToggleVoice}
+                  sx={{
+                    padding: "0 8px", // Adjust padding to balance the icon and switch
+                    display: "flex",
+                    alignItems: "center", // Align items centrally
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    },
+                  }}
+                >
+                  <Switch
+                    checked={voiceEnabled}
+                    onChange={(e) => setVoiceEnabled(e.target.checked)}
+                    icon={<VolumeOffIcon />}
+                    checkedIcon={<VolumeUpIcon />}
+                    inputProps={{ "aria-label": "Voice response toggle" }}
+                    color="default"
+                    sx={{
+                      width: 48,
+                      height: 24,
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      "& .MuiSwitch-switchBase": {
+                        padding: "4px", // Adjust padding for better alignment
+                        "&.Mui-checked": {
+                          transform: "translateX(20px)",
+                          color: "white",
+                          "& + .MuiSwitch-track": {
+                            backgroundColor: (theme) =>
+                              theme.palette.primary.main,
+                            opacity: 1,
+                          },
+                        },
+                      },
+                      "& .MuiSwitch-thumb": {
+                        width: 18,
+                        height: 18,
+                      },
+                      "& .MuiSwitch-track": {
+                        borderRadius: 12,
+                        backgroundColor: (theme) => theme.palette.grey[400],
+                        opacity: 1,
+                        transition: (theme) =>
+                          theme.transitions.create(["background-color"], {
+                            duration: 300,
+                          }),
+                      },
+                    }}
+                  />
+                </IconButton>
               </Tooltip>
 
               <Tooltip title="Start a new chat" placement="top" arrow>
                 <IconButton
                   aria-label="new chat"
-                  //variant="outlined"
                   color="primary"
                   onClick={finalizeChat}
                   disabled={isLoading}
