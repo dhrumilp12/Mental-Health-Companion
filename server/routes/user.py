@@ -453,3 +453,33 @@ def download_chat_logs_in_range():
     except Exception as e:
         logging.error(f"Error downloading chat logs: {str(e)}")
         return jsonify({"error": "Failed to download chat logs"}), 500
+
+
+
+
+@user_routes.delete('/user/delete/<user_id>')
+@jwt_required()
+def delete_user(user_id):
+    try:
+        db_client = MongoDBClient.get_client()
+        db = db_client[MongoDBClient.get_db_name()]
+        
+        # Delete user from the 'users' collection
+        user_delete_result = db['users'].delete_one({"_id": ObjectId(user_id)})
+        if user_delete_result.deleted_count == 0:
+            return jsonify({"message": "User not found"}), 404
+
+        # Deleting related entries in other collections
+        db['user_journeys'].delete_many({"user_id": user_id})
+        db['chat_summaries'].delete_many({"user_id": user_id})
+        db['check_ins'].delete_many({"user_id": user_id})
+
+        # Additional collections like 'user_materials', 'user_entities', etc., can also be cleared similarly.
+        db['user_materials'].delete_many({"user_id": user_id})
+        db['user_entities'].delete_many({"user_id": user_id})
+        
+        return jsonify({"message": "User and all related data deleted successfully"}), 200
+    
+    except Exception as e:
+        logging.error(f"Error deleting user: {str(e)}")
+        return jsonify({"error": str(e)}), 500

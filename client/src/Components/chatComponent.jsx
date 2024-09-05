@@ -447,31 +447,6 @@ const ChatComponent = () => {
                 marginBottom: "5px",
               }}
             >
-              {/* <Tooltip title="Toggle voice responses">
-                <IconButton color="inherit" onClick={handleToggleVoice}>
-                  <Switch
-                    checked={voiceEnabled}
-                    onChange={(e) => setVoiceEnabled(e.target.checked)}
-                    icon={<VolumeOffIcon />}
-                    checkedIcon={<VolumeUpIcon />}
-                    inputProps={{ "aria-label": "Voice response toggle" }}
-                    color="default"
-                    sx={{
-                      height: 42, // Adjust height to align with icons
-                      "& .MuiSwitch-switchBase": {
-                        padding: "8px", // Reduce padding to make the switch smaller
-                      },
-                      "& .MuiSwitch-switchBase.Mui-checked": {
-                        color: "white",
-                        transform: "translateX(16px)",
-                        "& + .MuiSwitch-track": {
-                          backgroundColor: "primary.main",
-                        },
-                      },
-                    }}
-                  />
-                </IconButton>
-              </Tooltip> */}
               <Tooltip title="Toggle voice responses" arrow placement="bottom">
                 <IconButton
                   color="inherit"
@@ -479,7 +454,8 @@ const ChatComponent = () => {
                   sx={{
                     padding: "0 8px", // Adjust padding to balance the icon and switch
                     display: "flex",
-                    alignItems: "center", // Align items centrally
+                    alignItems: "center",
+                    // Align items centrally
                     "&:hover": {
                       backgroundColor: "rgba(255, 255, 255, 0.1)",
                     },
@@ -493,8 +469,8 @@ const ChatComponent = () => {
                     inputProps={{ "aria-label": "Voice response toggle" }}
                     color="default"
                     sx={{
-                      width: 48,
-                      height: 24,
+                      width: 50,
+                      height: 30,
                       padding: 0,
                       display: "flex",
                       alignItems: "center",
@@ -504,8 +480,7 @@ const ChatComponent = () => {
                           transform: "translateX(20px)",
                           color: "white",
                           "& + .MuiSwitch-track": {
-                            backgroundColor: (theme) =>
-                              theme.palette.primary.main,
+                            backgroundColor: "#a281d6",
                             opacity: 1,
                           },
                         },
@@ -531,12 +506,12 @@ const ChatComponent = () => {
               <Tooltip title="Start a new chat" placement="top" arrow>
                 <IconButton
                   aria-label="new chat"
-                  color="primary"
+                  color="#a281d6"
                   onClick={finalizeChat}
                   disabled={isLoading}
                   sx={{
                     "&:hover": {
-                      backgroundColor: "primary.main",
+                      backgroundColor: "#a281d6",
                       color: "common.white",
                     },
                   }}
@@ -668,7 +643,7 @@ const ChatComponent = () => {
                               : "text.primary",
                           //textAlign: msg.sender === 'user' ? 'right' : 'left',
                           bgcolor:
-                            msg.sender === "user" ? "primary.main" : "grey.200", // You can adjust the background color here
+                            msg.sender === "user" ? "#a281d6" : "grey.200", // You can adjust the background color here
                           borderRadius: "16px", // Adds rounded corners to the text
                           px: 2, // padding left and right within the text
                           py: 1, // padding top and bottom within the text
@@ -696,7 +671,7 @@ const ChatComponent = () => {
               bgcolor: "background.paper",
             }}
           >
-            <TextField
+            {/* <TextField
               fullWidth
               variant="outlined"
               placeholder="Type your message here..."
@@ -736,6 +711,61 @@ const ChatComponent = () => {
                   </InputAdornment>
                 ),
               }}
+            /> */}
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Type your message here..."
+              value={input}
+              onChange={handleInputChange}
+              disabled={isLoading}
+              sx={{
+                mr: 1,
+                flexGrow: 1,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "20px", // Rounder border radius
+                  "& fieldset": {
+                    borderColor: "#a281d6", // Default border color
+                  },
+                  "&:hover fieldset": {
+                    borderColor: "#a281d6", // Hover border color
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#a281d6", // Focused border color
+                  },
+                },
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={isRecording ? stopRecording : startRecording}
+                      aria-label={
+                        isRecording ? "Stop recording" : "Start recording"
+                      }
+                      size="large"
+                      edge="end"
+                      disabled={isLoading}
+                    >
+                      {isRecording ? (
+                        <MicOffIcon size="small" />
+                      ) : (
+                        <MicIcon size="small" />
+                      )}
+                      {isRecording && (
+                        <CircularProgress
+                          size={30}
+                          sx={{
+                            color: "primary.main",
+                            position: "absolute",
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             {isLoading ? (
@@ -744,6 +774,13 @@ const ChatComponent = () => {
               <Button
                 variant="contained"
                 color="primary"
+                sx={{
+                  backgroundColor: "#a281d6",
+                  "&:hover": {
+                    backgroundColor: "#a281d6",
+                    opacity: 0.9,
+                  },
+                }}
                 onClick={sendMessage}
                 disabled={isLoading || !input.trim()}
                 endIcon={<SendIcon />}

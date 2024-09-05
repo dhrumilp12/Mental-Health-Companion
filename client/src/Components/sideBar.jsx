@@ -16,7 +16,7 @@ import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
 import { UserContext } from "./userContext";
 import { NavLink, useLocation } from "react-router-dom";
 
-const drawerWidth = 240;
+const drawerWidth = 270;
 
 function Sidebar() {
   const { logout, user } = useContext(UserContext);

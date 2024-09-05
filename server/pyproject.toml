@@ -25,6 +25,7 @@ motor = "^3.5.0"
 azure-mgmt-maps = "^2.1.0"
 azure-identity = "^1.17.1"
 googlemaps = "^4.10.0"
+langchain-google-community = "^1.0.8"
 
 
 [tool.poetry.group.dev.dependencies]

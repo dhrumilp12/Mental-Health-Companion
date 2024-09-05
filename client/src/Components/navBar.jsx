@@ -159,11 +159,21 @@ function Navbar({ toggleSidebar }) {
             <MenuItem
               key={index}
               onClick={() => handleClose(index)}
-              sx={{ whiteSpace: "normal", maxWidth: 350, padding: 1 }}
+              sx={{
+                whiteSpace: "normal",
+                maxWidth: 350,
+                padding: 2,
+              }}
             >
               <Card
                 elevation={2}
-                sx={{ display: "flex", alignItems: "center", width: "100%" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  padding: "2px",
+                }}
               >
                 <CancelIcon color="error" />
 

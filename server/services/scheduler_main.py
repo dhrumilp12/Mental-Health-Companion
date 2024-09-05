@@ -7,15 +7,17 @@ from services.scheduler import send_push_notification
 from models.check_in import CheckIn
 from services.azure_mongodb import MongoDBClient
 from datetime import datetime, timedelta
-from flask import current_app as app
+from flask import Flask
 
+import logging
 
 db_client = MongoDBClient.get_client()
 
 class NotificationScheduler:
-    def __init__(self):
+    def __init__(self, app: Flask):
         self.scheduler = schedule.Scheduler()
         self.db = MongoDBClient.get_client()[MongoDBClient.get_db_name()]
+        self.app = app
 
     def format_delta(self, delta):
         if delta == timedelta(days=1):
@@ -43,15 +45,17 @@ class NotificationScheduler:
                     self.send_notification, user_id=user_id, check_in_id=check_in['_id'],
                     message=f"Reminder: Your check-in is in {reminder_text}"
                 )
+                print(f"Current time: {datetime.now()}, scheduling notification for {scheduled_time}")
                 print(f"Notification for {user_id} scheduled at {scheduled_time}")
 
-    def send_notification(self, check_in):
-        with app.app_context():  # To access app configuration
-            user_id = check_in['user_id']
-            reminder_text = "1 hour" if check_in['reminder_times'][0] == timedelta(hours=1) else "1 day" if check_in['reminder_times'][0] == timedelta(days=1) else "1 week" 
-            message = f"Upcoming check-in in {reminder_text}."
-            send_push_notification(user_id, message)
-            print("Sent notification to user: ", user_id)
+    def send_notification(self, user_id, check_in_id, message):
+        print(f"Sending notification to user: {user_id} at {datetime.now()}")
+        with self.app.app_context():  # To access app configuration
+            success = send_push_notification(user_id, message)
+            if success:
+                print(f"Sent notification to user: {user_id}")
+            else:
+                print(f"Failed to send notification to user: {user_id}")
             
     def clear_check_in_notifications(self,check_in_id, user_id):
         for job in self.scheduler.jobs:
@@ -73,14 +77,18 @@ class NotificationScheduler:
             self.scheduler.run_pending()
             time.sleep(1)
 
+#def run_scheduler(app):  # Accept the Flask app as a parameter
+ #   scheduler_instance = NotificationScheduler(app)  # Pass the app to the scheduler
+ #   while True:
+ #       scheduler_instance.scheduler.run_pending()  # Correctly reference the scheduler attribute
+ #       time.sleep(1)
 
-# Create a single global instance of the scheduler
-scheduler = NotificationScheduler()
 
-
-# Start the scheduler in a background thread
-notification_thread = Thread(target=scheduler.run_scheduler)
-notification_thread.start()
+#def start_scheduler(app):
+    #global scheduler
+    #scheduler = NotificationScheduler(app)
+    #notification_thread = Thread(target=run_scheduler, args=(app,))
+    #notification_thread.start()
 
 
 

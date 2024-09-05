@@ -264,24 +264,14 @@ class MentalHealthAIAgent(AIAgent):
 
         chat_id = MentalHealthAIAgent.get_chat_id(user_id)
 
-        # if not with_history:
-        #     return super().run(message)
-        # else:
+       
         # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
-        # kwargs = {
-        #     "timestamp": curr_epoch_time
-        # }
+       
 
         invocation = self.agent_executor.invoke(
             {"input": message, "user_id": user_id, "agent_scratchpad": []},
             config={"configurable": {"session_id": session_id}})
-
-        # This updates certain collections in the database based on recent history
-        # if (turn_id + 1) % PROCESSING_STEP == 0:
-        #     # TODO
-        #     self.exec_update_step(user_id, chat_id)
-        #     pass
 
         return invocation["output"]
 
@@ -380,129 +370,3 @@ class MentalHealthAIAgent(AIAgent):
 
         print(result)
         pass
-
-
-    # def analyze_chat(self, text):
-    #     """Analyze the chat text to determine emotional state and detect triggers."""
-    #     doc = nlp(text)
-    #     emotions = [token for token in doc if token.dep_ ==
-    #                 "amod" and token.head.pos_ == "NOUN"]
-    #     triggers = [ent.text for ent in doc.ents if ent.label_ in [
-    #         "PERSON", "ORG", "GPE"]]
-
-    #     # Initialize a dictionary to hold detected patterns and suggested interventions
-    #     patterns = {}
-
-    #     # Detecting various emotional states based on keywords
-    #     lower_text = text.lower()  # Convert text to lower case for case insensitive matching
-    #     if any(keyword in lower_text for keyword in ["overwhelmed", "stressed", "too much", "can't handle", "pressure"]):
-    #         patterns['Stress or Overwhelm'] = [
-    #             "Consider taking a short break to clear your mind.",
-    #             "Engage in some deep breathing exercises or meditation to relax.",
-    #             "Explore these resources on time management to help organize your tasks better."
-    #         ]
-    #     if any(keyword in lower_text for keyword in ["anxious", "worry", "nervous", "scared", "panic"]):
-    #         patterns['Anxiety'] = [
-    #             "Try grounding techniques like the 5-4-3-2-1 method to calm your senses.",
-    #             "It might be helpful to talk to a friend or counselor about your feelings.",
-    #             "Check out these tips for managing anxiety and reducing stress."
-    #         ]
-    #     if any(word in lower_text for word in ["angry", "mad", "frustrated", "upset", "annoyed"]):
-    #         patterns['Anger or Frustration'] = [
-    #             "Try counting to ten or practicing deep breathing.",
-    #             "Engage in some physical activity to release energy.",
-    #             "Consider learning more about conflict resolution skills."
-    #         ]
-    #     if any(word in lower_text for word in ["lonely", "alone", "isolated", "no one", "abandoned"]):
-    #         patterns['Loneliness'] = [
-    #             "Consider joining community groups or online forums to connect with others.",
-    #             "Reach out to family or friends for a chat.",
-    #             "Explore resources to develop social skills or find social activities."
-    #         ]
-    #     if any(word in lower_text for word in ["scared", "fear", "terrified", "fright", "panic"]):
-    #         patterns['Fear'] = [
-    #             "Practice controlled breathing to manage acute fear.",
-    #             "Explore exposure therapy techniques under professional guidance.",
-    #             "Seek professional help if fears persist."
-    #         ]
-    #     if any(word in lower_text for word in ["confused", "lost", "unclear", "disoriented", "bewildered"]):
-    #         patterns['Confusion or Disorientation'] = [
-    #             "Organizational tools or apps might help structure daily tasks.",
-    #             "Try mindfulness exercises to enhance mental clarity.",
-    #             "Discussing these feelings with a mentor or counselor could be beneficial."
-    #         ]
-    #     if any(word in lower_text for word in ["grief", "loss", "mourn", "bereaved", "miss"]):
-    #         patterns['Grief or Loss'] = [
-    #             "Joining support groups for similar experiences might help.",
-    #             "Consider seeking grief counseling or therapy.",
-    #             "Healthy grieving practices, such as memorializing the lost one, can be therapeutic."
-    #         ]
-    #     if any(word in lower_text for word in ["excited", "nervous", "jittery", "thrilled", "restless"]):
-    #         patterns['Excitement or Nervousness'] = [
-    #             "Channel your excitement into productive activities.",
-    #             "Use techniques like visualization or positive affirmations to calm nerves.",
-    #             "Balance excitement with downtime to avoid burnout."
-    #         ]
-
-    #     return {"emotions": emotions, "triggers": triggers, "patterns": patterns}
-
-    # def _run(self, message: str, with_history=True, user_id=None, chat_id=None, turn_id=None):
-    #     try:
-    #         if not with_history:
-    #             return super().run(message)
-
-    #         # memory = self.get_agent_memory(user_id, chat_id)
-    #         memory = {
-    #             "buffer": []
-    #         }
-    #         if not memory:
-    #             return "Error: Unable to retrieve conversation history."
-
-    #         if memory.buffer:
-    #             addendum = f"""
-    #             Previous Conversation Summary:
-    #             {memory.buffer}
-    #             """
-    #             self.system_message.content = f"{self.system_message.content}\n{addendum}"
-
-    #         agent_with_history = self.get_agent_with_history(memory)
-
-    #         # Analyze the message for emotional content
-    #         analysis_results = self.analyze_chat(message)
-    #         response_addendum = self.format_response_addendum(analysis_results)
-
-    #         # Invoke the agent with history context
-    #         invocation = agent_with_history.invoke({"input": f"{message}\n{response_addendum}"}, config={
-    #                                                "configurable": {"user_id": user_id, "chat_id": chat_id}})
-
-    #         self.write_agent_response_to_db(
-    #             invocation, user_id, chat_id, turn_id)
-
-    #         return invocation["output"]
-
-    #     except Exception as e:
-    #         return f"An error occurred: {str(e)}"
-
-    # def format_response_addendum(self, analysis_results):
-    #     patterns = analysis_results['patterns']
-    #     response_addendum = ""
-    #     for state, suggestions in patterns.items():
-    #         response_addendum += f"Detected {state}: " + \
-    #             "; ".join(suggestions) + "\n"
-    #     return response_addendum.strip()
-
-
-
-
-# Agent Fact:
-# Prepopulate to DB
-# Chat Summary:
-# Update every 5 chat turns
-# Therapy Material
-# Maybe not get it from DB at all? Just perform Bing search?
-# User Entity:
-# Can be saved from chat summary step, every 5 chat turns
-# User Journey:
-# Can be either updated at the end of the chat, or every 5 chat turns
-# User Material:
-# Possibly updated every 5 chat turns, at the end of a chat, or not at all
