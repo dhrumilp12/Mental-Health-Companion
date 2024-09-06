@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import apiServerAxios from "../api/axios";
 import {
   TextField,
   Button,
@@ -22,7 +22,7 @@ function RequestPasswordReset() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post("/user/request_reset", { email });
+      const response = await apiServerAxios.post("/user/request_reset", { email });
       setMessage(response.data.message);
       setIsError(false);
     } catch (error) {

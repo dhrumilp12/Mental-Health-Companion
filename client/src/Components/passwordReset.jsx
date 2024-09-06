@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import apiServerAxios from "../api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   TextField,
@@ -32,7 +32,7 @@ function ResetPassword() {
       return;
     }
     try {
-      const response = await axios.post(`/user/reset_password/${token}`, {
+      const response = await apiServerAxios.post(`/user/reset_password/${token}`, {
         password,
       });
       setMessage(response.data.message);
