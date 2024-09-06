@@ -8,7 +8,7 @@ from services.azure_mongodb import MongoDBClient
 from bson import ObjectId,json_util
 from pymongo import ReturnDocument
 from bson.errors import InvalidId
-from services.scheduler_main import scheduler
+from services.scheduler_main import NotificationScheduler
 from models.subscription import Subscription, db as sub_db
 from services.scheduler import send_push_notification
 
@@ -56,6 +56,7 @@ def schedule_check_in():
         # Insert the new check-in into MongoDB
         result = db.check_ins.insert_one(check_in_dict)
         # Start scheduling notifications right after check-in creation
+        scheduler = NotificationScheduler(current_app._get_current_object())
         scheduler.schedule_notifications(check_in_dict)
         return jsonify({'message': 'Check-in scheduled successfully', 'check_in_id': str(result.inserted_id)}), 201
 
@@ -93,6 +94,7 @@ def update_check_in(check_in_id):
         )
         if update_result:
             # clear any previous notifications before creating new ones based on new check-in data.
+            scheduler = NotificationScheduler(current_app._get_current_object())
             scheduler.clear_check_in_notifications(check_in_id, update_result['user_id'])
             scheduler.schedule_notifications(update_result)
             return jsonify({'message': 'Check-in updated successfully'}), 200

@@ -6,3 +6,4 @@ venv/
 .env
 mental_health_bot_env/
 sandbox/
+instance/

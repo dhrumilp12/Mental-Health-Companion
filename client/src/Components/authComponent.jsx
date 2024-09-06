@@ -85,6 +85,10 @@ const StyledForm = styled(Paper)(({ theme }) => ({
 }));
 
 const commonTextFieldStyles = {
+  "& .MuiSelect-select": {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    color: "#fff"
+  },
   input: {
     color: "#fff",
     backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -287,7 +291,7 @@ function AuthComponent() {
             boxShadow: "0 4px 30px rgba(0, 0, 0, 0.3)",
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
+            alignItems: "center",
             justifyContent: "flex-start",
           }}
         >
@@ -295,7 +299,6 @@ function AuthComponent() {
             value={activeTab}
             onChange={handleChange}
             variant="fullWidth"
-            centered
             indicatorColor="primary"
             textColor="primary"
           >
@@ -347,19 +350,44 @@ function AuthComponent() {
                   sx={{
                     mt: 3,
                     mb: 2,
-                    backgroundColor: "rgba(255, 255, 255, 0.8)",
+                    backgroundColor: "rgba(255, 255, 255, 1.0)",
                     color: "#666",
                     "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
                     },
                     "&:disabled": {
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      backgroundColor: "rgba(255, 255, 255, 0.8)",
                     },
                   }}
                   disabled={loading}
                 >
                   {loading ? <CircularProgress size={24} /> : "Login"}
                 </Button>
+                {/* <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  sx={{
+                    mt: 3,
+                    mb: 2,
+                    backgroundColor: "#3b82f6", // Light blue color
+                    color: "#fff", // White text for contrast
+                    "&:hover": {
+                      backgroundColor: "#2563eb", // Slightly darker blue on hover
+                    },
+                    "&:disabled": {
+                      backgroundColor: "rgba(59, 130, 246, 0.5)", // Lighter blue when disabled
+                      color: "#ddd", // Faded text when disabled
+                    },
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Login"
+                  )}
+                </Button> */}
                 {showForgotPassword && (
                   <Typography variant="body2" textAlign="center" sx={{ mt: 2 }}>
                     Forgot your password?{" "}
@@ -531,7 +559,7 @@ function AuthComponent() {
                             placement="right"
                           >
                             <InfoIcon
-                              color="action"
+                              color="primary"
                               style={{ marginLeft: 4, fontSize: 20 }}
                             />
                           </Tooltip>

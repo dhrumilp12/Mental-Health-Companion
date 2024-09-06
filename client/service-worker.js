@@ -3,6 +3,7 @@ self.addEventListener('push', event => {
   try {
     // Try to parse the incoming push message data as JSON
     data = event.data.json();
+    console.log('Push event data:', data);
   } catch (error) {
     // If JSON parsing fails, treat it as a plain text
     console.error('Error parsing push notification data as JSON:', error);
