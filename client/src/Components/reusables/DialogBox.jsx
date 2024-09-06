@@ -49,9 +49,9 @@ function DialogBox({
                         <DialogContentText id="alert-dialog-description">
                             {message}
                         </DialogContentText>
-                        <Box sx={{ mt: 2 }}>
-                            <Typography sx={{ mb: 1 }}>
-                                Type{" "}
+                        <Box sx={{ mt: 2,}}>
+                            <Typography sx={{ mb: 1, display: "flex", gap: 1 }}>
+                                Type{" - "}
                                 <Typography sx={{ fontWeight: 700 }}>
                                     {user.username}
                                 </Typography>

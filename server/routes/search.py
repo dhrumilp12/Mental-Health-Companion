@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from dotenv import load_dotenv
-from utils.search_format import format_result, format_youtube_result
+from utils.search_format import format_result, format_youtube_result, save_search_results, get_user_search_history, delete_user_search_history
 import requests
 import os
 
@@ -16,6 +16,7 @@ YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 @search_routes.get('/search')
 @jwt_required()
 def search():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
     query = request.args.get('query')  # Get the search query from the URL parameter
     routine_type = request.args.get('type')  # Expected types: 'mindfulness', 'meditation', 'stress_relief'
 
@@ -41,6 +42,9 @@ def search():
         # Process the search results
         # Extract and format only the necessary information from the results
         formatted_results = [format_result(result) for result in search_results.get('items', [])]
+
+        # Save the search results to the database
+        save_search_results(current_user, formatted_results)  # Function to save results to DB
         return jsonify(formatted_results)
 
     except requests.RequestException as e:
@@ -49,6 +53,7 @@ def search():
 @search_routes.get('/youtube_search')
 @jwt_required()
 def youtube_search():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
     query = request.args.get('query')  # Get the search query from the URL parameter
     routine_type = request.args.get('type')  # Expected types: 'mindfulness', 'meditation', 'stress_relief'
     
@@ -73,8 +78,39 @@ def youtube_search():
         # Process the search results
         # Extract and format only the necessary information from the results
         formatted_results = [format_youtube_result(result) for result in search_results.get('items', [])]
+        
+        # Save the search results to the database
+        save_search_results(current_user, formatted_results)  # Function to save results to DB
         return jsonify(formatted_results)
 
     except requests.RequestException as e:
         return jsonify({'error': str(e)}), 500
 
+@search_routes.get('/search_history')
+@jwt_required()
+def search_history():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
+    
+    try:
+        # Retrieve the user's search history from the database
+        history = get_user_search_history(current_user)
+        if history:
+            return jsonify(history)
+        else:
+            return jsonify({'message': 'No search history found'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@search_routes.delete('/search_history')
+@jwt_required()
+def delete_history():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
+    
+    try:
+        # Delete the user's search history from the database
+        delete_user_search_history(current_user)
+        return jsonify({'message': 'Search history deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
