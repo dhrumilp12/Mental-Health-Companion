@@ -40,7 +40,7 @@ function App() {
                     path="/"
                     element={
                         <ProtectedRoute>
-                                <ChatComponent />
+                            <ChatComponent />
                         </ProtectedRoute>
                     }
                 />
@@ -141,24 +141,24 @@ function Layout({ children }) {
     return (
         <Box
             sx={{
-                display: "flex",
                 // Adjust overflow properties as needed
                 maxHeight: "100vh", // Limit height to viewport to prevent outer scrolling
             }}
         >
             <CssBaseline />
             {showNav && <Navbar toggleSidebar={toggleSidebar} />}
-            {showNav && sidebarOpen && <Sidebar />}
-            <Box
-                component="main"
-                style={{ width: "100%" }}
-                sx={{
-                    flexGrow: 1,
-                    p: mainPadding,
-                    ml: showNav && sidebarOpen ? 30 : 0,
-                }}
-            >
-                {children}
+            <Box sx={{display: "flex"}}>
+                {showNav && sidebarOpen && <Sidebar />}
+                <Box
+                    component="main"
+                    style={{ width: "100%" }}
+                    sx={{
+                        flexGrow: 1,
+                        p: mainPadding,
+                    }}
+                >
+                    {children}
+                </Box>
             </Box>
         </Box>
     );

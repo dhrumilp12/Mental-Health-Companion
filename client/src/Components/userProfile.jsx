@@ -160,7 +160,7 @@ const BootstrapInput = styled(InputBase)(({ theme }) => ({
 
 function UserProfile() {
     const { userId } = useParams();
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const [user, setUser] = useState({
         username: "",
         name: "",
@@ -280,7 +280,7 @@ function UserProfile() {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            closeDeleteModal(); 
+            closeDeleteModal();
             navigate("/auth");
             setMessage("Profile successfully deleted");
             setSeverity("success");
@@ -292,8 +292,6 @@ function UserProfile() {
         }
     }
 
-    
-
     const handleClose = () => {
         setOpen(false);
     };
@@ -301,7 +299,11 @@ function UserProfile() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Container component="main" maxWidth="md" sx={{ py: 3 , maxHeight: '88vh', overflowY: 'auto' }}>
+            <Container
+                component="main"
+                maxWidth="md"
+                sx={{ py: 3, maxHeight: "88vh", overflowY: "auto" }}
+            >
                 <CustomTabs
                     value={tabValue}
                     onChange={handleTabChange}
@@ -309,6 +311,7 @@ function UserProfile() {
                 >
                     <CustomTab label="Profile" />
                     <CustomTab label="Update Password" />
+                    <CustomTab label="Delete Account" />
                 </CustomTabs>
 
                 {tabValue === 0 && (
@@ -598,6 +601,11 @@ function UserProfile() {
                                 Update Profile
                             </Button>
                         </Box>
+                    </Box>
+                )}
+                {tabValue === 1 && <PasswordUpdateTab userId={userId} />}
+                {tabValue === 2 && (
+                    <Box>
                         <Box
                             sx={{
                                 p: 4,
@@ -642,7 +650,6 @@ function UserProfile() {
                         />
                     </Box>
                 )}
-                {tabValue === 1 && <PasswordUpdateTab userId={userId} />}
                 <Snackbar
                     open={open}
                     autoHideDuration={6000}
