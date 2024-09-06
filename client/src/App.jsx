@@ -1,6 +1,4 @@
 import { useState, useEffect, useContext } from "react";
-import { UserProvider } from "./Components/userContext";
-import { Navigate } from "react-router-dom";
 import {
     BrowserRouter as Router,
     Routes,
@@ -54,7 +52,7 @@ function App() {
                 />
                 <Route path="/auth" element={<AuthComponent />} />
                 <Route
-                    path="/user/profile/:userId"
+                    path="/user/profile"
                     element={
                         <ProtectedRoute>
                             <UserProfile />
@@ -147,14 +145,29 @@ function Layout({ children }) {
         >
             <CssBaseline />
             {showNav && <Navbar toggleSidebar={toggleSidebar} />}
-            <Box sx={{display: "flex"}}>
-                {showNav && sidebarOpen && <Sidebar />}
+            <Box
+                sx={{
+                    display: showNav && sidebarOpen ? "flex" : "",
+                    maxHeight: "100vh",
+                    gap: 5,
+                }}
+            >
+                {showNav && sidebarOpen && (
+                    <Sidebar setSidebarOpen={setSidebarOpen} />
+                )}
                 <Box
                     component="main"
-                    style={{ width: "100%" }}
+                    maxWidth={
+                        showNav && !sidebarOpen ? { xl: "1500px" } : "100%"
+                    }
+                    width={
+                        showNav && sidebarOpen
+                            ? { xl: "80%", md: "75%", sm: "100%" }
+                            : "100%"
+                    }
                     sx={{
-                        flexGrow: 1,
-                        p: mainPadding,
+                        py: mainPadding,
+                        mx: showNav && !sidebarOpen ? { xl: "auto" } : "none",
                     }}
                 >
                     {children}

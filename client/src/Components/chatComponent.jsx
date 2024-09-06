@@ -1,11 +1,10 @@
-import React, {
+import {
   useState,
   useEffect,
   useContext,
   useCallback,
   useRef,
 } from "react";
-import axios from "axios";
 import apiServerAxios from "../api/axios";
 import {
   InputAdornment,
@@ -18,7 +17,6 @@ import {
   Button,
   List,
   ListItem,
-  ListItemAvatar,
   ListItemText,
   CircularProgress,
   Snackbar,
@@ -36,8 +34,8 @@ import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import { UserContext } from "./userContext";
-import Aria from "../Assets/Images/Aria.jpg"; // Adjust the path to where your logo is stored
-import RecordRTC from "recordrtc";
+import Aria from "../Assets/Images/Aria.jpg";
+
 const TypingIndicator = () => (
   <Box sx={{ display: "flex", alignItems: "center", color: "text.secondary" }}>
     <Avatar
@@ -155,8 +153,8 @@ const ChatComponent = () => {
           },
         }
       );
+      const data = response?.data;
       if (response && response.data) {
-        const data = response.data;
         setWelcomeMessage(data.message);
         if (voiceEnabled && data.message) {
           // Ensure voice is enabled and the message is not empty
@@ -528,7 +526,7 @@ const ChatComponent = () => {
                   sx={{ width: 44, height: 44, marginRight: 2 }}
                   alt="Aria"
                 />
-                <Typography variant="h4" component="h1" gutterBottom>
+                <Typography variant="h4" component="h1" sx={{fontSize: {xs: "20px"}}} gutterBottom>
                   Welcome to Your Mental Health Companion
                 </Typography>
               </Box>

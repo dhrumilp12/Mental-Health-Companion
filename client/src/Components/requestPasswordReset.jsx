@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import {
   TextField,
@@ -9,7 +9,6 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
-import MailOutlineIcon from "@mui/icons-material/MailOutline"; // Importing an email icon
 import SendIcon from "@mui/icons-material/Send"; // Importing the send icon
 
 function RequestPasswordReset() {

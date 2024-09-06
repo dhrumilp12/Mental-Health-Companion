@@ -125,7 +125,7 @@ const BootstrapInput = styled(InputBase)(({ theme }) => ({
         border: "2px solid",
         borderColor: "#E0E3E7",
         fontSize: 16,
-        width: 577,
+        width: { xs: "100%", lg: 577 },
         padding: "10px 12px",
         transition: theme.transitions.create([
             "border-color",
@@ -301,8 +301,12 @@ function UserProfile() {
             <CssBaseline />
             <Container
                 component="main"
-                maxWidth="md"
-                sx={{ py: 3, maxHeight: "88vh", overflowY: "auto" }}
+                sx={{
+                    py: 3,
+                    maxHeight: { sm: "88vh", xs: "none" },
+                    overflowY: "auto",
+                    minWidth: "100%",
+                }}
             >
                 <CustomTabs
                     value={tabValue}
@@ -327,191 +331,249 @@ function UserProfile() {
                             >
                                 Profile
                             </Typography>
-                            <Box
-                                // id="Personal-information"
+                            <Box sx={{ display: { xl: "flex", gap: 100 } }}>
+                                <Box
+                                    // id="Personal-information"
 
-                                sx={{
-                                    p: 4,
-                                    border: 3,
-                                    mb: 4,
-                                    borderColor: "#E7E8F3",
-                                    borderRadius: "40px",
-                                    boxShadow: 1,
-                                    ":hover": {
-                                        bgcolor: "#E7E8F3",
-                                    },
-                                }}
-                            >
-                                <Typography
-                                    sx={{ fontWeight: "bold", fontSize: 20 }}
-                                >
-                                    Personal Information
-                                </Typography>
-                                <FormControl variant="standard" sx={{ mt: 3 }}>
-                                    <InputLabel
-                                        shrink
-                                        htmlFor="name"
-                                        style={{ fontSize: 20, color: "text" }}
-                                    >
-                                        Name
-                                    </InputLabel>
-                                    <BootstrapInput
-                                        value={user.name || ""}
-                                        id="name"
-                                        name="name"
-                                        onChange={handleChange}
-                                    />
-                                </FormControl>
-                                <FormControl variant="standard" sx={{ mt: 3 }}>
-                                    <InputLabel
-                                        shrink
-                                        htmlFor="email"
-                                        style={{ fontSize: 20, color: "text" }}
-                                    >
-                                        Email
-                                    </InputLabel>
-                                    <BootstrapInput
-                                        value={user.email || ""}
-                                        name="email"
-                                        id="email"
-                                        onChange={handleChange}
-                                    />
-                                </FormControl>
-                                <Box
                                     sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 5,
+                                        p: 4,
+                                        border: 3,
+                                        mb: 4,
+                                        borderColor: "#E7E8F3",
+                                        borderRadius: "40px",
+                                        boxShadow: 1,
+                                        ":hover": {
+                                            bgcolor: "#E7E8F3",
+                                        },
                                     }}
                                 >
-                                    <FormControl
-                                        variant="standard"
-                                        sx={{ mt: 3 }}
+                                    <Typography
+                                        sx={{
+                                            fontWeight: "bold",
+                                            fontSize: 20,
+                                        }}
                                     >
-                                        <InputLabel
-                                            shrink
-                                            htmlFor="age"
-                                            style={{
-                                                fontSize: 20,
-                                                color: "text",
+                                        Personal Information
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            flexDirection: {
+                                                xl: "column",
+                                                sm: "row",
+                                                xs: "column",
+                                            },
+                                            gap: { xs: 0, sm: 5 },
+                                        }}
+                                    >
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{
+                                                mt: 3,
+                                                width: { xs: "100%", lg: 577 },
                                             }}
                                         >
-                                            Age
-                                        </InputLabel>
-                                        <BootstrapInput
-                                            value={user.age || ""}
-                                            name="age"
-                                            id="age"
-                                            style={{ width: 200 }}
-                                            onChange={handleChange}
-                                        />
-                                    </FormControl>
-                                    <FormControl
-                                        variant="standard"
-                                        sx={{ mt: 3 }}
-                                    >
-                                        <InputLabel
-                                            shrink
-                                            htmlFor="gender"
-                                            style={{
-                                                fontSize: 20,
-                                                color: "text",
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="name"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Name
+                                            </InputLabel>
+                                            <BootstrapInput
+                                                value={user.name || ""}
+                                                id="name"
+                                                name="name"
+                                                onChange={handleChange}
+                                            />
+                                        </FormControl>
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{
+                                                mt: 3,
+                                                width: { xs: "100%", lg: 577 },
                                             }}
                                         >
-                                            Gender
-                                        </InputLabel>
-                                        <Select
-                                            name="gender"
-                                            style={{ width: 120 }}
-                                            value={user.gender || ""}
-                                            label="Gender"
-                                            onChange={handleChange}
-                                            startAdornment={
-                                                <IconButton>
-                                                    <WcIcon />
-                                                </IconButton>
-                                            }
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="email"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Email
+                                            </InputLabel>
+                                            <BootstrapInput
+                                                value={user.email || ""}
+                                                name="email"
+                                                id="email"
+                                                onChange={handleChange}
+                                            />
+                                        </FormControl>
+                                    </Box>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: {
+                                                xs: "start",
+                                                sm: "center",
+                                            },
+                                            flexDirection: {
+                                                xs: "column",
+                                                sm: "row",
+                                            },
+                                            gap: { xs: 0, sm: 5 },
+                                        }}
+                                    >
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{ mt: 3, width: "100%" }}
                                         >
-                                            <MenuItem value="male">
-                                                Male
-                                            </MenuItem>
-                                            <MenuItem value="female">
-                                                Female
-                                            </MenuItem>
-                                            <MenuItem value="other">
-                                                Other
-                                            </MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="age"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Age
+                                            </InputLabel>
+                                            <BootstrapInput
+                                                value={user.age || ""}
+                                                name="age"
+                                                id="age"
+                                                width="100%"
+                                                style={{ width: 200 }}
+                                                onChange={handleChange}
+                                            />
+                                        </FormControl>
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{ mt: 3, width: "100%" }}
+                                        >
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="gender"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Gender
+                                            </InputLabel>
+                                            <Select
+                                                name="gender"
+                                                style={{ width: 120 }}
+                                                value={user.gender || ""}
+                                                label="Gender"
+                                                onChange={handleChange}
+                                                startAdornment={
+                                                    <IconButton>
+                                                        <WcIcon />
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <MenuItem value="male">
+                                                    Male
+                                                </MenuItem>
+                                                <MenuItem value="female">
+                                                    Female
+                                                </MenuItem>
+                                                <MenuItem value="other">
+                                                    Other
+                                                </MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
                                 </Box>
-                            </Box>
-                            <Box
-                                sx={{
-                                    p: 4,
-                                    border: 3,
-                                    mb: 4,
-                                    borderColor: "#E7E8F3",
-                                    borderRadius: "40px",
-                                    boxShadow: 1,
-                                    ":hover": {
-                                        bgcolor: "#E7E8F3",
-                                    },
-                                }}
-                            >
-                                <Typography
-                                    sx={{ fontWeight: "bold", fontSize: 20 }}
-                                >
-                                    Personal Address
-                                </Typography>
                                 <Box
                                     sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        gap: 5,
+                                        p: 4,
+                                        border: 3,
+                                        mb: 4,
+                                        borderColor: "#E7E8F3",
+                                        borderRadius: "40px",
+                                        boxShadow: 1,
+                                        ":hover": {
+                                            bgcolor: "#E7E8F3",
+                                        },
                                     }}
                                 >
-                                    <FormControl
-                                        variant="standard"
-                                        sx={{ mt: 3 }}
+                                    <Typography
+                                        sx={{
+                                            fontWeight: "bold",
+                                            fontSize: 20,
+                                        }}
                                     >
-                                        <InputLabel
-                                            shrink
-                                            htmlFor="place-of-residence"
-                                            style={{
-                                                fontSize: 20,
-                                                color: "text",
+                                        Personal Address
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            flexDirection: {
+                                                xl: "column",
+                                                sm: "row",
+                                                xs: "column",
+                                            },
+                                            gap: { xs: 0, sm: 5 },
+                                        }}
+                                    >
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{
+                                                mt: 3,
+                                                width: { xs: "100%", lg: 577 },
                                             }}
                                         >
-                                            Place of Residence
-                                        </InputLabel>
-                                        <BootstrapInput
-                                            value={user.placeOfResidence || ""}
-                                            name="placeOfResidence"
-                                            id="place-of-residence"
-                                            onChange={handleChange}
-                                        />
-                                    </FormControl>
-                                    <FormControl
-                                        variant="standard"
-                                        sx={{ mt: 3 }}
-                                    >
-                                        <InputLabel
-                                            shrink
-                                            htmlFor="field-of-work"
-                                            style={{
-                                                fontSize: 20,
-                                                color: "text",
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="place-of-residence"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Place of Residence
+                                            </InputLabel>
+                                            <BootstrapInput
+                                                value={
+                                                    user.placeOfResidence || ""
+                                                }
+                                                name="placeOfResidence"
+                                                id="place-of-residence"
+                                                onChange={handleChange}
+                                            />
+                                        </FormControl>
+                                        <FormControl
+                                            variant="standard"
+                                            sx={{
+                                                mt: 3,
+                                                width: { xs: "100%", lg: 577 },
                                             }}
                                         >
-                                            Field of Work
-                                        </InputLabel>
-                                        <BootstrapInput
-                                            value={user.fieldOfWork || ""}
-                                            name="fieldOfWork"
-                                            id="field-of-work"
-                                            onChange={handleChange}
-                                        />
-                                    </FormControl>
+                                            <InputLabel
+                                                shrink
+                                                htmlFor="field-of-work"
+                                                style={{
+                                                    fontSize: 20,
+                                                    color: "text",
+                                                }}
+                                            >
+                                                Field of Work
+                                            </InputLabel>
+                                            <BootstrapInput
+                                                value={user.fieldOfWork || ""}
+                                                name="fieldOfWork"
+                                                id="field-of-work"
+                                                onChange={handleChange}
+                                            />
+                                        </FormControl>
+                                    </Box>
                                 </Box>
                             </Box>
                             <Box
@@ -605,7 +667,7 @@ function UserProfile() {
                 )}
                 {tabValue === 1 && <PasswordUpdateTab userId={userId} />}
                 {tabValue === 2 && (
-                    <Box>
+                    <Box sx={{ width: "100%" }}>
                         <Box
                             sx={{
                                 p: 4,
@@ -640,8 +702,8 @@ function UserProfile() {
                             user={user}
                             title="Are you sure you want to do this?"
                             message="We will immediately delete all of your information. To confirm this action, kindly input your username below."
-                            okText="Agree"
-                            cancelText="Disagree"
+                            okText="Delete"
+                            cancelText="Cancel"
                             errorMessage={errorMessage}
                             usernameCheck={usernameCheck}
                             setUsername={setUsername}

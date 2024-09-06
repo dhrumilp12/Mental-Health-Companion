@@ -44,7 +44,7 @@ function DialogBox({
                 ></l-ring-2>
             ) : (
                 <Box>
-                    <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+                    <DialogTitle id="alert-dialog-title" sx={{}}>{title}</DialogTitle>
                     <DialogContent>
                         <DialogContentText id="alert-dialog-description">
                             {message}
@@ -100,7 +100,7 @@ function DialogBox({
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={closeDeleteModal}>{cancelText}</Button>
-                        <Button onClick={deleteProfile} autoFocus>
+                        <Button sx={{color: "red"}} onClick={deleteProfile} autoFocus>
                             {okText}
                         </Button>
                     </DialogActions>

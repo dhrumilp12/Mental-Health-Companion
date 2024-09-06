@@ -6,7 +6,6 @@ import { Link } from "react-router-dom";
 import {
   TextField,
   Button,
-  Paper,
   CssBaseline,
   Snackbar,
   Alert,
@@ -24,7 +23,7 @@ import {
   Container,
   Grid,
 } from "@mui/material";
-import { createTheme, ThemeProvider, styled } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -69,20 +68,6 @@ const theme = createTheme({
     },
   },
 });
-
-const StyledForm = styled(Paper)(({ theme }) => ({
-  margin: theme.spacing(10),
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  padding: theme.spacing(4),
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[10],
-  width: "90%",
-  maxWidth: "450px",
-  opacity: 0.98,
-  backdropFilter: "blur(10px)",
-}));
 
 const commonTextFieldStyles = {
   "& .MuiSelect-select": {
@@ -293,6 +278,7 @@ function AuthComponent() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-start",
+            width: "100%"
           }}
         >
           <Tabs

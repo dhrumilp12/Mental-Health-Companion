@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import {
   Drawer,
   List,
@@ -13,12 +13,11 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
+import PropTypes from "prop-types"
 import { UserContext } from "./userContext";
 import { NavLink, useLocation } from "react-router-dom";
 
-const drawerWidth = 270;
-
-function Sidebar() {
+function Sidebar({setSidebarOpen}) {
   const { logout, user } = useContext(UserContext);
   const location = useLocation(); // This hook returns the location object that represents the current URL.
 
@@ -56,15 +55,21 @@ function Sidebar() {
   return (
     <Drawer
       sx={{
-        width: drawerWidth,
+        width: {xl: "20%", md: "25%"},
+        maxWidth: "270px",
         flexShrink: 0,
         mt: 8,
         "& .MuiDrawer-paper": {
-          width: drawerWidth,
+          width: {md: "100%", sm: "50%"},
+          maxWidth: "270px",
+          position: {xs: "fixed", md: "relative"},
+          left: 0,
+          top: {md: 13, xs: 60},
+          zIndex: 100,
           boxSizing: "border-box",
-          position: "relative", //position: 'fixed', Fixing the sidebar so it doesn't move on scroll
+          // position: "relative", //position: 'fixed', Fixing the sidebar so it doesn't move on scroll
           height: "88vh", // Ensuring it covers the full height of the viewport
-          top: 13, // Aligning it to the top of the viewport
+          // top: 13, // Aligning it to the top of the viewport
           overflowX: "hidden", // Hiding horizontal overflow
           borderRadius: 2,
           boxShadow: 1,
@@ -77,12 +82,17 @@ function Sidebar() {
       anchor="left"
     >
       <List
-        sx={{ padding: 1.5, display: "flex", flexDirection: "column", gap: 1 }}
+        sx={{ padding: 1.5, display: "flex", flexDirection: "column", gap: 1, width: "100%" }}
       >
         {items.map((item) => (
           <NavLink
             to={item.path}
             key={item.text}
+            onClick={() => {
+              if (window.innerWidth < 900) {
+                setSidebarOpen(false)
+              }
+            }}
             style={{ textDecoration: "none", color: "inherit" }}
           >
             <ListItem
@@ -119,6 +129,10 @@ function Sidebar() {
       </List>
     </Drawer>
   );
+}
+
+Sidebar.propTypes = {
+  setSidebarOpen: PropTypes.func
 }
 
 export default Sidebar;

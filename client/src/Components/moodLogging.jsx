@@ -1,19 +1,15 @@
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import apiServerAxios from "../api/axios";
 import {
-  Alert,
   Box,
   Button,
   Container,
   createTheme,
-  Snackbar,
   TextField,
   ThemeProvider,
   Typography,
 } from "@mui/material";
 import MoodIcon from "@mui/icons-material/Mood";
-import SendIcon from "@mui/icons-material/Send";
 import "../Assets/Styles/MoodLogging.css";
 
 function MoodLogging() {
@@ -99,10 +95,10 @@ function MoodLogging() {
       <ThemeProvider theme={theme}>
         <Container
           component="main"
-          maxWidth="md"
           sx={{
             background: "#fff",
             borderRadius: "8px",
+            width: {xs: "90%", lg: "100%"},
             boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
           }}
         >
