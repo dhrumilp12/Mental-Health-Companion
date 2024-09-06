@@ -44,7 +44,7 @@ def search():
         formatted_results = [format_result(result) for result in search_results.get('items', [])]
 
         # Save the search results to the database
-        save_search_results(current_user, formatted_results)  # Function to save results to DB
+        save_search_results(current_user, formatted_results, 'google_search')  # Function to save results to DB
         return jsonify(formatted_results)
 
     except requests.RequestException as e:
@@ -80,7 +80,7 @@ def youtube_search():
         formatted_results = [format_youtube_result(result) for result in search_results.get('items', [])]
         
         # Save the search results to the database
-        save_search_results(current_user, formatted_results)  # Function to save results to DB
+        save_search_results(current_user, formatted_results, 'youtube_search')  # Function to save results to DB
         return jsonify(formatted_results)
 
     except requests.RequestException as e:

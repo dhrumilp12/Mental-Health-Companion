@@ -23,25 +23,27 @@ def serialize_objectid(value):
     """Helper function to convert ObjectId to string."""
     if isinstance(value, ObjectId):
         return str(value)
+    elif isinstance(value, dict):
+        return {k: serialize_objectid(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [serialize_objectid(item) for item in value]
     return value
 
-def save_search_results(user_id, results):
+def save_search_results(user_id, results, search_type):
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
     history_record = {
         'user_id': user_id,
-        'queries': results
+        'queries': results,
+        'search_type': search_type
     }
     db.search_history.insert_one(history_record)
 
 def get_user_search_history(user_id):
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
-    history = db.search_history.find_one({'user_id': user_id})
-    if history:
-        # Recursively convert ObjectId instances to strings
-        history = json.loads(json.dumps(history, default=serialize_objectid))
-    return history
+    history = db.search_history.find({'user_id': user_id})
+    return serialize_objectid(list(history))
 
 def delete_user_search_history(user_id):
     db_client = MongoDBClient.get_client()
