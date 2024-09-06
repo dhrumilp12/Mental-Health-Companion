@@ -299,15 +299,7 @@ function UserProfile() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Container
-                component="main"
-                sx={{
-                    py: 3,
-                    maxHeight: { sm: "88vh", xs: "none" },
-                    overflowY: "auto",
-                    minWidth: "100%",
-                }}
-            >
+            <Container component="main" maxWidth="md" sx={{ py: 3 , maxHeight: '88vh', overflowY: 'auto' }}>
                 <CustomTabs
                     value={tabValue}
                     onChange={handleTabChange}

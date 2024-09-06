@@ -1,15 +1,17 @@
 import { useState } from "react";
-import axios from "axios";
+import apiServerAxios from "../api/axios";
 import {
   TextField,
   Button,
-  Paper,
+  Container,
   Typography,
   Box,
   Alert,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send"; // Importing the send icon
+import SendIcon from "@mui/icons-material/Send";
 
 function RequestPasswordReset() {
   const [email, setEmail] = useState("");
@@ -17,11 +19,16 @@ function RequestPasswordReset() {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post("/user/request_reset", { email });
+      const response = await apiServerAxios.post("/user/request_reset", {
+        email,
+      });
       setMessage(response.data.message);
       setIsError(false);
     } catch (error) {
@@ -60,32 +67,31 @@ function RequestPasswordReset() {
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
+    <Container
+      component="main"
+      maxWidth="false"
+      disableGutters
       sx={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
         background:
-          "linear-gradient(to bottom right, #121111 60%, #201739 72%, #eec9e6 100%)", // Gradient background
-        "& .MuiPaper-root": {
-          margin: 16,
-          padding: 8,
-          bgcolor: "rgba(255, 255, 255, 0.15)",
+          "linear-gradient(to bottom right, #121111 60%, #201739 72%, #eec9e6 100%)", // Background gradient
+      }}
+    >
+      <Box
+        sx={{
+          padding: isSmallScreen ? "20px" : "40px", // Adjust padding for small screens
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
           backdropFilter: "blur(20px)",
           borderRadius: 2,
           border: "1px solid rgba(255, 255, 255, 0.5)",
           boxShadow: "0 4px 30px rgba(0, 0, 0, 0.3)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-        },
-      }}
-    >
-      <Paper
-        elevation={3}
-        style={{ padding: "30px", width: "400px", textAlign: "center" }}
+          textAlign: "center",
+          maxWidth: isSmallScreen ? "90%" : "400px", // Responsive width
+          width: "100%", // Ensures it stretches properly
+        }}
       >
         <Typography
           variant="h5"
@@ -138,8 +144,8 @@ function RequestPasswordReset() {
             {message}
           </Alert>
         )}
-      </Paper>
-    </Box>
+      </Box>
+    </Container>
   );
 }
 
