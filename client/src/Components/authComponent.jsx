@@ -85,6 +85,10 @@ const StyledForm = styled(Paper)(({ theme }) => ({
 }));
 
 const commonTextFieldStyles = {
+  "& .MuiSelect-select": {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    color: "#fff"
+  },
   input: {
     color: "#fff",
     backgroundColor: "rgba(255, 255, 255, 0.2)",
@@ -555,7 +559,7 @@ function AuthComponent() {
                             placement="right"
                           >
                             <InfoIcon
-                              color="action"
+                              color="primary"
                               style={{ marginLeft: 4, fontSize: 20 }}
                             />
                           </Tooltip>
