@@ -145,14 +145,12 @@ function AuthComponent() {
       });
       if (response && response.data) {
         const userId = response.data.userId;
-        localStorage.setItem("token", response.data.access_token); // Ensure this is correctly saving the token
-        console.log("Token stored:", localStorage.getItem("token")); // Confirm the token is stored
+        localStorage.setItem("token", response.data.access_token);
         setMessage("Login successful!");
         setSeverity("success");
         setIsAuthenticated(true);
         setUser({ userId });
         navigate("/");
-        console.log("User logged in:", userId);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -185,14 +183,12 @@ function AuthComponent() {
       });
       if (response && response.data) {
         const userId = response?.data?.userId;
-        localStorage.setItem("token", response?.data?.access_token); // Ensure this is correctly saving the token
-        console.log("Token stored:", localStorage.getItem("token")); // Confirm the token is stored
+        localStorage.setItem("token", response?.data?.access_token);
         setMessage("User registered successfully!");
         setSeverity("success");
         setIsAuthenticated(true);
         setUser({ userId });
         navigate("/");
-        console.log("User registered:", userId);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -213,8 +209,7 @@ function AuthComponent() {
       if (response && response.data) {
         const userId = "0";
         const isAnon = true;
-        localStorage.setItem("token", response.data.access_token); // Ensure this is correctly saving the token
-        console.log("Token stored:", localStorage.getItem("token")); // Confirm the token is stored
+        localStorage.setItem("token", response.data.access_token);
         setMessage("Anonymous sign-in successful!");
         setSeverity("success");
         setIsAuthenticated(true);

@@ -111,9 +111,6 @@ const ChatComponent = () => {
     const utterance = new SpeechSynthesisUtterance(text);
     const setVoiceAndSpeak = () => {
       const voices = synth.getVoices();
-      console.log(
-        voices.map((voice) => `${voice.name} - ${voice.lang} - ${voice.gender}`)
-      );
 
       const femaleVoice = voices.find((voice) =>
         voice.name.includes("Microsoft Zira - English (United States)")
@@ -161,7 +158,6 @@ const ChatComponent = () => {
           speak(data.message);
         }
         setChatId(data.chat_id);
-        console.log(data.chat_id);
       } else {
         console.error("Failed to fetch welcome message:", data);
         setWelcomeMessage("Error fetching welcome message.");
@@ -219,7 +215,6 @@ const ChatComponent = () => {
 
   const sendMessage = useCallback(async () => {
     if (!input.trim() || chatId === undefined) return;
-    console.log(chatId);
     setIsLoading(true);
 
     try {

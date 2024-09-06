@@ -32,7 +32,6 @@ function Navbar({ toggleSidebar }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const token = localStorage.getItem("token");
     const userId = user?.userId;
-    console.log("User ID:", userId);
 
     useEffect(() => {
         if (userId) {
@@ -57,7 +56,6 @@ function Navbar({ toggleSidebar }) {
                 }
             ); // Replace {userId} with actual user ID
             const missedCheckIns = response.data;
-            console.log("Missed check-ins:", missedCheckIns);
             if (missedCheckIns.length > 0) {
                 missedCheckIns.forEach((checkIn) => {
                     addNotification({

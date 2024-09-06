@@ -29,9 +29,7 @@ export const UserProvider = ({ children }) => {
   // Load user from local storage on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    console.log("Attempting to load user:", savedUser);
     if (savedUser) {
-      console.log("User found in storage:", savedUser);
       setUser(JSON.parse(savedUser));
     } else {
       console.log("No user found in storage at initialization.");
@@ -40,10 +38,8 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      console.log("Storing user in storage:", user);
       localStorage.setItem("user", JSON.stringify(user));
     } else {
-      console.log("Removing user from storage.");
       localStorage.removeItem("user");
     }
   }, [user]);
@@ -51,7 +47,6 @@ export const UserProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Logging out with token:", token);
       if (!token) {
         console.error("No token available for logout");
         return; // Exit the function if no token is available
@@ -120,7 +115,6 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const handleServiceWorkerMessages = (event) => {
       if (event.data && event.data.type === "NEW_NOTIFICATION") {
-        console.log("Notification received:", event.data.data);
         addNotification({
           title: event.data.data.title,
           message: event.data.data.body,

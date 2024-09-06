@@ -29,7 +29,6 @@ function MoodLogs() {
                         },
                     }
                 );
-                console.log("Received data:", response.data); // Check what's being received
                 setMoodLogs(response.data.mood_logs || []);
             } catch (error) {
                 setError(error.response.data.error);

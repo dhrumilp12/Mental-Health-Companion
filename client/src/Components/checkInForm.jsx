@@ -61,7 +61,6 @@ function CheckInForm({ userId, update }) {
                 })
                 .then((response) => {
                     const data = response.data;
-                    console.log("Fetched check-in data:", data);
                     // Format the date for datetime-local input
                     const formattedCheckInTime = formatISO(
                         parseISO(data.check_in_time),
@@ -103,7 +102,6 @@ function CheckInForm({ userId, update }) {
                 "Content-Type": "application/json",
             },
         };
-        console.log("URL:", url);
         const method = update ? "patch" : "post";
         const data = {
             user_id: userId,
@@ -111,10 +109,8 @@ function CheckInForm({ userId, update }) {
             frequency,
             notify,
         };
-        console.log("Submitting:", data);
         try {
             const response = await apiServerAxios[method](url, data, config);
-            console.log("Success:", response.data.message);
             setSnackbar({
                 open: true,
                 message: response.data.message,

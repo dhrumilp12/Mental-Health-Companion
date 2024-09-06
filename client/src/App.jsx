@@ -52,7 +52,7 @@ function App() {
                 />
                 <Route path="/auth" element={<AuthComponent />} />
                 <Route
-                    path="/user/profile"
+                    path="/user/profile/:userId"
                     element={
                         <ProtectedRoute>
                             <UserProfile />
