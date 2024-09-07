@@ -12,7 +12,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from bson import ObjectId, json_util
 from datetime import timedelta,datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from utils.delete_user_data import delete_user_data
 from services.azure_mongodb import MongoDBClient
 from models.user import User as UserModel
 from models.chat_summary import ChatSummary
@@ -131,6 +131,14 @@ def logout():
     # JWT Revocation or Blacklisting could be implemented here if needed
     jwt_id = get_jwt_identity()
     logging.info(f"User {jwt_id} logged out successfully")
+
+    if jwt_id == {'anonymous': True}:  
+        # Delete all data for anonymous users
+        user_id = "0"  # Set the user_id for anonymous users
+        delete_user_data(user_id)
+
+        logging.info("All data for anonymous user deleted successfully")
+
     return jsonify({"msg": "Logout successful"}), 200
 
 
@@ -463,21 +471,14 @@ def delete_user(user_id):
     try:
         db_client = MongoDBClient.get_client()
         db = db_client[MongoDBClient.get_db_name()]
-        
         # Delete user from the 'users' collection
         user_delete_result = db['users'].delete_one({"_id": ObjectId(user_id)})
         if user_delete_result.deleted_count == 0:
             return jsonify({"message": "User not found"}), 404
 
         # Deleting related entries in other collections
-        db['user_journeys'].delete_many({"user_id": user_id})
-        db['chat_summaries'].delete_many({"user_id": user_id})
-        db['check_ins'].delete_many({"user_id": user_id})
+        delete_user_data(user_id)
 
-        # Additional collections like 'user_materials', 'user_entities', etc., can also be cleared similarly.
-        db['user_materials'].delete_many({"user_id": user_id})
-        db['user_entities'].delete_many({"user_id": user_id})
-        
         return jsonify({"message": "User and all related data deleted successfully"}), 200
     
     except Exception as e:
