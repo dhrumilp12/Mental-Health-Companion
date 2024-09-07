@@ -273,7 +273,7 @@ function AuthComponent() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-start",
-            width: "100%"
+            maxWidth: "90%"
           }}
         >
           <Tabs
