@@ -1,31 +1,13 @@
 import os
-
-# from azure.identity import DefaultAzureCredential
-# from azure.mgmt.maps import AzureMapsManagementClient
-
-from langchain_google_community import GooglePlacesTool, GooglePlacesAPIWrapper
-
 from langchain_community.utilities import BingSearchAPIWrapper
 from langchain_community.tools.bing_search import BingSearchResults
 from langchain_community.tools.tavily_search import TavilySearchResults
-
 from utils.docs import format_docs
-
 from services.db.user import get_user_profile_by_user_id
+from langchain.tools import Tool
+from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results
+from langchain_google_community import GooglePlacesTool, GooglePlacesAPIWrapper
 
-
-def get_maps_results(self, query):
-    """
-    Searches for places that match the query and returns a list of results.
-
-    Args:
-        query (str): The query to search for in the map.
-    """
-
-    # sub_id = os.environ.get("AZURE_SUBSCRIPTION_ID") 
-    # client = AzureMapsManagementClient(credential=DefaultAzureCredential(), subscription_id=sub_id)
-
-    pass   
 
 
 
@@ -38,11 +20,11 @@ def vector_store_chain_factory(collection_name) -> callable:
     return lambda x: get_vector_store_chain(collection_name=collection_name)
 
 
+
 toolbox = {
     "community": {
-        "web_search_bing": BingSearchResults(api_wrapper=BingSearchAPIWrapper(k=1)),
         "web_search_tavily": TavilySearchResults(),
-        "location_search_gplaces": GooglePlacesTool()
+        "location_search_gplaces": GooglePlacesTool(),
     },
     "custom": {
         "agent_facts": {
@@ -51,12 +33,24 @@ toolbox = {
             "retriever": True,
             "structured": False
         },
-        # "location_search": {
-        #     "func": get_maps_results,
-        #     "description": "Searches for places that match the query and returns a list of results.",
-        #     "retriever": False,
-        #     "structured": False
-        # },
+        "web_search_bing": {
+            "func": get_bing_search_results,
+            "description": "Uses Google Custom Search to fetch search results for a given query.",
+            "retriever": False,
+            "structured": True
+        },
+        "web_search_google": {
+            "func": get_google_search_results,
+            "description": "Uses Google Custom Search to fetch search results for a given query.",
+            "retriever": False,
+            "structured": True
+        },
+        "web_search_youtube": {
+            "func": get_youtube_search_results,
+            "description": "Uses YouTube Search to fetch search results for a given query.",
+            "retriever": False,
+            "structured": True
+        },
         "user_profile_retrieval": {
             "func": get_user_profile_by_user_id,
             "structured": True,

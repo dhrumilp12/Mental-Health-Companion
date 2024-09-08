@@ -31,6 +31,7 @@ from langchain_mongodb.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import trim_messages
 from langchain_core.messages.human import HumanMessage
 
+
 # MongoDB
 # -- Custom modules --
 from .ai_agent import AIAgent
@@ -64,6 +65,8 @@ class MentalHealthAIAgent(AIAgent):
             None
         """
         super().__init__(system_message, tool_names)
+
+        
 
         self.prompt = ChatPromptTemplate.from_messages(
             [
@@ -273,7 +276,10 @@ class MentalHealthAIAgent(AIAgent):
             {"input": message, "user_id": user_id, "agent_scratchpad": []},
             config={"configurable": {"session_id": session_id}})
 
-        return invocation["output"]
+        response = invocation["output"]
+        if isinstance(response, dict):
+            response = {k: (v if isinstance(v, (str, int, float, bool, list, dict)) else str(v)) for k, v in response.items()}
+        return response
 
 
     def get_initial_greeting(self, user_id:str) -> dict:

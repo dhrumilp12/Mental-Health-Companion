@@ -9,8 +9,8 @@ search_routes = Blueprint("search", __name__)
 
 load_dotenv()
 
-GOOGLE_CUSTOME_SEARCH_API_KEY = os.getenv('GOOGLE_CUSTOME_SEARCH_API_KEY')
-GOOGLE_SEARCH_CSE_ID = os.getenv('GOOGLE_SEARCH_CSE_ID')
+GOOGLE_CUSTOME_SEARCH_API_KEY = os.getenv('GOOGLE_API_KEY')
+GOOGLE_SEARCH_CSE_ID = os.getenv('GOOGLE_CSE_ID')
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 @search_routes.get('/search')
