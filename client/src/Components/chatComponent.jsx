@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useContext,
-  useCallback,
-  useRef,
-} from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import apiServerAxios from "../api/axios";
 import {
   InputAdornment,
@@ -383,6 +377,48 @@ const ChatComponent = () => {
     );
   };
 
+  const renderMessageWithLinks = (message) => {
+    const urlRegex = /\[(.*?)\]\((https?:\/\/[^\s]+)\)/g;
+    const lines = message.split("\n");
+
+    return lines.map((line, lineIndex) => {
+      const parts = [];
+      let lastIndex = 0;
+
+      line.replace(urlRegex, (match, text, url, offset) => {
+        if (offset > lastIndex) {
+          parts.push(
+            <span key={`text-${lineIndex}-${lastIndex}`}>
+              {line.slice(lastIndex, offset)}
+            </span>
+          );
+        }
+        parts.push(
+          <a
+            key={`link-${lineIndex}-${url}`}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#1976d2" }}
+          >
+            {text}
+          </a>
+        );
+        lastIndex = offset + match.length;
+      });
+
+      if (lastIndex < line.length) {
+        parts.push(
+          <span key={`text-${lineIndex}-${lastIndex}`}>
+            {line.slice(lastIndex)}
+          </span>
+        );
+      }
+
+      return <div key={lineIndex}>{parts}</div>;
+    });
+  };
+
   return (
     <>
       <style>
@@ -521,7 +557,12 @@ const ChatComponent = () => {
                   sx={{ width: 44, height: 44, marginRight: 2 }}
                   alt="Aria"
                 />
-                <Typography variant="h4" component="h1" sx={{fontSize: {xs: "20px"}}} gutterBottom>
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  sx={{ fontSize: { xs: "20px" } }}
+                  gutterBottom
+                >
                   Welcome to Your Mental Health Companion
                 </Typography>
               </Box>
@@ -574,19 +615,10 @@ const ChatComponent = () => {
                     flexDirection: "column",
                     alignItems:
                       msg.sender === "user" ? "flex-end" : "flex-start",
-                    //backgroundColor: msg.sender === 'user' ? 'primary.light' : 'grey.100',  // Adjust colors here
-                    borderRadius: 2, // Optional: Adds rounded corners
-                    mb: 0.5, // Margin bottom for spacing between messages
-                    p: 1, // Padding inside each list item
-                    border: "none", // Added to remove any border or underline
-                    "&:before": {
-                      // Targeting pseudo-elements which might create lines
-                      display: "none",
-                    },
-                    "&:after": {
-                      // Same as above
-                      display: "none",
-                    },
+                    borderRadius: 2,
+                    mb: 0.5,
+                    p: 1,
+                    border: "none",
                   }}
                 >
                   <Box
@@ -611,12 +643,13 @@ const ChatComponent = () => {
                         <Box
                           sx={{
                             display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            flexWrap: "nowrap",
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                            gap: 2,
+                            flexWrap: "wrap",
                           }}
                         >
-                          {msg.message}
+                          {renderMessageWithLinks(msg.message)}
                           {voiceEnabled && msg.sender === "agent" && (
                             <IconButton
                               onClick={() => speak(msg.message)}
@@ -634,13 +667,12 @@ const ChatComponent = () => {
                             msg.sender === "user"
                               ? "common.white"
                               : "text.primary",
-                          //textAlign: msg.sender === 'user' ? 'right' : 'left',
                           bgcolor:
-                            msg.sender === "user" ? "#a281d6" : "grey.200", // You can adjust the background color here
-                          borderRadius: "16px", // Adds rounded corners to the text
-                          px: 2, // padding left and right within the text
-                          py: 1, // padding top and bottom within the text
-                          display: "inline-block", // Ensures the background color wraps the text only
+                            msg.sender === "user" ? "#a281d6" : "grey.200",
+                          borderRadius: "16px",
+                          px: 2,
+                          py: 1,
+                          display: "inline-block",
                         },
                       }}
                     />
