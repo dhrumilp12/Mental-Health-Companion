@@ -377,47 +377,69 @@ const ChatComponent = () => {
     );
   };
 
-  const renderMessageWithLinks = (message) => {
+  const renderMessageWithFormat = (message) => {
     const urlRegex = /\[(.*?)\]\((https?:\/\/[^\s]+)\)/g;
-    const lines = message.split("\n");
+    const boldRegex = /(\*\*|__)(.*?)\1/g;
+    const italicRegex = /(\*|_)(.*?)\1/g;
+    const strikethroughRegex = /~~(.*?)~~/g;
+    const headerRegex = /^#+\s?(.*)/gm;
 
-    return lines.map((line, lineIndex) => {
-      const parts = [];
-      let lastIndex = 0;
+    const convertLine = (line) => {
+        const parts = [];
+        let lastIndex = 0;
 
-      line.replace(urlRegex, (match, text, url, offset) => {
-        if (offset > lastIndex) {
-          parts.push(
-            <span key={`text-${lineIndex}-${lastIndex}`}>
-              {line.slice(lastIndex, offset)}
-            </span>
-          );
+        // Helper to handle appending regular text
+        const appendRegularText = (text, offset) => {
+            if (offset > lastIndex) {
+                parts.push(
+                    <span key={`text-${lastIndex}`}>
+                        {text.slice(lastIndex, offset)}
+                    </span>
+                );
+            }
+        };
+
+        // Replace all markdown with React components
+        line.replace(urlRegex, (match, text, url, offset) => {
+            appendRegularText(line, offset);
+            parts.push(
+                <a key={`link-${url}`}
+                   href={url}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   style={{ color: "#1976d2" }}>
+                    {text}
+                </a>
+            );
+            lastIndex = offset + match.length;
+        }).replace(boldRegex, (match, marker, text, offset) => {
+            appendRegularText(line, offset);
+            parts.push(<strong key={`bold-${lastIndex}`}>{text}</strong>);
+            lastIndex = offset + match.length;
+        }).replace(italicRegex, (match, marker, text, offset) => {
+            appendRegularText(line, offset);
+            parts.push(<em key={`italic-${lastIndex}`}>{text}</em>);
+            lastIndex = offset + match.length;
+        }).replace(strikethroughRegex, (match, text, offset) => {
+            appendRegularText(line, offset);
+            parts.push(<del key={`strikethrough-${lastIndex}`}>{text}</del>);
+            lastIndex = offset + match.length;
+        }).replace(headerRegex, (match, text, offset) => {
+            appendRegularText(line, offset);
+            parts.push(<h1 key={`header-${lastIndex}`}>{text}</h1>);
+            lastIndex = offset + match.length;
+        });
+
+        // Append any remaining text
+        if (lastIndex < line.length) {
+            parts.push(<span key={`text-end-${lastIndex}`}>{line.slice(lastIndex)}</span>);
         }
-        parts.push(
-          <a
-            key={`link-${lineIndex}-${url}`}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#1976d2" }}
-          >
-            {text}
-          </a>
-        );
-        lastIndex = offset + match.length;
-      });
 
-      if (lastIndex < line.length) {
-        parts.push(
-          <span key={`text-${lineIndex}-${lastIndex}`}>
-            {line.slice(lastIndex)}
-          </span>
-        );
-      }
+        return <div>{parts}</div>;
+    };
 
-      return <div key={lineIndex}>{parts}</div>;
-    });
-  };
+    return message.split("\n").map((line, index) => convertLine(line, index));
+};
 
   return (
     <>
@@ -649,7 +671,7 @@ const ChatComponent = () => {
                             flexWrap: "wrap",
                           }}
                         >
-                          {renderMessageWithLinks(msg.message)}
+                          {renderMessageWithFormat(msg.message)}
                           {voiceEnabled && msg.sender === "agent" && (
                             <IconButton
                               onClick={() => speak(msg.message)}

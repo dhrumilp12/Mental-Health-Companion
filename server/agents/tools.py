@@ -1,13 +1,10 @@
 import os
-from langchain_community.utilities import BingSearchAPIWrapper
-from langchain_community.tools.bing_search import BingSearchResults
 from langchain_community.tools.tavily_search import TavilySearchResults
 from utils.docs import format_docs
 from services.db.user import get_user_profile_by_user_id
 from langchain.tools import Tool
 from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results
-from langchain_google_community import GooglePlacesTool, GooglePlacesAPIWrapper
-
+from langchain_google_community import GooglePlacesTool
 
 
 

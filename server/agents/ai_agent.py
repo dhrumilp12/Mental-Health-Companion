@@ -30,7 +30,8 @@ from services.azure import (
     get_azure_openai_embeddings,
 )
 from utils.docs import format_docs
-from .tools import toolbox
+
+
 
 
 class AIAgent:
@@ -51,7 +52,6 @@ class AIAgent:
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ]
         )
-
         self.tools = self._create_agent_tools(tool_names)
         # agent = create_react_agent(llm=self.llm, tools=self.tools, prompt=self.prompt)
         # self.agent_executor:RunnableSerializable = AgentExecutor(agent, tools=[])
@@ -169,7 +169,7 @@ class AIAgent:
                 )
 
                 retriever_chain = retriever | format_docs
-
+                print("Description:", description)
                 custom_tools.append(
                     Tool(
                         name=f"vector_search_{tool_name}",
@@ -187,6 +187,5 @@ class AIAgent:
                 )
 
         result_tools = community_tools + custom_tools
-        print("Tools:", result_tools)
 
         return result_tools
