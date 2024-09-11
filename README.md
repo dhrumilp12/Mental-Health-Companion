@@ -1,6 +1,6 @@
 # Earlent - A Mental Health Platform
 `Dhrumil Patel - Full Stack Developer`<br>
-`Anthony Santana - Software Engineer in AI/ML`<br>
+
  ## How we built it 
 - **Database:** [Azure Cosmos DB (v-core)](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/vcore/introduction) for its robust, scalable database services to manage dynamic data requirements efficiently.
 - **LLM:** The [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) platform was integrated for generating empathetic, context-aware responses through advanced AI models like GPT 3.5.
