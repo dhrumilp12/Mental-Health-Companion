@@ -37,7 +37,7 @@ def get_google_search_results(query):
         return search_results
     
     except Exception as e:
-        print(f"Failed to fetch Google search results: {e}")
+        print(f"Failed to fetch Google search results: {e}", exc_info=True)
         return None
     
 
@@ -63,7 +63,7 @@ def get_youtube_search_results(query):
         return search_results
 
     except Exception as e:
-        print(f"Failed to fetch YouTube search results: {e}")
+        print(f"Failed to fetch YouTube search results: {e}", exc_info=True)
         return None
 
 
@@ -89,7 +89,7 @@ def get_bing_search_results(query):
         return search_results
 
     except Exception as e:
-        print(f"Failed to fetch Bing search results: {e}")
+        print(f"Failed to fetch Bing search results: {e}", exc_info=True)
         return None
     
 

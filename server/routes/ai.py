@@ -70,7 +70,7 @@ def set_mental_health_end_state(user_id, chat_id):
         return jsonify({"message": "Chat session finalized successfully"}), 200
 
     except Exception as e:
-        logger.error(f"Error during finalizing chat: {e}")
+        logger.error(f"Error during finalizing chat: {e}", exc_info=True)
         return jsonify({"error": "Failed to finalize chat"}), 500
     
 
