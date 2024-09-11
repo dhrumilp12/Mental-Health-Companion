@@ -23,6 +23,7 @@ import { UserContext } from "./Components/userContext";
 import ProtectedRoute from "./protectedRoute";
 import RequestPasswordReset from "./Components/requestPasswordReset";
 import ResetPassword from "./Components/passwordReset";
+import Routine from "./Components/Routine";
 
 function App() {
     const { user } = useContext(UserContext);
@@ -96,6 +97,14 @@ function App() {
                     }
                 />
                 <Route
+                    path="/user/routines"
+                    element={
+                        <ProtectedRoute>
+                            <Routine />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/user/chat_log_Manager"
                     element={
                         <ProtectedRoute>
@@ -129,7 +138,7 @@ function Layout({ children }) {
             ? route === location.pathname
             : route.test(location.pathname)
     );
-
+    
     const mainPadding = !showNav ? 0 : 6;
     const [sidebarOpen, setSidebarOpen] = useState(true); // State to control the sidebar
 

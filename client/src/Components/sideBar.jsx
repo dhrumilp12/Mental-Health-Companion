@@ -16,6 +16,7 @@ import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
 import PropTypes from "prop-types"
 import { UserContext } from "./userContext";
 import { NavLink, useLocation } from "react-router-dom";
+import SelfImprovementOutlinedIcon from '@mui/icons-material/SelfImprovementOutlined';
 
 function Sidebar({setSidebarOpen}) {
   const { logout, user } = useContext(UserContext);
@@ -44,6 +45,11 @@ function Sidebar({setSidebarOpen}) {
             path: `/user/check_ins/${user?.userId}`,
           }, // Dynamically inserting userId
           {
+            text: "Routines",
+            icon: <SelfImprovementOutlinedIcon/>,
+            path: "/user/routines"
+          },
+          {
             text: "Chat Log Manager",
             icon: <ManageHistoryIcon />,
             path: "/user/chat_log_Manager",
@@ -62,9 +68,9 @@ function Sidebar({setSidebarOpen}) {
         "& .MuiDrawer-paper": {
           width: {md: "100%", sm: "50%"},
           maxWidth: "270px",
-          position: {xs: "fixed", md: "relative"},
+          position: "fixed",
           left: 0,
-          top: {md: 13, xs: 60},
+          top: {md: 70, xs: 60},
           zIndex: 100,
           boxSizing: "border-box",
           // position: "relative", //position: 'fixed', Fixing the sidebar so it doesn't move on scroll
