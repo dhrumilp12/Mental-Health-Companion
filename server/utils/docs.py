@@ -3,6 +3,7 @@ This module contains utility functions for working with LangChain Documents.
 """
 
 import json
+import logging
 
 from langchain.schema.document import Document
 
