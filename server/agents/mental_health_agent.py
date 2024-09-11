@@ -12,6 +12,7 @@ This module defines a class used to generate AI agents centered around mental he
 # -- Standard libraries --
 from datetime import datetime
 import logging
+import json
 import asyncio
 from operator import itemgetter
 
@@ -162,6 +163,11 @@ class MentalHealthAIAgent(AIAgent):
             agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
         return agent_executor
+    
+    def get_suggestions_based_on_mood(self, user_id, chat_id, user_input):
+        mood = self.get_user_mood(user_id, chat_id)
+        suggestions = self.tools["generate_suggestions"].func(mood, user_input)
+        return suggestions
 
     def get_user_mood(self, user_id, chat_id):
         history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
@@ -272,14 +278,21 @@ class MentalHealthAIAgent(AIAgent):
         session_id = f"{user_id}-{chat_id}"
        
 
-        invocation = self.agent_executor.invoke(
-            {"input": message, "user_id": user_id, "agent_scratchpad": []},
-            config={"configurable": {"session_id": session_id}})
+        try:
+            invocation = self.agent_executor.invoke(
+                {"input": message, "user_id": user_id, "agent_scratchpad": []},
+                config={"configurable": {"session_id": session_id}})
 
-        response = invocation["output"]
-        if isinstance(response, dict):
-            response = {k: (v if isinstance(v, (str, int, float, bool, list, dict)) else str(v)) for k, v in response.items()}
-        return response
+            response = invocation["output"]
+
+            if isinstance(response, dict):
+                response = json.dumps(response)
+            elif not isinstance(response, str):
+                response = str(response)
+
+            return response
+        except Exception as e:
+            raise
 
 
     def get_initial_greeting(self, user_id:str) -> dict:

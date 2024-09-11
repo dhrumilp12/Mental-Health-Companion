@@ -3,9 +3,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from utils.docs import format_docs
 from services.db.user import get_user_profile_by_user_id
 from langchain.tools import Tool
-from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results
+from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results, generate_suggestions
 from langchain_google_community import GooglePlacesTool
-
 
 
 def get_vector_store_chain(agent, collection_name:str):
@@ -15,6 +14,7 @@ def get_vector_store_chain(agent, collection_name:str):
 def vector_store_chain_factory(collection_name) -> callable:
     collection_name = collection_name
     return lambda x: get_vector_store_chain(collection_name=collection_name)
+
 
 
 
@@ -30,6 +30,11 @@ toolbox = {
             "retriever": True,
             "structured": False
         },
+        "generate_suggestions": {
+            "func": generate_suggestions,
+            "description": "Generates personalized activities or coping mechanisms based on the user's mood using a language model.",
+            "structured": True
+            },
         "web_search_bing": {
             "func": get_bing_search_results,
             "description": "Uses Google Custom Search to fetch search results for a given query.",
@@ -55,3 +60,5 @@ toolbox = {
         }
     }
 }
+
+

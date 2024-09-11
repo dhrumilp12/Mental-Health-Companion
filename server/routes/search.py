@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 from utils.search_format import format_result, format_youtube_result, save_search_results, get_user_search_history, delete_user_search_history
 import requests
 import os
-
+import logging
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 search_routes = Blueprint("search", __name__)
 
 load_dotenv()
@@ -84,6 +87,7 @@ def youtube_search():
         return jsonify(formatted_results)
 
     except requests.RequestException as e:
+        logger.error(f"Error during YouTube search: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @search_routes.get('/search_history')
