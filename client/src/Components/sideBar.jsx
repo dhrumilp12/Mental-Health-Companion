@@ -13,12 +13,12 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
-import PropTypes from "prop-types"
+import PropTypes from "prop-types";
 import { UserContext } from "./userContext";
 import { NavLink, useLocation } from "react-router-dom";
-import SelfImprovementOutlinedIcon from '@mui/icons-material/SelfImprovementOutlined';
+import SelfImprovementOutlinedIcon from "@mui/icons-material/SelfImprovementOutlined";
 
-function Sidebar({setSidebarOpen}) {
+function Sidebar({ setSidebarOpen }) {
   const { logout, user } = useContext(UserContext);
   const location = useLocation(); // This hook returns the location object that represents the current URL.
 
@@ -29,11 +29,10 @@ function Sidebar({setSidebarOpen}) {
     ...(!user?.isAnon
       ? [
           {
-            text: "Track Your Vibes",
-            icon: <InsertEmoticonIcon />,
-            path: "/user/mood_logging",
+            text: "Mood Tracking",
+            icon: <ListAltIcon />,
+            path: "/user/mood_tracking",
           },
-          { text: "Mood Logs", icon: <ListAltIcon />, path: "/user/mood_logs" },
           {
             text: "Schedule Check-In",
             icon: <ScheduleIcon />,
@@ -46,8 +45,8 @@ function Sidebar({setSidebarOpen}) {
           }, // Dynamically inserting userId
           {
             text: "Routines",
-            icon: <SelfImprovementOutlinedIcon/>,
-            path: "/user/routines"
+            icon: <SelfImprovementOutlinedIcon />,
+            path: "/user/routines",
           },
           {
             text: "Chat Log Manager",
@@ -61,16 +60,16 @@ function Sidebar({setSidebarOpen}) {
   return (
     <Drawer
       sx={{
-        width: {xl: "20%", md: "25%"},
+        width: { xl: "20%", md: "25%" },
         maxWidth: "270px",
         flexShrink: 0,
         mt: 8,
         "& .MuiDrawer-paper": {
-          width: {md: "100%", sm: "50%"},
+          width: { md: "100%", sm: "50%" },
           maxWidth: "270px",
           position: "fixed",
           left: 0,
-          top: {md: 70, xs: 60},
+          top: { md: 70, xs: 60 },
           zIndex: 100,
           boxSizing: "border-box",
           // position: "relative", //position: 'fixed', Fixing the sidebar so it doesn't move on scroll
@@ -88,7 +87,13 @@ function Sidebar({setSidebarOpen}) {
       anchor="left"
     >
       <List
-        sx={{ padding: 1.5, display: "flex", flexDirection: "column", gap: 1, width: "100%" }}
+        sx={{
+          padding: 1.5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          width: "100%",
+        }}
       >
         {items.map((item) => (
           <NavLink
@@ -96,7 +101,7 @@ function Sidebar({setSidebarOpen}) {
             key={item.text}
             onClick={() => {
               if (window.innerWidth < 900) {
-                setSidebarOpen(false)
+                setSidebarOpen(false);
               }
             }}
             style={{ textDecoration: "none", color: "inherit" }}
@@ -138,7 +143,7 @@ function Sidebar({setSidebarOpen}) {
 }
 
 Sidebar.propTypes = {
-  setSidebarOpen: PropTypes.func
-}
+  setSidebarOpen: PropTypes.func,
+};
 
 export default Sidebar;

@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import axios from "axios";
 import apiServerAxios from "../api/axios";
 import {
   Button,
   Snackbar,
   Alert,
   Tooltip,
-  Paper,
   Typography,
   CircularProgress,
   TextField,
@@ -17,23 +15,11 @@ import {
   DialogTitle,
   Container,
   Box,
-  FormControl,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/CloudDownload";
 import DeleteIcon from "@mui/icons-material/DeleteForever";
 import { createTheme, styled, ThemeProvider } from "@mui/material/styles";
 import DateRangeIcon from "@mui/icons-material/DateRange";
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: 1,
-  maxWidth: "100%",
-  margin: "auto",
-  marginTop: theme.spacing(2),
-  backgroundColor: "#fff", // Consider using theme.palette.background.paper for theme consistency
-  overflow: "auto",
-}));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   margin: theme.spacing(0),
@@ -155,161 +141,6 @@ function ChatLogManager() {
 
   return (
     <>
-      {/* <StyledPaper sx={{ height: "91vh" }}>
-        <Typography variant="h4" gutterBottom>
-          Manage Your Chat Logs
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Manage your chat logs efficiently by downloading or deleting entries
-          for specific dates or entire ranges. Please be cautious as deletion is
-          permanent.
-        </Typography>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 20,
-          }}
-        >
-          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            <TextField
-              label="Start Date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <TextField
-              label="End Date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          </div>
-          <Typography variant="body1" paragraph>
-            Here you can download your chat logs as a CSV file, which includes
-            details like chat IDs, content, type, and additional information for
-            each session.
-          </Typography>
-
-          <Tooltip title="Download chat logs for selected date range">
-            <ActionButton
-              variant="outlined"
-              startIcon={<DateRangeIcon />}
-              onClick={() => downloadChatLogs(true)}
-              disabled={loading || !startDate || !endDate}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Download Range"
-              )}
-            </ActionButton>
-          </Tooltip>
-          <Tooltip title="Download your chat logs as a CSV file">
-            <ActionButton
-              variant="contained"
-              color="primary"
-              startIcon={<DownloadIcon />}
-              onClick={() => downloadChatLogs(false)}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Download Chat Logs"
-              )}
-            </ActionButton>
-          </Tooltip>
-          <Typography variant="body1" paragraph>
-            If you need to clear your history for privacy or other reasons, you
-            can also permanently delete your chat logs from the server.
-          </Typography>
-          <Tooltip title="Delete chat logs for selected date range">
-            <ActionButton
-              variant="outlined"
-              color="warning"
-              startIcon={<DeleteIcon />}
-              onClick={() => handleDeleteConfirmation(true)}
-              disabled={loading || !startDate || !endDate}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Delete Range"
-              )}
-            </ActionButton>
-          </Tooltip>
-          <Tooltip title="Permanently delete all your chat logs">
-            <ActionButton
-              variant="contained"
-              color="secondary"
-              startIcon={<DeleteIcon />}
-              onClick={() => handleDeleteConfirmation(false)}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Delete Chat Logs"
-              )}
-            </ActionButton>
-          </Tooltip>
-          <Typography variant="body1" paragraph>
-            Please use these options carefully as deleting your chat logs is
-            irreversible.
-          </Typography>
-        </div>
-        <Dialog
-          open={dialogOpen}
-          onClose={handleDialogClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            {"Confirm Deletion"}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              Are you sure you want to delete these chat logs? This action
-              cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose} color="primary">
-              Cancel
-            </Button>
-            <Button
-              onClick={() => deleteChatLogs(true)}
-              color="secondary"
-              autoFocus
-            >
-              Confirm
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleSnackbarClose}
-        >
-          <Alert
-            onClose={handleSnackbarClose}
-            severity={severity}
-            sx={{ width: "100%" }}
-          >
-            {message}
-          </Alert>
-        </Snackbar>
-      </StyledPaper> */}
       <ThemeProvider theme={theme}>
         <Container
           component="main"
@@ -388,10 +219,16 @@ function ChatLogManager() {
               >
                 <Tooltip title="Download chat logs for selected date range">
                   <ActionButton
-                    variant="outlined"
                     startIcon={<DateRangeIcon />}
                     onClick={() => downloadChatLogs(true)}
                     disabled={loading || !startDate || !endDate}
+                    sx={{
+                      width: "50%",
+                      alignSelf: "center",
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: "#333",
+                    }}
                   >
                     {loading ? (
                       <CircularProgress size={24} color="inherit" />
@@ -433,11 +270,17 @@ function ChatLogManager() {
               >
                 <Tooltip title="Delete chat logs for selected date range">
                   <ActionButton
-                    variant="outlined"
                     color="warning"
                     startIcon={<DeleteIcon />}
                     onClick={() => handleDeleteConfirmation(true)}
                     disabled={loading || !startDate || !endDate}
+                    sx={{
+                      width: "50%",
+                      alignSelf: "center",
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: "#333",
+                    }}
                   >
                     {loading ? (
                       <CircularProgress size={24} color="inherit" />
