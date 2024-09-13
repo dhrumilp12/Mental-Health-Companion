@@ -15,8 +15,7 @@ import Sidebar from "./Components/sideBar";
 import Navbar from "./Components/navBar";
 import ChatLogManager from "./Components/chatLogManager";
 
-import MoodLogging from "./Components/moodLogging";
-import MoodLogs from "./Components/moodLogs";
+
 import CheckInForm from "./Components/checkInForm";
 import CheckInsList from "./Components/checkInsList";
 import { UserContext } from "./Components/userContext";
