@@ -7,3 +7,5 @@ venv/
 mental_health_bot_env/
 sandbox/
 instance/
+
+agent_facts_faiss_index/

@@ -26,7 +26,7 @@ toolbox = {
     "custom": {
         "agent_facts": {
             "func": vector_store_chain_factory("agent_facts"),
-            "description": "Searches for facts about the AI to answer questions about itself.",
+            "description": "Searches for specific facts about the AI's origin, creators, capabilities, and history stored in a vector database. It retrieves answers to questions like 'Who built you?' or 'What is your purpose?' by finding the most relevant information from the agent_facts collection. This tool is used when the AI needs to provide self-referential information based on pre-stored facts. The retrieved facts are sourced from a similarity search on semantic embeddings of stored data.",
             "retriever": True,
             "structured": False
         },

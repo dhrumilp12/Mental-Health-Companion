@@ -4,14 +4,16 @@ This module defines a general structure for AI agents in the app.
 
 # -- Standard libraries --
 import re
-
+from pydantic import BaseModel
+import os
 # -- 3rd Party libraries --
 ## Langchain
 from langchain_community.vectorstores.azure_cosmos_db import (
-    AzureCosmosDBVectorSearch,
+    
     CosmosDBSimilarityType,
     CosmosDBVectorSearchType,
 )
+from langchain_community.vectorstores import FAISS
 from langchain.agents import Tool
 from langchain.tools import StructuredTool
 from langchain_core.messages import SystemMessage
@@ -19,7 +21,7 @@ from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_community.document_loaders.mongodb import MongodbLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-
+from langchain.schema import Document
 ## MongoDB
 from pymongo.database import Database
 
@@ -66,40 +68,35 @@ class AIAgent:
         result = self.agent_executor({"input": message})
         return result["output"]
 
-    def _get_cosmosdb_vector_store_retriever(
-        self, collection_name, top_k=3
-    ) -> VectorStoreRetriever:
+    def _get_vector_store_retriever(self, collection_name, top_k=3) -> VectorStoreRetriever:
         """
-        Returns a vector store retriever for a given collection.
+        Returns a vector store retriever for a given collection using FAISS.
 
         Args:
             collection_name: The name of the collection to retrieve.
             top_k: The number of similar documents to retrieve.
         """
 
-        db = self.db
-        db_name = MongoDBClient.get_db_name()
-        CONNECTION_STRING = MongoDBClient.get_mongodb_variables()
         embeddings_model = self.embedding_model
-        vector_store_name = f"{collection_name}_vector_store"
-        vector_store_collection = self.db[vector_store_name]
+        index_file_path = f"{collection_name}_faiss_index"
 
-        if db[vector_store_name].find_one({}):
-            vector_store = AzureCosmosDBVectorSearch.from_connection_string(
-                connection_string=CONNECTION_STRING,
-                namespace=f"{db_name}.{vector_store_name}",
-                embedding=embeddings_model,
-                index_name="VectorSearchIndex",
-                embedding_key="vectorContent",
-                text_key="textContent",
+        if os.path.exists(index_file_path):
+            # Load the FAISS index from disk
+            vector_store = FAISS.load_local(
+                index_file_path, embeddings_model, allow_dangerous_deserialization=True
             )
         else:
+            # Load documents from MongoDB
             loader = MongodbLoader(
-                connection_string=CONNECTION_STRING,
-                db_name=db_name,
+                connection_string=MongoDBClient.get_mongodb_variables(),
+                db_name=MongoDBClient.get_db_name(),
                 collection_name=collection_name,
             )
             docs = loader.load()
+
+            # Convert docs to LangChain Document objects if necessary
+            if docs and isinstance(docs[0], dict):
+                docs = [Document(page_content=doc.get('textContent', ''), metadata=doc) for doc in docs]
 
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000,
@@ -110,26 +107,17 @@ class AIAgent:
 
             docs = text_splitter.split_documents(docs)
 
-            vector_store = AzureCosmosDBVectorSearch.from_documents(
+            vector_store = FAISS.from_documents(
                 docs,
                 embeddings_model,
-                collection=vector_store_collection,
-                index_name="vectorSearchIndex",
             )
-            num_lists = 1
-            dimensions = 1536
-            similarity_algorithm = CosmosDBSimilarityType.COS
-            kind = CosmosDBVectorSearchType.VECTOR_IVF
-            m = 16
-            ef_construction = 64
 
-            vector_store.create_index(
-                num_lists, dimensions, similarity_algorithm, kind, m, ef_construction
-            )
+            # Save the FAISS index to disk
+            vector_store.save_local(index_file_path)
 
         retriever = vector_store.as_retriever(search_kwargs={"k": top_k})
-
         return retriever
+
 
     def _create_agent_tools(self, tool_names=[]) -> list[Tool]:
         """
@@ -164,17 +152,26 @@ class AIAgent:
                 continue
             
             elif tool_dict.get("retriever", False):
-                retriever = self._get_cosmosdb_vector_store_retriever(
+                retriever = self._get_vector_store_retriever(
                     tool_name
                 )
 
                 retriever_chain = retriever | format_docs
                 print("Description:", description)
+                    # Define an args_schema
+                class RetrieverInput(BaseModel):
+                    query: str
+
+                # Define the function to be used
+                def retriever_func(query: str):
+                    return retriever_chain.invoke(query)
+
                 custom_tools.append(
-                    Tool(
+                    StructuredTool(
                         name=f"vector_search_{tool_name}",
-                        func=retriever_chain.invoke,
-                        description=description
+                        func=retriever_func,
+                        description=description,
+                        args_schema=RetrieverInput
                     )
                 )
             else: 
