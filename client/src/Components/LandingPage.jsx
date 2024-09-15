@@ -19,7 +19,7 @@ const LandingPage = () => {
     >
       <TopBar />
       <Container maxWidth="md" sx={{ mt: 8 }}>
-        <Grid container spacing={4} alignItems="center" justifyContent="center">
+        <Grid container spacing={3} alignItems="center" justifyContent="center">
           <Grid item xs={12}>
             <Typography
               variant="h2"
