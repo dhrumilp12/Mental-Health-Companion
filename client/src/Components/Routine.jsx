@@ -29,7 +29,7 @@ const theme = createTheme({
         },
     },
     typography: {
-        fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif', 
+        fontFamily: '"Open Sans", "Helvetica", "Arial", sans-serif',
         button: {
             textTransform: "none",
             fontWeight: "bold",
@@ -40,7 +40,7 @@ const theme = createTheme({
             styleOverrides: {
                 root: {
                     boxShadow: "none",
-                    borderRadius: 8, 
+                    borderRadius: 8,
                     "&:hover": {
                         boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
                     },
@@ -51,19 +51,19 @@ const theme = createTheme({
 });
 
 const CustomTabs = styled(Tabs)({
-    background: "#fff", 
-    borderRadius: "8px", 
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)", 
-    margin: "20px 0", 
-    maxWidth: "100%", 
-    overflow: "hidden", 
+    background: "#fff",
+    borderRadius: "8px",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    margin: "20px 0",
+    maxWidth: "100%",
+    overflow: "hidden",
 });
 
 const CustomTab = styled(Tab)({
-    fontSize: "1rem", 
-    fontWeight: "bold", 
-    color: "#3F51B5", 
-    marginRight: "4px", 
+    fontSize: "1rem",
+    fontWeight: "bold",
+    color: "#3F51B5",
+    marginRight: "4px",
     marginLeft: "4px",
     flex: 1,
     maxWidth: "none",
@@ -72,7 +72,7 @@ const CustomTab = styled(Tab)({
         background: "#e0e0e0",
     },
     "&:hover": {
-        background: "#f4f4f4", 
+        background: "#f4f4f4",
         transition: "background-color 0.3s",
     },
     "@media (max-width: 720px)": {
@@ -125,11 +125,13 @@ function Routine() {
         const cachedHistoryData = sessionStorage.getItem(
             "initial-history-data"
         );
+        console.log(JSON.parse(cachedHistoryData), "on fetch");
 
-        if (cachedYoutubeData && cachedGoogleData && cachedHistoryData.length) {
+        if (cachedYoutubeData && cachedGoogleData && cachedHistoryData) {
             setInitialYouTubeData(JSON.parse(cachedYoutubeData));
             setInitialGoogleData(JSON.parse(cachedGoogleData));
             setHistoryData(JSON.parse(cachedHistoryData));
+            console.log("in session");
             setIsLoading(false);
             return;
         }
@@ -151,6 +153,8 @@ function Routine() {
                     Authorization: `Bearer ${token}`,
                 },
             });
+
+            console.log("from server");
 
             setInitialYouTubeData(youtubeSearchResponse.data);
             setInitialGoogleData(googleSearchResponse.data);
@@ -268,24 +272,66 @@ function Routine() {
         setTabValue(newValue);
     };
 
-    async function deleteSearchHistory() {
+    async function deleteYouTubeSearchHistory() {
         try {
-            await apiServerAxios.delete(`/search_history`, {
+            console.log("entered")
+            await apiServerAxios.delete(`/youtube_search_history`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setHistoryData([]);
-            sessionStorage.setItem("initial-history-data", JSON.stringify([]));
-            setMessage("Search history deleted successfully!");
+            const updatedYouTubeHistoryData = await apiServerAxios.get(
+                "/search_history",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setHistoryData(updatedYouTubeHistoryData.data);
+            sessionStorage.setItem(
+                "initial-history-data",
+                JSON.stringify(updatedYouTubeHistoryData.data)
+            );
+            setMessage("YouTube search history deleted successfully!");
             setSeverity("success");
         } catch (error) {
-            setMessage("Failed to delete search history.");
+            setMessage("Failed to delete YouTube search history.");
             setSeverity("error");
             console.error(error);
             throw error;
         }
         setOpen(true);
+    }
+
+    async function deleteGoogleSearchHistory() {
+        try {
+            await apiServerAxios.delete("/google_search_history", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            const updatedHistoryData = await apiServerAxios.get(
+                "/search_history",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            setHistoryData(updatedHistoryData.data);
+            sessionStorage.setItem(
+                "initial-history-data",
+                JSON.stringify(updatedHistoryData.data)
+            );
+            setMessage("Google search history deleted successfully!");
+            setSeverity("success");
+        } catch (error) {
+            setMessage("Failed to delete google search history.");
+            setSeverity("error");
+            console.error(error);
+            throw error;
+        }
     }
 
     const handleClose = () => {
@@ -423,7 +469,7 @@ function Routine() {
                                 >
                                     {initialYouTubeData
                                         ?.slice(0, itemsToDisplay)
-                                        .map((routine) => {
+                                        .map((routine, index) => {
                                             const embedUrl =
                                                 routine.videoUrl.replace(
                                                     "watch?v=",
@@ -436,7 +482,7 @@ function Routine() {
                                                         flexDirection: "column",
                                                         gap: "8px",
                                                     }}
-                                                    key={routine.id}
+                                                    key={index}
                                                 >
                                                     <iframe
                                                         src={embedUrl}
@@ -491,18 +537,12 @@ function Routine() {
                                             History{" "}
                                         </Typography>
                                         <div
-                                            data-tip="This is a tooltip"
-                                            onClick={deleteSearchHistory}
+                                            onClick={deleteYouTubeSearchHistory}
                                         >
                                             <RiDeleteBin6Line
                                                 color={"red"}
                                                 size={25}
-                                            />
-                                            <Tooltip
-                                                place="top"
-                                                type="dark"
-                                                effect="float"
-                                                data-tip="This is a tooltip"
+                                                cursor={"pointer"}
                                             />
                                         </div>
                                     </Box>
@@ -875,18 +915,12 @@ function Routine() {
                                             History{" "}
                                         </Typography>
                                         <div
-                                            data-tip="This is a tooltip"
-                                            onClick={deleteSearchHistory}
+                                            onClick={deleteGoogleSearchHistory}
                                         >
                                             <RiDeleteBin6Line
                                                 color={"red"}
                                                 size={25}
-                                            />
-                                            <Tooltip
-                                                place="top"
-                                                type="dark"
-                                                effect="float"
-                                                data-tip="This is a tooltip"
+                                                cursor={"pointer"}
                                             />
                                         </div>
                                     </Box>
