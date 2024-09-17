@@ -110,11 +110,38 @@ def search_history():
 @jwt_required()
 def delete_history():
     current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
-    
+
     try:
-        # Delete the user's search history from the database
+        # Delete all types of search history for the user
         delete_user_search_history(current_user)
-        return jsonify({'message': 'Search history deleted successfully'}), 200
+        return jsonify({'message': 'All search history deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    
+@search_routes.delete('/google_search_history')
+@jwt_required()
+def delete_google_search_history():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
+
+    try:
+        # Delete the user's Google search history from the database
+        delete_user_search_history(current_user, search_type='google_search')
+        return jsonify({'message': 'Google search history deleted successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@search_routes.delete('/youtube_search_history')
+@jwt_required()
+def delete_youtube_search_history():
+    current_user = get_jwt_identity()  # Assuming JWT contains user ID or username
+
+    try:
+        # Delete the user's YouTube search history from the database
+        delete_user_search_history(current_user, search_type='youtube_search')
+        return jsonify({'message': 'YouTube search history deleted successfully'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
