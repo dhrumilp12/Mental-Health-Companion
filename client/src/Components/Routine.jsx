@@ -20,7 +20,6 @@ import { useCallback, useEffect, useState } from "react";
 import { ring2 } from "ldrs";
 import apiServerAxios from "../api/axios";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import { Tooltip } from "react-tooltip";
 
 const theme = createTheme({
     palette: {
@@ -274,7 +273,7 @@ function Routine() {
 
     async function deleteYouTubeSearchHistory() {
         try {
-            console.log("entered")
+            console.log("entered");
             await apiServerAxios.delete(`/youtube_search_history`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -450,107 +449,14 @@ function Routine() {
                                 </Button>
                             </Box>
                             <Box sx={{ pt: 5 }}>
-                                <Typography
-                                    variant="h5"
-                                    sx={{ mb: 2, fontWeight: 600 }}
-                                >
-                                    Meditation and Mindfulness Exercise{" "}
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: { xs: "flex", md: "grid" },
-                                        overflowX: "auto",
-                                        gridTemplateColumns: {
-                                            md: "repeat(3, 1fr)",
-                                            xl: "repeat(4, 1fr)",
-                                        },
-                                        gap: "16px",
-                                    }}
-                                >
-                                    {initialYouTubeData
-                                        ?.slice(0, itemsToDisplay)
-                                        .map((routine, index) => {
-                                            const embedUrl =
-                                                routine.videoUrl.replace(
-                                                    "watch?v=",
-                                                    "embed/"
-                                                );
-                                            return (
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        gap: "8px",
-                                                    }}
-                                                    key={index}
-                                                >
-                                                    <iframe
-                                                        src={embedUrl}
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                                        allowFullScreen
-                                                        title={
-                                                            routine.videoTitle
-                                                        }
-                                                        style={{
-                                                            backgroundColor:
-                                                                "black",
-                                                        }}
-                                                        loading="lazy"
-                                                    ></iframe>
-                                                    <Link
-                                                        href={routine.videoUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        sx={{ fontWeight: 600 }}
-                                                    >
-                                                        {routine.videoTitle}
-                                                    </Link>
-                                                    <Typography
-                                                        sx={{
-                                                            textAlign:
-                                                                "justify",
-                                                        }}
-                                                    >
-                                                        {
-                                                            routine.description.split(
-                                                                "."
-                                                            )[0]
-                                                        }
-                                                        ...
-                                                    </Typography>
-                                                </div>
-                                            );
-                                        })}
-                                </Box>
-                                <Box>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                        }}
-                                    >
+                                {youtubeSearchData?.length === 0 && !isSearchInProgress && (
+                                    <Box>
                                         <Typography
                                             variant="h5"
-                                            sx={{ my: 2, fontWeight: 600 }}
+                                            sx={{ mb: 2, fontWeight: 600 }}
                                         >
-                                            History{" "}
+                                            Meditation and Mindfulness Exercise{" "}
                                         </Typography>
-                                        <div
-                                            onClick={deleteYouTubeSearchHistory}
-                                        >
-                                            <RiDeleteBin6Line
-                                                color={"red"}
-                                                size={25}
-                                                cursor={"pointer"}
-                                            />
-                                        </div>
-                                    </Box>
-                                    {historyData.filter(
-                                        (data) =>
-                                            data.search_type ===
-                                            "youtube_search"
-                                    )?.length > 0 ? (
                                         <Box
                                             sx={{
                                                 display: {
@@ -565,17 +471,11 @@ function Routine() {
                                                 gap: "16px",
                                             }}
                                         >
-                                            {historyData
-                                                .filter(
-                                                    (data) =>
-                                                        data.search_type ===
-                                                        "youtube_search"
-                                                )
-                                                .map((data, index) => {
-                                                    const chosenIndex =
-                                                        data.queries.length - 1;
+                                            {initialYouTubeData
+                                                ?.slice(0, itemsToDisplay)
+                                                .map((routine, index) => {
                                                     const embedUrl =
-                                                        data.queries[0].videoUrl.replace(
+                                                        routine.videoUrl.replace(
                                                             "watch?v=",
                                                             "embed/"
                                                         );
@@ -594,10 +494,7 @@ function Routine() {
                                                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                                                 allowFullScreen
                                                                 title={
-                                                                    data
-                                                                        .queries[
-                                                                        chosenIndex
-                                                                    ].videoTitle
+                                                                    routine.videoTitle
                                                                 }
                                                                 style={{
                                                                     backgroundColor:
@@ -607,10 +504,7 @@ function Routine() {
                                                             ></iframe>
                                                             <Link
                                                                 href={
-                                                                    data
-                                                                        .queries[
-                                                                        chosenIndex
-                                                                    ].videoUrl
+                                                                    routine.videoUrl
                                                                 }
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
@@ -619,10 +513,7 @@ function Routine() {
                                                                 }}
                                                             >
                                                                 {
-                                                                    data
-                                                                        .queries[
-                                                                        chosenIndex
-                                                                    ].videoTitle
+                                                                    routine.videoTitle
                                                                 }
                                                             </Link>
                                                             <Typography
@@ -632,9 +523,7 @@ function Routine() {
                                                                 }}
                                                             >
                                                                 {
-                                                                    data.queries[
-                                                                        chosenIndex
-                                                                    ].description.split(
+                                                                    routine.description.split(
                                                                         "."
                                                                     )[0]
                                                                 }
@@ -644,12 +533,149 @@ function Routine() {
                                                     );
                                                 })}
                                         </Box>
-                                    ) : (
-                                        <Typography variant="h6">
-                                            No search History available
-                                        </Typography>
-                                    )}
-                                </Box>
+                                        <Box>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    justifyContent:
+                                                        "space-between",
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="h5"
+                                                    sx={{
+                                                        my: 2,
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    History{" "}
+                                                </Typography>
+                                                <div
+                                                    onClick={
+                                                        deleteYouTubeSearchHistory
+                                                    }
+                                                >
+                                                    <RiDeleteBin6Line
+                                                        color={"red"}
+                                                        size={25}
+                                                        cursor={"pointer"}
+                                                    />
+                                                </div>
+                                            </Box>
+                                            {historyData.filter(
+                                                (data) =>
+                                                    data.search_type ===
+                                                    "youtube_search"
+                                            )?.length > 0 ? (
+                                                <Box
+                                                    sx={{
+                                                        display: {
+                                                            xs: "flex",
+                                                            md: "grid",
+                                                        },
+                                                        overflowX: "auto",
+                                                        gridTemplateColumns: {
+                                                            md: "repeat(3, 1fr)",
+                                                            xl: "repeat(4, 1fr)",
+                                                        },
+                                                        gap: "16px",
+                                                    }}
+                                                >
+                                                    {historyData
+                                                        .filter(
+                                                            (data) =>
+                                                                data.search_type ===
+                                                                "youtube_search"
+                                                        )
+                                                        .map((data, index) => {
+                                                            const chosenIndex =
+                                                                data.queries
+                                                                    .length - 1;
+                                                            const embedUrl =
+                                                                data.queries[0].videoUrl.replace(
+                                                                    "watch?v=",
+                                                                    "embed/"
+                                                                );
+                                                            return (
+                                                                <div
+                                                                    style={{
+                                                                        display:
+                                                                            "flex",
+                                                                        flexDirection:
+                                                                            "column",
+                                                                        gap: "8px",
+                                                                    }}
+                                                                    key={index}
+                                                                >
+                                                                    <iframe
+                                                                        src={
+                                                                            embedUrl
+                                                                        }
+                                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                                        allowFullScreen
+                                                                        title={
+                                                                            data
+                                                                                .queries[
+                                                                                chosenIndex
+                                                                            ]
+                                                                                .videoTitle
+                                                                        }
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                "black",
+                                                                        }}
+                                                                        loading="lazy"
+                                                                    ></iframe>
+                                                                    <Link
+                                                                        href={
+                                                                            data
+                                                                                .queries[
+                                                                                chosenIndex
+                                                                            ]
+                                                                                .videoUrl
+                                                                        }
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        sx={{
+                                                                            fontWeight: 600,
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            data
+                                                                                .queries[
+                                                                                chosenIndex
+                                                                            ]
+                                                                                .videoTitle
+                                                                        }
+                                                                    </Link>
+                                                                    <Typography
+                                                                        sx={{
+                                                                            textAlign:
+                                                                                "justify",
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            data.queries[
+                                                                                chosenIndex
+                                                                            ].description.split(
+                                                                                "."
+                                                                            )[0]
+                                                                        }
+                                                                        ...
+                                                                    </Typography>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="h6">
+                                                    No search History available
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                )}
                                 <div style={{ position: "relative" }}>
                                     {isSearchInProgress && (
                                         <Box
@@ -673,10 +699,9 @@ function Routine() {
                                             ></l-ring-2>
                                         </Box>
                                     )}
-                                    {youtubeSearchData?.length > 0 && (
+                                    {youtubeSearchData?.length > 0 && !isSearchInProgress && (
                                         <Box
                                             sx={{
-                                                pt: 5,
                                                 display: "flex",
                                                 flexDirection: "column",
                                                 gap: 3,
@@ -849,85 +874,15 @@ function Routine() {
                                     Search
                                 </Button>
                             </Box>
-                            <Box sx={{ pt: 5 }}>
-                                <Typography
-                                    variant="h5"
-                                    sx={{ mb: 2, fontWeight: 600 }}
-                                >
-                                    Meditation and Mindfulness Exercise{" "}
-                                </Typography>
-                                <Box
-                                    sx={{
-                                        display: { xs: "flex", md: "grid" },
-                                        overflowX: "auto",
-                                        gridTemplateColumns: {
-                                            md: "repeat(3, 1fr)",
-                                            xl: "repeat(4, 1fr)",
-                                        },
-                                        gap: "16px",
-                                    }}
-                                >
-                                    {initialGoogleData
-                                        ?.slice(0, itemsToDisplay)
-                                        .map((result, index) => {
-                                            return (
-                                                <Box
-                                                    key={index}
-                                                    sx={{
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        gap: 1,
-                                                    }}
-                                                >
-                                                    <Link
-                                                        href={result.link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        sx={{
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        {result.title}
-                                                    </Link>
-                                                    <Typography
-                                                        sx={{
-                                                            textAlign: "start",
-                                                        }}
-                                                    >
-                                                        {result.snippet}
-                                                    </Typography>
-                                                </Box>
-                                            );
-                                        })}
-                                </Box>
-                                <Box>
-                                    <Box
-                                        sx={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                        }}
-                                    >
+                            <Box>
+                                {googleSearchData.length === 0 && !isSearchInProgress && (
+                                    <Box>
                                         <Typography
                                             variant="h5"
-                                            sx={{ my: 2, fontWeight: 600 }}
+                                            sx={{ mb: 2, fontWeight: 600, mt: 5 }}
                                         >
-                                            History{" "}
+                                            Meditation and Mindfulness Exercise{" "}
                                         </Typography>
-                                        <div
-                                            onClick={deleteGoogleSearchHistory}
-                                        >
-                                            <RiDeleteBin6Line
-                                                color={"red"}
-                                                size={25}
-                                                cursor={"pointer"}
-                                            />
-                                        </div>
-                                    </Box>
-                                    {historyData.filter(
-                                        (data) =>
-                                            data.search_type === "google_search"
-                                    )?.length > 0 ? (
                                         <Box
                                             sx={{
                                                 display: {
@@ -942,15 +897,9 @@ function Routine() {
                                                 gap: "16px",
                                             }}
                                         >
-                                            {historyData
-                                                .filter(
-                                                    (data) =>
-                                                        data.search_type ===
-                                                        "google_search"
-                                                )
-                                                .map((data, index) => {
-                                                    const chosenIndex =
-                                                        data.queries.length - 1;
+                                            {initialGoogleData
+                                                ?.slice(0, itemsToDisplay)
+                                                .map((result, index) => {
                                                     return (
                                                         <Box
                                                             key={index}
@@ -963,9 +912,7 @@ function Routine() {
                                                         >
                                                             <Link
                                                                 href={
-                                                                    data
-                                                                        .queries[0]
-                                                                        .link
+                                                                    result.link
                                                                 }
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
@@ -973,12 +920,7 @@ function Routine() {
                                                                     fontWeight: 600,
                                                                 }}
                                                             >
-                                                                {
-                                                                    data
-                                                                        .queries[
-                                                                        chosenIndex
-                                                                    ].title
-                                                                }
+                                                                {result.title}
                                                             </Link>
                                                             <Typography
                                                                 sx={{
@@ -986,28 +928,134 @@ function Routine() {
                                                                         "start",
                                                                 }}
                                                             >
-                                                                {
-                                                                    data
-                                                                        .queries[
-                                                                        chosenIndex
-                                                                    ].snippet
-                                                                }
+                                                                {result.snippet}
                                                             </Typography>
                                                         </Box>
                                                     );
                                                 })}
                                         </Box>
-                                    ) : (
-                                        <Typography variant="h6">
-                                            No search History available
-                                        </Typography>
-                                    )}
-                                </Box>
+                                        <Box>
+                                            <Box
+                                                sx={{
+                                                    display: "flex",
+                                                    justifyContent:
+                                                        "space-between",
+                                                    alignItems: "center",
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant="h5"
+                                                    sx={{
+                                                        my: 2,
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    History{" "}
+                                                </Typography>
+                                                <div
+                                                    onClick={
+                                                        deleteGoogleSearchHistory
+                                                    }
+                                                >
+                                                    <RiDeleteBin6Line
+                                                        color={"red"}
+                                                        size={25}
+                                                        cursor={"pointer"}
+                                                    />
+                                                </div>
+                                            </Box>
+                                            {historyData.filter(
+                                                (data) =>
+                                                    data.search_type ===
+                                                    "google_search"
+                                            )?.length > 0 ? (
+                                                <Box
+                                                    sx={{
+                                                        display: {
+                                                            xs: "flex",
+                                                            md: "grid",
+                                                        },
+                                                        overflowX: "auto",
+                                                        gridTemplateColumns: {
+                                                            md: "repeat(3, 1fr)",
+                                                            xl: "repeat(4, 1fr)",
+                                                        },
+                                                        gap: "16px",
+                                                    }}
+                                                >
+                                                    {historyData
+                                                        .filter(
+                                                            (data) =>
+                                                                data.search_type ===
+                                                                "google_search"
+                                                        )
+                                                        .map((data, index) => {
+                                                            const chosenIndex =
+                                                                data.queries
+                                                                    .length - 1;
+                                                            return (
+                                                                <Box
+                                                                    key={index}
+                                                                    sx={{
+                                                                        display:
+                                                                            "flex",
+                                                                        flexDirection:
+                                                                            "column",
+                                                                        gap: 1,
+                                                                    }}
+                                                                >
+                                                                    <Link
+                                                                        href={
+                                                                            data
+                                                                                .queries[0]
+                                                                                .link
+                                                                        }
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        sx={{
+                                                                            fontWeight: 600,
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            data
+                                                                                .queries[
+                                                                                chosenIndex
+                                                                            ]
+                                                                                .title
+                                                                        }
+                                                                    </Link>
+                                                                    <Typography
+                                                                        sx={{
+                                                                            textAlign:
+                                                                                "start",
+                                                                        }}
+                                                                    >
+                                                                        {
+                                                                            data
+                                                                                .queries[
+                                                                                chosenIndex
+                                                                            ]
+                                                                                .snippet
+                                                                        }
+                                                                    </Typography>
+                                                                </Box>
+                                                            );
+                                                        })}
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="h6">
+                                                    No search History available
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                )}
                                 <div style={{ position: "relative" }}>
                                     {isSearchInProgress && (
                                         <Box
                                             sx={{
                                                 position: "absolute",
+                                                pt: 10,
                                                 left: { xs: "50%", md: "55%" },
                                                 top: { xs: "50%", md: "40%" },
                                                 translate: {
@@ -1026,75 +1074,80 @@ function Routine() {
                                             ></l-ring-2>
                                         </Box>
                                     )}
-                                    {googleSearchData?.length > 0 && (
-                                        <Box
-                                            sx={{
-                                                pt: 5,
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                gap: 3,
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="h5"
-                                                sx={{ fontWeight: 600 }}
-                                            >
-                                                Search result{" "}
-                                            </Typography>
+                                    {googleSearchData?.length > 0 &&
+                                        !isSearchInProgress && (
                                             <Box
                                                 sx={{
-                                                    display: "grid",
-                                                    gridTemplateColumns: {
-                                                        xs: "repeat(1, 1fr)",
-                                                        sm: "repeat(2, 1fr)",
-                                                    },
-                                                    gap: "16px",
+                                                    pt: 5,
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 3,
                                                 }}
                                             >
-                                                {googleSearchData
-                                                    .splice(0, 6)
-                                                    .map((result, index) => {
-                                                        return (
-                                                            <Box
-                                                                key={index}
-                                                                sx={{
-                                                                    display:
-                                                                        "flex",
-                                                                    flexDirection:
-                                                                        "column",
-                                                                    gap: 1,
-                                                                }}
-                                                            >
-                                                                <Link
-                                                                    href={
-                                                                        result.link
-                                                                    }
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    sx={{
-                                                                        fontWeight: 600,
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        result.title
-                                                                    }
-                                                                </Link>
-                                                                <Typography
-                                                                    sx={{
-                                                                        textAlign:
-                                                                            "start",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        result.snippet
-                                                                    }
-                                                                </Typography>
-                                                            </Box>
-                                                        );
-                                                    })}
+                                                <Typography
+                                                    variant="h5"
+                                                    sx={{ fontWeight: 600 }}
+                                                >
+                                                    Search result{" "}
+                                                </Typography>
+                                                <Box
+                                                    sx={{
+                                                        display: "grid",
+                                                        gridTemplateColumns: {
+                                                            xs: "repeat(1, 1fr)",
+                                                            sm: "repeat(2, 1fr)",
+                                                        },
+                                                        gap: "16px",
+                                                    }}
+                                                >
+                                                    {googleSearchData
+                                                        .splice(0, 6)
+                                                        .map(
+                                                            (result, index) => {
+                                                                return (
+                                                                    <Box
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        sx={{
+                                                                            display:
+                                                                                "flex",
+                                                                            flexDirection:
+                                                                                "column",
+                                                                            gap: 1,
+                                                                        }}
+                                                                    >
+                                                                        <Link
+                                                                            href={
+                                                                                result.link
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            sx={{
+                                                                                fontWeight: 600,
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                result.title
+                                                                            }
+                                                                        </Link>
+                                                                        <Typography
+                                                                            sx={{
+                                                                                textAlign:
+                                                                                    "start",
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                result.snippet
+                                                                            }
+                                                                        </Typography>
+                                                                    </Box>
+                                                                );
+                                                            }
+                                                        )}
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                    )}
+                                        )}
                                 </div>
                             </Box>
                         </Box>
