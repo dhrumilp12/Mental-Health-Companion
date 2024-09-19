@@ -258,9 +258,9 @@ function AuthComponent() {
 
             <Box
                 sx={{
-                    display: { xs: "flex", md: "block" },
+                    display: { xs: "flex", sm: "block" },
                     flexDirection: "column",
-                    height: { xs: "90vh", md: "" },
+                    height: { xs: "90vh", sm: "" },
                     gap: 15,
                     background: theme.palette.background.default,
                 }}
@@ -290,7 +290,7 @@ function AuthComponent() {
                     disableGutters
                     sx={{
                         // minHeight: "100vh",
-                        minHeight: { md: "100vh" },
+                        minHeight: { sm: "100vh" },
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
