@@ -428,6 +428,9 @@ function Routine() {
                                             <MenuItem value={"Mindfulness"}>
                                                 Mindfulness
                                             </MenuItem>
+                                            <MenuItem value={"Stress Relief"}>
+                                                Stress Relief
+                                            </MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Box>
@@ -853,6 +856,9 @@ function Routine() {
                                             </MenuItem>
                                             <MenuItem value={"Mindfulness"}>
                                                 Mindfulness
+                                            </MenuItem>
+                                            <MenuItem value={"Stress Relief"}>
+                                                Stress Relief
                                             </MenuItem>
                                         </Select>
                                     </FormControl>
