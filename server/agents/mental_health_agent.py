@@ -72,6 +72,7 @@ class MentalHealthAIAgent(AIAgent):
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", self.system_message.content),
+                ("system", "{past_summaries}"),
                 ("system", "user_id:{user_id}"),
                 MessagesPlaceholder(variable_name="chat_turns"),
                 ("human", "{input}"),
@@ -277,11 +278,25 @@ class MentalHealthAIAgent(AIAgent):
         # TODO: throw error if user_id, chat_id is set to None.
         session_id = f"{user_id}-{chat_id}"
        
+       # Retrieve past conversation summaries for the user
+        db_client = MongoDBClient.get_client()
+        db_name = MongoDBClient.get_db_name()
+        db = db_client[db_name]
+        chat_summary_collection = db["chat_summaries"]
+        past_summaries_cursor = chat_summary_collection.find({"user_id": user_id}).sort("chat_id", -1)
+        past_summaries = list(past_summaries_cursor)
+        summaries_text = "\n".join([summary.get("summary_text", "") for summary in past_summaries])
 
         try:
             invocation = self.agent_executor.invoke(
-                {"input": message, "user_id": user_id, "agent_scratchpad": []},
-                config={"configurable": {"session_id": session_id}})
+            {
+                "input": message,
+                "user_id": user_id,
+                "past_summaries": summaries_text,
+                "agent_scratchpad": []
+            },
+            config={"configurable": {"session_id": session_id}}
+        )
 
             response = invocation["output"]
 
@@ -310,7 +325,27 @@ class MentalHealthAIAgent(AIAgent):
         chat_summary_collection = db["chat_summaries"]
         user_journey = user_journey_collection.find_one({"user_id": user_id})
 
+         # Retrieve past conversation summaries for the user
+        past_summaries_cursor = chat_summary_collection.find({"user_id": user_id}).sort("chat_id", -1)
+
+        past_summaries = list(past_summaries_cursor)
+
+        # Combine the past summaries into a single string
+        recent_summaries = past_summaries[:2]
+        summaries_text = "\n".join([summary.get("summary_text", "") for summary in recent_summaries])
+        print(f"Past summaries retrieved:\n{summaries_text}")
+
+        # Include the summaries in the system prompt
         system_message = self.system_message
+
+        if summaries_text:
+            addendum = f"""
+    Previous Conversations Summary:
+    {summaries_text}
+
+    Please use the above information to continue assisting the user.
+    """
+            system_message.content += addendum
 
 
         now = datetime.now()
@@ -335,12 +370,12 @@ class MentalHealthAIAgent(AIAgent):
                 "mental_health_concerns": []
             })
 
-            addendum = """This is your first session with the patient. Be polite and introduce yourself in a friendly and inviting manner.
-                In this session, do your best to understand what the user hopes to achieve through your service, and derive a therapy style fitting to
-                their needs.        
-            """
+            introduction = """
+    This is your first session with the patient. Be polite and introduce yourself in a friendly and inviting manner.
+    In this session, do your best to understand what the user hopes to achieve through your service, and derive a therapy style fitting to their needs.
+    """
 
-            full_system_message = ''.join([system_message.content, addendum])
+            full_system_message = ''.join([system_message.content, introduction])
             system_message.content = full_system_message
 
         chat_id = MentalHealthAIAgent.get_chat_id(user_id)
@@ -358,17 +393,29 @@ class MentalHealthAIAgent(AIAgent):
             "chat_id": chat_id
         }
         
+        
 
     def get_summary_from_chat_history(self, user_id, chat_id):
-        history:BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
+        history: BaseChatMessageHistory = self.get_session_history(f"{user_id}-{chat_id}")
 
-        memory = ConversationSummaryMemory.from_messages(
+        memory = ConversationSummaryMemory(
             llm=self.llm,
             chat_memory=history,
             return_messages=True
         )
 
-        return memory.buffer
+        
+        for msg in asyncio.run(history.aget_messages()):
+            if isinstance(msg, HumanMessage):
+                memory.save_context({"input": msg.content}, {})
+            else:
+                memory.save_context({}, {"output": msg.content})
+
+        # Retrieve the summary
+        summary = memory.load_memory_variables({}).get('history', '')
+        print(f"Generated summary: {summary}")
+        return summary
+
 
 
     def perform_final_processes(self, user_id, chat_id):

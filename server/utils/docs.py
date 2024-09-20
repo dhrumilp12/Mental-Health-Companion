@@ -24,20 +24,22 @@ def extract_text(docs:list[Document], key='description') -> str:
 def format_docs(docs:list[Document]) -> str:
     """
     Prepares the objects list for the system prompt.
-    """       
+    """
     str_docs = []
 
     for doc in docs:
         metadata = doc.metadata.copy()
-        del metadata["_id"]
-        del metadata["vectorContent"]
+        # Log the metadata keys
+        logging.debug(f"Metadata keys before cleanup: {list(metadata.keys())}")
+        metadata.pop("_id", None)
+        metadata.pop("vectorContent", None)
 
         doc_dict = {"_id": doc.page_content}
         doc_dict.update(metadata)
-        if "contentVector" in doc_dict:
-            del doc_dict["contentVector"]
-        if "vectorContent" in doc_dict:
-            del doc_dict["vectorContent"]
+        # Log the doc_dict keys
+        logging.debug(f"Document dict keys before cleanup: {list(doc_dict.keys())}")
+        doc_dict.pop("contentVector", None)
+        doc_dict.pop("vectorContent", None)
         str_docs.append(json.dumps(doc_dict, default=str))
-    
+
     return "\n\n".join(str_docs)

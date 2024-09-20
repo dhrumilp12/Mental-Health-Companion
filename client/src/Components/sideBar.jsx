@@ -81,6 +81,7 @@ function Sidebar({ setSidebarOpen }) {
           ml: 1,
           backgroundColor: "#ecf0f5",
           color: "#191718",
+          minHeight: "100vh",
         },
       }}
       variant="permanent"

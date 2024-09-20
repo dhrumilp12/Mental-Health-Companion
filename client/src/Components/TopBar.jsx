@@ -9,7 +9,7 @@ const TopBar = () => {
       position="static"
       sx={{ backgroundColor: "transparent", boxShadow: "none" }}
     >
-      <Toolbar>
+      <Toolbar sx={{mt: {xs: 2, sm: 0}, alignItems: {xs: "start", sm: "center"}}}>
         <Typography
           variant="h6"
           sx={{

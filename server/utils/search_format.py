@@ -45,7 +45,10 @@ def get_user_search_history(user_id):
     history = db.search_history.find({'user_id': user_id})
     return serialize_objectid(list(history))
 
-def delete_user_search_history(user_id):
+def delete_user_search_history(user_id, search_type=None):
     db_client = MongoDBClient.get_client()
     db = db_client[MongoDBClient.get_db_name()]
-    db.search_history.delete_many({'user_id': user_id})
+    query = {'user_id': user_id}
+    if search_type:
+        query['search_type'] = search_type
+    db.search_history.delete_many(query)
