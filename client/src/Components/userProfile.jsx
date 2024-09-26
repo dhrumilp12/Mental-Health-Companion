@@ -299,12 +299,13 @@ function UserProfile() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <Container
-                component="main"
-                sx={{
-                    py: 3,
+            <div
+                style={{
+                    paddingTop: 3,
+                    paddingBottom: 3,
                     maxHeight: "88vh",
                     overflowY: "auto",
+                    paddingRight: 20,
                 }}
             >
                 <CustomTabs
@@ -732,7 +733,7 @@ function UserProfile() {
                         {message}
                     </Alert>
                 </Snackbar>
-            </Container>
+            </div>
         </ThemeProvider>
     );
 }

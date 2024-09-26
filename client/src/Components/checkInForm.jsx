@@ -19,6 +19,7 @@ import {
     createTheme,
     ThemeProvider,
     Container,
+    CircularProgress,
 } from "@mui/material";
 import { ring2 } from "ldrs";
 
@@ -30,6 +31,7 @@ function CheckInForm({ userId, update }) {
     const [notify, setNotify] = useState(false);
     const { checkInId } = useParams();
     const [loading, setLoading] = useState(false);
+    const [isSaveInProgress, setIsSaveInProgress] = useState(false);
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: "",
@@ -82,6 +84,7 @@ function CheckInForm({ userId, update }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        setIsSaveInProgress(true);
         const selectedTime = new Date(checkInTime);
         const now = new Date();
         if (selectedTime <= now) {
@@ -116,6 +119,9 @@ function CheckInForm({ userId, update }) {
                 message: response.data.message,
                 severity: "success",
             });
+            setCheckInTime("");
+            setFrequency("");
+            setNotify(false);
             // Optionally reset form or handle next steps
         } catch (error) {
             console.error("Error:", error.response?.data || error);
@@ -126,6 +132,8 @@ function CheckInForm({ userId, update }) {
                 message: errorMessage,
                 severity: "error",
             });
+        } finally {
+            setIsSaveInProgress(false);
         }
     };
 
@@ -140,10 +148,10 @@ function CheckInForm({ userId, update }) {
         return (
             <Box
                 sx={{
-                  position: "absolute",
-                  left: { xs: "50%", md: "60%" },
-                  top: { xs: "50%", md: "40%" },
-                  translate: { xs: "-50% -50%", md: "-60% -40%" },
+                    position: "absolute",
+                    left: { xs: "50%", md: "60%" },
+                    top: { xs: "50%", md: "40%" },
+                    translate: { xs: "-50% -50%", md: "-60% -40%" },
                 }}
             >
                 <l-ring-2
@@ -323,9 +331,15 @@ function CheckInForm({ userId, update }) {
                                     },
                                 }}
                             >
-                                {update
-                                    ? "Update Check-In"
-                                    : "Schedule Check-In"}
+                                {isSaveInProgress ? (
+                                    <CircularProgress size={24} />
+                                ) : (
+                                    <div>
+                                        {update
+                                            ? "Update Check-In"
+                                            : "Schedule Check-In"}
+                                    </div>
+                                )}
                             </Button>
                             <Snackbar
                                 open={snackbar.open}

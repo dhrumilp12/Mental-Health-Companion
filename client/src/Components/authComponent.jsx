@@ -318,15 +318,40 @@ function AuthComponent() {
                             onChange={handleChange}
                             variant="fullWidth"
                             indicatorColor="primary"
-                            textColor="primary"
+                            textColor="inherit" // Use 'inherit' to manage color through custom styles
                         >
-                            <Tab icon={<LockOutlinedIcon />} label="Login" />
-                            <Tab icon={<PersonAddIcon />} label="Sign Up" />
+                            <Tab
+                                icon={<LockOutlinedIcon />}
+                                label="Login"
+                                sx={{
+                                    color: "white", // Default color (white)
+                                    "&.Mui-selected": {
+                                        color: "primary.main", // Active tab color (primary)
+                                    },
+                                }}
+                            />
+                            <Tab
+                                icon={<PersonAddIcon />}
+                                label="Sign Up"
+                                sx={{
+                                    color: "white", // Default color (white)
+                                    "&.Mui-selected": {
+                                        color: "primary.main", // Active tab color (primary)
+                                    },
+                                }}
+                            />
                             <Tab
                                 icon={<VisibilityOffIcon />}
                                 label="Anonymous"
+                                sx={{
+                                    color: "white", // Default color (white)
+                                    "&.Mui-selected": {
+                                        color: "primary.main", // Active tab color (primary)
+                                    },
+                                }}
                             />
                         </Tabs>
+
                         <Box sx={{ mt: 3, width: "100%" }}>
                             {activeTab === 0 && (
                                 <form onSubmit={handleLogin}>
