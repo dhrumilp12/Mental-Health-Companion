@@ -2,9 +2,12 @@ import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from utils.docs import format_docs
 from services.db.user import get_user_profile_by_user_id
+from services.db.user_journey import get_user_journey_by_user_id, update_user_journey_by_user_id
 from langchain.tools import Tool
 from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results, generate_suggestions
 from langchain_google_community import GooglePlacesTool
+
+
 
 
 def get_vector_store_chain(agent, collection_name:str):
@@ -14,7 +17,6 @@ def get_vector_store_chain(agent, collection_name:str):
 def vector_store_chain_factory(collection_name) -> callable:
     collection_name = collection_name
     return lambda x: get_vector_store_chain(collection_name=collection_name)
-
 
 
 
@@ -57,7 +59,15 @@ toolbox = {
             "func": get_user_profile_by_user_id,
             "structured": True,
             "description": "Retrieves a user's profile information by the user's ID to be used when brought up in conversation. Includes age, name and location. Exclude if user ID is `0`, as this indicates it is an anonymous user."
-        }
+        },
+        "user_journey_retrieval": {
+            "func": get_user_journey_by_user_id,
+            "structured": True,
+            "description": (
+                "Retrieves the user's journey information, including mental health concerns, "
+                "goals, and therapy plans, by the user's ID."
+            )
+        },
     }
 }
 

@@ -5,24 +5,23 @@ overarching therapy goals and corcerns.
 
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 
 class TherapyPlan(BaseModel):
-    chat_id: str
-    exercise: list[str]
-    submit_assignments: list[str]
-    assign_assignments: list[str]
-    assign_exercise: list[str]
-    share_resources: list[str]
-
+    chat_id: Optional[str] = None
+    exercise: Optional[list[str]] = []
+    submit_assignments: Optional[list[str]] = []
+    assign_assignments: Optional[list[str]] = []
+    assign_exercise: Optional[list[str]] = []
+    share_resources: Optional[list[str]] = []
 
 class MentalHealthConcern(BaseModel):
     label: str
     severity: str
 
-
 class UserJourney(BaseModel):
-    user_id:str
-    patient_goals: list[str]
-    last_update:datetime
-    therapy_plan: TherapyPlan
-    mental_health_concerns: list[MentalHealthConcern]
+    user_id: str
+    patient_goals: Optional[list[str]] = []
+    last_update: Optional[datetime] = None
+    therapy_plan: Optional[TherapyPlan] = TherapyPlan()
+    mental_health_concerns: Optional[list[MentalHealthConcern]] = []
