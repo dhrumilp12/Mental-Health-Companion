@@ -15,7 +15,8 @@ RUN pipx install poetry
 
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install $(test {FLASK_ENV} == development && echo "--only=main") --no-interaction --no-ansi
+RUN poetry install $(test "$FLASK_ENV" = development && echo "--only=main") --no-interaction --no-ansi
+
 
 COPY . ./
 
