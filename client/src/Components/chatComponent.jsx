@@ -91,6 +91,15 @@ const ChatComponent = () => {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [snackbarSeverity, setSnackbarSeverity] = useState("info");
     const [currentPlayingMessage, setCurrentPlayingMessage] = useState(null);
+    const chatContainerRef = useRef(null);
+
+    useEffect(() => {
+        // Scroll to the bottom whenever a new message is added
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop =
+                chatContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const handleToggleVoice = (event) => {
         event.preventDefault(); // Prevents the IconButton from triggering form submissions if used in forms
@@ -245,6 +254,7 @@ const ChatComponent = () => {
                 }
                 setTurnId((prev) => prev + 1);
                 setInput("");
+                window.scrollTo(0, document.body.scrollHeight);
             } else {
                 console.error(
                     "Failed to send message:",
@@ -511,6 +521,7 @@ const ChatComponent = () => {
                     }}
                 >
                     <CardContent
+                        ref={chatContainerRef}
                         sx={{
                             flexGrow: 1,
                             overflow: "auto",
@@ -693,7 +704,7 @@ const ChatComponent = () => {
                                 </Box>
                             )
                         )}
-                        <List sx={{ maxHeight: "100%", overflow: "auto" }}>
+                        <List sx={{ maxHeight: "100%" }}>
                             {messages.map((msg, index) => (
                                 <ListItem
                                     key={index}
