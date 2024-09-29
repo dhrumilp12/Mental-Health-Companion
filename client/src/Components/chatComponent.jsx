@@ -29,6 +29,8 @@ import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import { UserContext } from "./userContext";
 import Aria from "../Assets/Images/Aria.jpg";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const TypingIndicator = () => (
     <Box
@@ -391,85 +393,33 @@ const ChatComponent = () => {
     };
 
     const renderMessageWithFormat = (message) => {
-        const urlRegex = /\[(.*?)\]\((https?:\/\/[^\s]+)\)/g;
-        const boldRegex = /(\*\*|__)(.*?)\1/g;
-        const italicRegex = /(\*|_)(.*?)\1/g;
-        const strikethroughRegex = /~~(.*?)~~/g;
-        const headerRegex = /^#+\s?(.*)/gm;
-
-        const convertLine = (line) => {
-            const parts = [];
-            let lastIndex = 0;
-
-            // Helper to handle appending regular text
-            const appendRegularText = (text, offset) => {
-                if (offset > lastIndex) {
-                    parts.push(
-                        <span key={`text-${lastIndex}`}>
-                            {text.slice(lastIndex, offset)}
-                        </span>
-                    );
-                }
-            };
-
-            // Replace all markdown with React components
-            line.replace(urlRegex, (match, text, url, offset) => {
-                appendRegularText(line, offset);
-                parts.push(
-                    <a
-                        key={`link-${url}`}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "#1976d2" }}
-                    >
-                        {text}
-                    </a>
-                );
-                lastIndex = offset + match.length;
-            })
-                .replace(boldRegex, (match, marker, text, offset) => {
-                    appendRegularText(line, offset);
-                    parts.push(
-                        <strong key={`bold-${lastIndex}`}>{text}</strong>
-                    );
-                    lastIndex = offset + match.length;
-                })
-                .replace(italicRegex, (match, marker, text, offset) => {
-                    appendRegularText(line, offset);
-                    parts.push(<em key={`italic-${lastIndex}`}>{text}</em>);
-                    lastIndex = offset + match.length;
-                })
-                .replace(strikethroughRegex, (match, text, offset) => {
-                    appendRegularText(line, offset);
-                    parts.push(
-                        <del key={`strikethrough-${lastIndex}`}>{text}</del>
-                    );
-                    lastIndex = offset + match.length;
-                })
-                .replace(headerRegex, (match, text, offset) => {
-                    appendRegularText(line, offset);
-                    parts.push(<h1 key={`header-${lastIndex}`}>{text}</h1>);
-                    lastIndex = offset + match.length;
-                });
-
-            // Append any remaining text
-            if (lastIndex < line.length) {
-                parts.push(
-                    <span key={`text-end-${lastIndex}`}>
-                        {line.slice(lastIndex)}
-                    </span>
-                );
-            }
-
-            return <div>{parts}</div>;
-        };
-
-        return message
-            .split("\n")
-            .map((line, index) => convertLine(line, index));
-    };
-
+        return (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node, ...props }) => (
+                <a
+                  {...props}
+                  style={{ color: '#1976d2' }}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                />
+              ),
+              img: ({ node, ...props }) => (
+                <img
+                  {...props}
+                  style={{ maxWidth: '100%', height: 'auto' }}
+                  alt={props.alt || 'Image'}
+                />
+              ),
+              // Customize other elements if needed
+            }}
+          >
+            {message}
+          </ReactMarkdown>
+        );
+      };
+      
     return (
         <>
             <style>
