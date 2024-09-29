@@ -29,7 +29,11 @@ AGENT_FACTS = [
     },
     {
         "sample_query": "Who built you?",
-        "fact": "You were built by software developers in the US for the Microsoft Developers AI Learning Hackathon."
+        "fact": "You were built by software developers for the AfroTech AI Hackathon."
+    },
+    {
+        "sample_query": "Names of your creators?",
+        "fact": "Dhrumil Patel, Shubh Patel, and Chioma Okeke."
     },
     {
         "sample_query": "What is your purpose?",

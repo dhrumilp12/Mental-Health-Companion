@@ -1,16 +1,13 @@
-
-
-import { Navigate } from 'react-router-dom';
-import PropTypes from "prop-types"
+import { Navigate } from "react-router-dom";
+import PropTypes from "prop-types";
 
 const ProtectedRoute = ({ children }) => {
-    const isAuthenticated  = localStorage.getItem('token') ;
-    console.log('isAuthenticated:', isAuthenticated);
-    return isAuthenticated ? children : <Navigate to="/auth" replace />;
-  };
+  const isAuthenticated = localStorage.getItem("token");
+  return isAuthenticated ? children : <Navigate to="/landing_page" replace />;
+};
 
-  ProtectedRoute.propTypes = {
-    children: PropTypes.node
-  }
+ProtectedRoute.propTypes = {
+  children: PropTypes.node,
+};
 
 export default ProtectedRoute;

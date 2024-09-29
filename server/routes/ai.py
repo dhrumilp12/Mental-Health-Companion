@@ -14,7 +14,7 @@ ai_routes = Blueprint("ai", __name__)
 
 @ai_routes.post("/ai/mental_health/welcome/<user_id>")
 def get_mental_health_agent_welcome(user_id):
-    agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
+    agent = MentalHealthAIAgent(tool_names=["generate_suggestions","web_search_youtube","web_search_tavily","wiki_search","web_search_bing","location_search_gplaces", "web_search_google", "user_profile_retrieval", "agent_facts"])
 
     response = agent.get_initial_greeting(
                                     user_id=user_id
@@ -36,7 +36,19 @@ def run_mental_health_agent(user_id, chat_id):
     prompt = body.get("prompt")
     turn_id = body.get("turn_id")
 
-    agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
+    agent = MentalHealthAIAgent(
+        tool_names=[
+            "generate_suggestions",
+            "web_search_youtube",
+            "web_search_google",
+            "web_search_tavily",
+            "location_search_gplaces",
+            "web_search_bing",
+            "user_profile_retrieval",
+            "agent_facts",
+            "user_journey_retrieval",
+        ]
+    )
 
     try:
             
@@ -61,7 +73,7 @@ def run_mental_health_agent(user_id, chat_id):
 def set_mental_health_end_state(user_id, chat_id):
     try:
         logger.info(f"Finalizing chat {chat_id} for user {user_id}")
-        agent = MentalHealthAIAgent(tool_names=["location_search", "web_search_bing", "user_profile_retrieval", "agent_facts"])
+        agent = MentalHealthAIAgent(tool_names=["generate_suggestions","web_search_youtube","web_search_tavily","web_search_bing","location_search_gplaces", "web_search_google", "user_profile_retrieval", "agent_facts"])
 
         agent.perform_final_processes(user_id, chat_id)
 
@@ -70,7 +82,7 @@ def set_mental_health_end_state(user_id, chat_id):
         return jsonify({"message": "Chat session finalized successfully"}), 200
 
     except Exception as e:
-        logger.error(f"Error during finalizing chat: {e}")
+        logger.error(f"Error during finalizing chat: {e}", exc_info=True)
         return jsonify({"error": "Failed to finalize chat"}), 500
     
 

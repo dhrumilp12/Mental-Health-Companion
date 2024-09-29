@@ -1,6 +1,6 @@
-import React, { useContext, useState, useEffect } from "react";
-import axios from "axios";
+import { useContext, useState, useEffect } from "react";
 import apiServerAxios from "../api/axios";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import {
   AppBar,
@@ -16,9 +16,9 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircle from "@mui/icons-material/AccountCircle";
-import { UserContext } from "./userContext";
-
 import CancelIcon from "@mui/icons-material/Cancel";
+
+import { UserContext } from "./userContext";
 
 function Navbar({ toggleSidebar }) {
   const {
@@ -32,7 +32,6 @@ function Navbar({ toggleSidebar }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const token = localStorage.getItem("token");
   const userId = user?.userId;
-  console.log("User ID:", userId);
 
   useEffect(() => {
     if (userId) {
@@ -57,7 +56,6 @@ function Navbar({ toggleSidebar }) {
         }
       ); // Replace {userId} with actual user ID
       const missedCheckIns = response.data;
-      console.log("Missed check-ins:", missedCheckIns);
       if (missedCheckIns.length > 0) {
         missedCheckIns.forEach((checkIn) => {
           addNotification({
@@ -104,7 +102,10 @@ function Navbar({ toggleSidebar }) {
     const handleServiceWorkerMessage = (event) => {
       if (event.data && event.data.msg === "updateCount") {
         console.log("Received message from service worker:", event.data);
-        addNotification({ title: event.data.title, message: event.data.body });
+        addNotification({
+          title: event.data.title,
+          message: event.data.body,
+        });
         incrementNotificationCount();
       }
     };
@@ -125,6 +126,7 @@ function Navbar({ toggleSidebar }) {
   return (
     <AppBar
       position="fixed"
+      width="100%"
       sx={{
         zIndex: (theme) => theme.zIndex.drawer + 1,
         backgroundColor: "#ecf0f5",
@@ -150,46 +152,81 @@ function Navbar({ toggleSidebar }) {
             </Badge>
           </IconButton>
         )}
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={() => handleClose(null)}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              maxHeight: 400,
+              width: { xs: 250, sm: 400 },
+              padding: 1,
+            },
+          }}
         >
-          {notifications.map((notification, index) => (
-            <MenuItem
-              key={index}
-              onClick={() => handleClose(index)}
-              sx={{
-                whiteSpace: "normal",
-                maxWidth: 350,
-                padding: 2,
-              }}
-            >
-              <Card
-                elevation={2}
+          {notifications.length > 0 ? (
+            notifications.map((notification, index) => (
+              <MenuItem
+                key={index}
+                onClick={() => handleClose(index)}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  padding: "2px",
+                  whiteSpace: "normal",
+                  padding: 1,
                 }}
               >
-                <CancelIcon color="error" />
-
-                <CardContent sx={{ flex: "1 1 auto" }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                    {notification.title}
-                  </Typography>
-
-                  <Typography variant="body2" color="text.secondary">
-                    {notification.message}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </MenuItem>
-          ))}
+                <Card
+                  elevation={2}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    width: "100%",
+                    padding: "8px 12px",
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: 2,
+                    boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <CancelIcon color="error" sx={{ marginRight: 2 }} />{" "}
+                  <CardContent sx={{ padding: "0 !important" }}>
+                    {" "}
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: "bold",
+                        color: "text.primary",
+                        marginBottom: 0.5,
+                      }}
+                    >
+                      {notification.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {notification.message}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </MenuItem>
+            ))
+          ) : (
+            <Typography
+              variant="h6"
+              onClick={() => handleClose(0)}
+              sx={{
+                whiteSpace: "normal",
+                padding: 2,
+                textAlign: "center",
+                fontSize: { xs: "14px", sm: "18px" },
+                fontWeight: 600,
+                color: "text.secondary",
+              }}
+            >
+              You have no notifications
+            </Typography>
+          )}
         </Menu>
+
         {!user?.isAnon && (
           <IconButton color="inherit" onClick={handleProfileClick}>
             <AccountCircle />
@@ -199,5 +236,9 @@ function Navbar({ toggleSidebar }) {
     </AppBar>
   );
 }
+
+Navbar.propTypes = {
+  toggleSidebar: PropTypes.func,
+};
 
 export default Navbar;

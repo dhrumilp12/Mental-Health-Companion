@@ -13,12 +13,14 @@ from services.db.agent_facts import load_agent_facts_to_db
 from config.config import Config
 from routes import register_blueprints
 from flask_mail import Mail
-
+from utils.update_agent_facts import update_agent_facts_in_db
 load_dotenv()
 
 
 def run_app():
     # Set up the app
+    update_agent_facts_in_db()
+    
     app = Flask(__name__)
     
     app.config.from_object(Config)
