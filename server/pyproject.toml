@@ -185,7 +185,7 @@ pywebpush = "2.0.0"
 env = [
     "log_cli = true",
     "log_cli_level = INFO",
-    "FLASK_ENV = test",
+    "FLASK_ENV = development",
     "cache_dir = ./server"
 ]
 
