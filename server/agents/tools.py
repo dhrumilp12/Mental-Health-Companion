@@ -2,7 +2,7 @@ import os
 from langchain_community.tools.tavily_search import TavilySearchResults
 from utils.docs import format_docs
 from services.db.user import get_user_profile_by_user_id
-from services.db.user_journey import get_user_journey_by_user_id, update_user_journey_by_user_id
+from services.db.user_journey import get_user_journey_by_user_id
 from langchain.tools import Tool
 from utils.agents import get_google_search_results, get_bing_search_results, get_youtube_search_results, generate_suggestions
 from langchain_google_community import GooglePlacesTool
