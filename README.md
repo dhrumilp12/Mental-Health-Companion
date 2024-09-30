@@ -59,8 +59,8 @@ For users who wish to discontinue using the service, Earlent offers an option to
 **In Summary:**
 
 Earlent - The Mental Health Companion is an innovative and AI-powered platform designed to provide personalized and empathetic mental health support. By offering features like a responsive chat interface, customizable well-being routines, mood logging with AI analysis, scheduled check-ins with reminders, anonymous login options, secure password recovery, comprehensive data management, and the option to delete accounts, Earlent empowers users to take control of their mental health in a convenient, supportive, and accessible way.
----
 
+---
  ## How we built it 
 - **Database:** [Azure Cosmos DB (v-core)](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/vcore/introduction) for its robust, scalable database services to manage dynamic data requirements efficiently.
 - **LLM:** The [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) platform was integrated for generating empathetic, context-aware responses through advanced AI models like **GPT 4o mini**.
