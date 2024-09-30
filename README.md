@@ -16,7 +16,7 @@ The heart of the platform is an intuitive, AI-driven chat interface that facilit
 
 - **Location-Based Assistance:** The AI can help users find nearby mental health professionals or wellness centers when asked.
 
-
+---
 **Use Case Diagram:**
 
 ![Use Case Diagram](https://www.plantuml.com/plantuml/png/bLVDZjCm4BxdAKQz08Vk0o2qskx_8YfGMuGupYRJr2Ar8tjIRK4y4O_0RP-Ck3k2c4wYz9JAttpV9EFFdzMBmEYvsLPPHMi6Tk1DkM4eZAUSZRDPzWgkQMqimIndvqE6yG6V0tdvELdk0zCMPiNMM1FOOxiwQOcn2AumKCYQG3a6QcjZFxXoTaS-OEmm-GSkYBsX7S63DMomWZjFnCQMdPebsGBc50AMr5d-vDtE50JBcYZVJDbDL_J4hL3TS5gMjzm1WKYBz1SX-DXmgh2WdCoEO46XTZOa4kJNpc_XrbYiG5fHw5JCyhXq65x4rwQY7lIzQxobVPSSfxbohWhGTldRFoWly8KUOKdeyuq2hd1dgdq_VcbisO_UELTMr8z_TSsgULGAxiYIHswHfYmfn9qFsjRFIh8CjvXp5_xWSeoKOzqvMYnRcssGuTu4TdxVdLbT80kwRBPRJD2PnMh_dLucFdUkw63tQ8kAuCPxvyDnF_5yt8yZL0IlaV5m3AJsqZMsGB_FQio_OHdxFy2SB6C5zuGLRs1MrnF00CBuaG40l1uu5s-aOj3-KdHa_fIiMJzXzxXRSDNRWkdE5h3Nru9hhXP8yxI2YgDLJFoie8gR1TQzBA3kP06FV2phgei5KpqicE9WGLB_jgi_enCNL1tQXusfWoIq1sEPFEO783kiJAVdQbHtq2I7E-j3JfIwTzEfagCTRDYGyRsrAoVz3lrMYk-ed-5XWdQi7snUDGNzDrHbR2BIVuhXBJp_CYzopx-pTBOZnZg6dvxz8uhWUbTz8qPfA1izZgR5oLYc4ZRZg7eKZMKhX_Y8sTD159IeEqr0JQRJ9DJyEaaYIJdb6vJF5AAUv-FfIk2F9witmdYwVcLeVEKM5H4jwazIK2w4b1-3w-Q9oHPfRYcUFZixX-GQ4HlGWTvA3OVIUBuIBsC5z5cCe6ONxJF-x_a3 "Use Case Diagram")
@@ -61,7 +61,7 @@ For users who wish to discontinue using the service, Earlent offers an option to
 Earlent - The Mental Health Companion is an innovative and AI-powered platform designed to provide personalized and empathetic mental health support. By offering features like a responsive chat interface, customizable well-being routines, mood logging with AI analysis, scheduled check-ins with reminders, anonymous login options, secure password recovery, comprehensive data management, and the option to delete accounts, Earlent empowers users to take control of their mental health in a convenient, supportive, and accessible way.
 
 
-##How we built it 
+ ##How we built it 
 - **Database:** [Azure Cosmos DB (v-core)](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/vcore/introduction) for its robust, scalable database services to manage dynamic data requirements efficiently.
 - **LLM:** The [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview) platform was integrated for generating empathetic, context-aware responses through advanced AI models like **GPT 4o mini**.
 - **AI Services:** [Azure Speech Services](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/overview) enable users to interact with the platform using their voice, improving accessibility and user experience. Speech-to-text allowed users to input requests through speech, while text-to-speech provided responses audibly using _window.speechSynthesis_.
@@ -81,7 +81,7 @@ Earlent - The Mental Health Companion is an innovative and AI-powered platform d
 - **CI/CD** [Docker](https://www.docker.com) was used to containerize the application, ensuring consistency across different computing environments. [Github Actions](https://docs.github.com/en/actions) was used to optimize the deployment process by wiring it directly to Render's web services.
 
 
-## Export the Application
+ ## Export the Application
 1. Clone the repo
 ```
 https://github.com/dhrumilp12/Mental-Health-Companion.git
